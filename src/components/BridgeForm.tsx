@@ -55,6 +55,30 @@ const TOKEN_DECIMALS: Record<string, number> = {
     HBAR: 8,
 };
 
+const EXPLORER_URLS: Record<string, string> = {
+  sepolia: "https://sepolia.etherscan.io/tx/",
+  bsc: "https://testnet.bscscan.com/tx/",
+  hedera: "https://testnet.hederaexplorer.io/transactions/", // Hedera testnet explorer
+};
+
+const getExplorerLink = (txHash: string, network: NetworkOption) => {
+  switch (network) {
+    case "ethereum":
+      return EXPLORER_URLS.sepolia + txHash;
+    case "bsc":
+      return EXPLORER_URLS.bsc + txHash;
+    case "hedera":
+      return EXPLORER_URLS.hedera + txHash;
+    default:
+      return "#";
+  }
+};
+
+const truncateHash = (hash: string) => {
+  if (!hash) return "";
+  return `${hash.slice(0, 6)}...${hash.slice(-4)}`;
+};
+
 const getTokenDecimals = (tokenSymbol: string): number => {
     return TOKEN_DECIMALS[tokenSymbol] ?? 18; // Default to 18 if not found
 };
@@ -72,42 +96,7 @@ type BridgeStatus = {
     error?: string;
 };
 
-const BridgeStatusTracker: React.FC<{ status: BridgeStatus }> = ({ status }) => {
-    const getStatusColor = (step: number) => {
-        if (status.step > step) return "text-green-500";
-        if (status.step === step && status.error) return "text-red-500";
-        if (status.step === step) return "text-yellow-500";
-        return "text-gray-600";
-    }
 
-    return (
-        <div className="p-3 bg-zinc-800 rounded-lg border border-zinc-700 space-y-2">
-            <p className="font-semibold text-white">Bridge Status:</p>
-            <div className={`text-sm ${getStatusColor(1)}`}>
-                {status.step > 1 ? "✅" : status.step === 1 && status.error ? "❌" : status.step === 1 ? "➡️" : "○"} Step 1: Connect & Network Check
-            </div>
-            <div className={`text-sm ${getStatusColor(2)}`}>
-                {status.step > 2 ? "✅" : status.step === 2 && status.error ? "❌" : status.step === 2 ? "⏳" : "○"} Step 2: Deposit to Volt Contract
-            </div>
-            <div className={`text-sm ${getStatusColor(3)}`}>
-                {status.step > 3 ? "✅" : status.step === 3 && status.error ? "❌" : status.step === 3 ? "⚙️" : "○"} Step 3: Relayer Processing (Withdrawal)
-            </div>
-            <div className={`text-sm font-medium ${status.error ? 'text-red-500' : status.step === 4 ? 'text-green-500' : 'text-white'}`}>
-                {status.message}
-            </div>
-            {status.txHash && status.txHash !== "N/A" && status.txHash !== "pending" && (
-                <p className="text-xs text-gray-500 truncate">
-                    TX Hash: {status.txHash}
-                </p>
-            )}
-            {status.error && (
-                   <p className="text-xs text-red-400">
-                    Error: {status.error}
-                </p>
-            )}
-        </div>
-    );
-}
 
 
 // ----------------------------------------------------------------------
@@ -133,6 +122,7 @@ export default function BridgeForm() {
     const [prices, setPrices] = useState<TokenPrices>({});
     const [isPriceLoading, setIsPriceLoading] = useState(false);
     const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
+    const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
 
     // --- NEW STATES FOR APPROVAL FLOW ---
     const [isApproving, setIsApproving] = useState(false);
@@ -152,11 +142,9 @@ export default function BridgeForm() {
 
 
     // --- WAGMI HOOKS FOR MONITORING ---
-
     // 1. Monitor the deposit transaction confirmation
     const { isLoading: isConfirming, isSuccess: isConfirmed, data: txReceipt } = useWaitForTransactionReceipt({
-        hash: bridgeStatus?.txHash as Address,
-        query: { enabled: !!bridgeStatus?.txHash && bridgeStatus.step === 2 && bridgeStatus.txHash !== "pending" && !bridgeStatus.error }
+        hash: depositTxHash as Address
     }); 
     
     // 2. Monitor the approval transaction confirmation
@@ -223,41 +211,52 @@ export default function BridgeForm() {
     };
 
     // --- CORE DEPOSIT FUNCTION (Extracted for sequential flow) ---
-    const handleDepositTx = useCallback((depositValue: bigint) => {
-        
-        if (!receivingAddress) {
-            setBridgeStatus({ step: 2, message: "❌ Receiving wallet address not available.", error: "Destination Address Missing" });
-            setApprovalTxHash(undefined);
-            return;
-        }
+const handleDepositTx = useCallback((depositValue: bigint) => {
+    if (!receivingAddress) {
+        setBridgeStatus({ step: 2, message: "❌ Receiving wallet address not available.", error: "Destination Address Missing" });
+        setApprovalTxHash(undefined);
+        return;
+    }
 
-        setBridgeStatus({ step: 2, message: "Step 2/3: Awaiting wallet signature for deposit...", txHash: "pending" });
+    setBridgeStatus({ step: 2, message: "Step 2/3: Awaiting wallet signature for deposit...", txHash: "pending" });
 
-        writeContract({
+    writeContract(
+        {
             address: voltContractAddress,
             abi: BRIDGE_VOLT_ABI,
             functionName: isNative ? 'depositNative' : 'depositERC20',
-            args: isNative 
-                ? [] 
-                : [tokenAddress, depositValue],
+            args: isNative ? [] : [tokenAddress, depositValue],
             // Use 0n (BigInt zero) for ERC20 value field, or the token amount for native
-            value: isNative ? depositValue : parseUnits('0', units), 
-        }, {
+            value: isNative ? depositValue : parseUnits('0', units),
+        },
+        {
             onSuccess: (hash) => {
-                setBridgeStatus({ step: 2, message: "Step 2/3: Transaction sent. Waiting for confirmation...", txHash: hash });
+                
+                setBridgeStatus({
+                    step: 2,
+                    message: "Step 2/3: Transaction sent. Waiting for confirmation...",
+                    txHash: hash,
+                });
+                setDepositTxHash(hash);
                 setApprovalTxHash(undefined); // Reset approval hash
             },
             onError: (e: any) => {
                 setApprovalTxHash(undefined); // Reset hash on failure
                 const errMsg = e?.shortMessage || e.message;
-                setBridgeStatus({ 
-                    step: 2, 
-                    message: "❌ Transaction failed/rejected.", 
-                    error: errMsg 
+
+                setBridgeStatus({
+                    step: 2,
+                    message: "❌ Transaction failed/rejected.",
+                    error: errMsg,
                 });
-            }
-        });
+
+                // 🧹 Optional: clear the deposit TX hash if failed/rejected
+                setDepositTxHash("");
+            },
+        }
+        );
     }, [receivingAddress, voltContractAddress, isNative, tokenAddress, writeContract, BRIDGE_VOLT_ABI, units]);
+
 
 
     // Price Fetching
@@ -299,29 +298,45 @@ export default function BridgeForm() {
     // 2. Deposit Confirmation Effect (Relayer call)
     const notifiedRef = useRef(false);
 
-    useEffect(() => {
-      if (isConfirming) {
-          setBridgeStatus(prev => {
-            if (prev?.message?.includes("confirming")) return prev; // prevent repeat
-            return { ...prev!, message: "Step 2/3: Transaction is confirming on the From Network..." };
-          });
-      }
+        useEffect(() => {
+            if (isConfirming) {
+                setBridgeStatus(prev => ({
+                ...prev!,
+                message: "Step 2/3: Transaction is confirming on the From Network..."
+                }));
+            }
 
-      if (isConfirmed &&  
-        !notifiedRef.current &&
-        bridgeStatus?.step === 2 && 
-        bridgeStatus.txHash &&
-        bridgeStatus.txHash !== "pending"
-      ) {
-          notifiedRef.current = true;
-          setBridgeStatus({
-              step: 3, 
-              message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
-              txHash: bridgeStatus.txHash 
-          });
-          notifyBackend(bridgeStatus.txHash, fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount);
-      }
-    }, [isConfirming, isConfirmed, fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount, notifyBackend]);
+            if (isConfirmed && bridgeStatus?.step === 2 && depositTxHash) {
+                    setBridgeStatus({
+                    step: 3,
+                    message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
+                    txHash: depositTxHash
+                    });
+
+                    notifyBackend(
+                        depositTxHash,
+                        fromNetwork,
+                        toNetwork,
+                        fromToken,
+                        toToken,
+                        amount,
+                        finalToAmount
+                    );
+            }
+        }, [
+            isConfirming,
+            isConfirmed,
+            depositTxHash, 
+            fromNetwork,
+            toNetwork,
+            fromToken,
+            toToken,
+            amount,
+            finalToAmount,
+            notifyBackend,
+            bridgeStatus?.step
+        ]);
+
 
 
     // --- HANDLER FUNCTIONS ---
@@ -420,18 +435,72 @@ export default function BridgeForm() {
 
         
         // 3. Hedera Deposit Logic (MOCK)
-        if (fromNetwork === "hedera") {
-            setBridgeStatus({ step: 2, message: `Step 2/3: Initiating Hedera deposit of ${amount} ${fromToken}...`, txHash: "HEDERA_TX_MOCK_PENDING" });
-            await new Promise(resolve => setTimeout(resolve, 3000)); 
-            
-            setBridgeStatus({ 
-                step: 3, 
-                message: "Step 3/3: Hedera deposit confirmed. Notifying relayer...",
-                txHash: "HEDERA_TX_MOCK_CONFIRMED"
+if (fromNetwork === "hedera") {
+    if (!hederaConnected || !hederaAccount) {
+        setBridgeStatus({ step: 1, message: "❌ Hedera wallet not connected.", error: "Connect wallet" });
+        return;
+    }
+
+    try {
+        setBridgeStatus({ step: 2, message: `Step 2/3: Initiating Hedera deposit of ${amount} ${fromToken}...`, txHash: "pending" });
+
+        // Example using your context helper
+        const hbarOrToken = fromToken === "HBAR" ? "HBAR" : "hUSDC";
+        const contractId = CONTRACT_ADDRESSES.hedera;
+        const amountBig = parseUnits(amount, TOKEN_DECIMALS[fromToken]);
+
+        let txHash: string | undefined;
+
+        if (fromToken === "HBAR") {
+            // Deposit native HBAR
+            txHash = await hederaSendTransaction({
+                contractId,
+                functionName: "depositNative",
+                params: [],
+                payableAmount: amountBig
             });
-            notifyBackend("HEDERA_TX_MOCK_CONFIRMED", fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount);
-            return;
+        } else {
+            // Deposit HTS token (USDC, etc.)
+            txHash = await hederaSendTransaction({
+                contractId,
+                functionName: "depositERC20",
+                params: [TOKEN_ADDRESSES[fromToken], amountBig],
+                payableAmount: 0n
+            });
         }
+
+        if (!txHash) throw new Error("Failed to get transaction hash");
+
+        setBridgeStatus({
+            step: 2,
+            message: "Step 2/3: Hedera deposit sent. Waiting for confirmation...",
+            txHash
+        });
+
+        // Wait for confirmation (polling your SDK helper)
+        const confirmed = await waitForHederaConfirmation(txHash);
+        if (!confirmed) throw new Error("Hedera transaction not confirmed");
+
+        // When confirmed
+        setBridgeStatus({
+            step: 3,
+            message: "Step 3/3: Deposit confirmed. Notifying relayer...",
+            txHash
+        });
+
+        await notifyBackend(txHash, fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount);
+
+    } catch (err: any) {
+        setBridgeStatus({
+            step: 2,
+            message: "❌ Hedera transaction failed.",
+            error: err.message || String(err)
+        });
+    }
+
+    return;
+}
+
 
         // --- 4. EVM ERC-20 APPROVAL CHECK (START) ---
         try {
@@ -548,6 +617,54 @@ export default function BridgeForm() {
         return "Bridge Tokens";
     }
 
+    const BridgeStatusTracker: React.FC<{ status: BridgeStatus }> = ({ status }) => {
+    const getStatusColor = (step: number) => {
+        if (status.step > step) return "text-green-500";
+        if (status.step === step && status.error) return "text-red-500";
+        if (status.step === step) return "text-yellow-500";
+        return "text-gray-600";
+    }
+
+    return (
+        <div className="p-3 bg-zinc-800 rounded-lg border border-zinc-700 space-y-2">
+            <p className="font-semibold text-white">Bridge Status:</p>
+            <div className={`text-sm ${getStatusColor(1)}`}>
+                {status.step > 1 ? "✅" : status.step === 1 && status.error ? "❌" : status.step === 1 ? "➡️" : "○"} Step 1: Connect & Network Check
+            </div>
+            <div className={`text-sm ${getStatusColor(2)}`}>
+                {status.step > 2 ? "✅" : status.step === 2 && status.error ? "❌" : status.step === 2 ? "⏳" : "○"} Step 2: Deposit to Volt Contract
+            </div>
+            <div className={`text-sm ${getStatusColor(3)}`}>
+                {status.step > 3 ? "✅" : status.step === 3 && status.error ? "❌" : status.step === 3 ? "⚙️" : "○"} Step 3: Relayer Processing (Withdrawal)
+            </div>
+            <div className={`text-sm font-medium ${status.error ? 'text-red-500' : status.step === 4 ? 'text-green-500' : 'text-white'}`}>
+                {status.message}
+            </div>
+
+            {depositTxHash && (
+                <p className="text-xs text-gray-500 truncate">
+                    Deposit TX Hash:{" "}
+                    <a
+                    href={getExplorerLink(depositTxHash, fromNetwork)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Verify"
+                    className="text-blue-400 hover:underline"
+                    >
+                    {truncateHash(depositTxHash)}
+                    </a>
+                </p>
+            )}
+
+            {status.error && (
+                   <p className="text-xs text-red-400">
+                    Error: {status.error}
+                </p>
+            )}
+        </div>
+    );
+}
+
     // Helper to check if receiving wallet is connected
     const isReceivingWalletConnected = useMemo(() => {
         if (toNetwork === 'hedera') return hederaConnected;
@@ -556,16 +673,18 @@ export default function BridgeForm() {
     
     const isPriceInvalid = fromPrice <= 0 || toPrice <= 0;
     
-    // Updated isButtonDisabled to include checks for both wallets and the same network
-    const isButtonDisabled = isPriceLoading || Number(amount) <= 0 || isPriceInvalid || (fromNetwork === toNetwork) 
-        // Checks for the From Network connection/chain
+    
+    const isButtonDisabled = isPriceLoading 
+        || Number(amount) <= 0 
+        || isPriceInvalid 
+        || (fromNetwork === toNetwork) 
         || (fromNetwork === "hedera" && !hederaConnected) 
         || (fromNetwork !== "hedera" && !evmConnected)
         || (fromNetwork !== "hedera" && evmConnected && currentChainId !== CHAIN_IDS[fromNetwork])
-        // Checks for the To Network connection
         || !isReceivingWalletConnected 
-        // Checks for active bridge state (now includes step 1 which is approval)
-        || (bridgeStatus && (bridgeStatus.step === 1 || bridgeStatus.step === 2 || bridgeStatus.step === 3));
+        // Only disable if an actual TX or approval is in progress
+        || isApproving
+        || (bridgeStatus?.txHash === "pending");
 
 
     // Display a loading state if prices are not ready
