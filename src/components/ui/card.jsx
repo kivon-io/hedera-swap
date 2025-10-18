@@ -21,3 +21,9 @@ export const CardTitle = ({ children, className = "" }) => (
 export const CardContent = ({ children, className = "" }) => (
   <div className={className}>{children}</div>
 );
+
+export const CardFooter = ({ children, className = "" }) => (
+  <div className={`mt-4 border-t border-zinc-800 pt-2 text-sm text-zinc-400 ${className}`}>
+    {children}
+  </div>
+);

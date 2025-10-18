@@ -8,13 +8,13 @@ import {
 } from "@rainbow-me/rainbowkit";
 import { HederaWalletProvider } from "@/context/HederaWalletContext";
 import { WagmiProvider } from "wagmi";
-import { mainnet, polygon, sepolia } from "wagmi/chains";
+import { bscTestnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const config = getDefaultConfig({
   appName: "MultiChain Bridge",
   projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
-  chains: [mainnet, polygon, sepolia],
+  chains: [bscTestnet, sepolia],
 });
 
 const queryClient = new QueryClient();

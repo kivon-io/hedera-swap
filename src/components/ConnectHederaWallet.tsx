@@ -7,6 +7,7 @@ export default function ConnectHederaWallet() {
     useHederaWallet();
  
   return (
+    <>
     <div className="p-4 bg-gray-800 rounded-2xl shadow-lg text-center">
       <h2 className="text-lg font-semibold mb-2 text-emerald-400">
         Hedera Wallet (HashPack / Blade)
@@ -30,5 +31,7 @@ export default function ConnectHederaWallet() {
         </button>
       )}
     </div>
+
+    </>
   );
 }
