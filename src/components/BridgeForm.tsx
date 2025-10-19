@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi"; 
 import { type Address, parseUnits } from "viem"; 
-import { useHederaWallet } from "@/context/HederaWalletContext"; 
-import { fetchTokenPrices } from "@/helpers"
+import { useWallet, useAccountId, useWriteContract as UseWriteContract, useApproveTokenAllowance } from "@buidlerlabs/hashgraph-react-wallets";
+import { HashpackConnector, KabilaConnector } from '@buidlerlabs/hashgraph-react-wallets/connectors'
+import { ContractId, AccountId } from "@hashgraph/sdk";
+
+import { fetchTokenPrices, convertHederaIdToEVMAddress } from "@/helpers"
 import BRIDGE_VOLT_ABI from "@/Abi/vault.json"; 
 import ERC20_ABI from "@/Abi/erc20.json"; 
 
@@ -22,16 +25,20 @@ const CHAIN_IDS: Record<NetworkOption, number> = {
     hedera: 296, 
 };
 
-const CONTRACT_ADDRESSES: Record<NetworkOption, Address> = {
+const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
     ethereum: "0x8A8Dbbe919f80Ca7E96A824D61763503dF15166f", 
     bsc: "0xA1C6545861c572fc44320f9A52CF1DE32Da84Ab8", 
-    hedera: "0x8A8Dbbe919f80Ca7E96A824D61763503dF15166f", 
+    hedera: "0.0.7091818", 
 };
 
-const TOKEN_ADDRESSES: Record<string, Address> = {
+const hederContractAddress = "0.0.7091818"; 
+const hederaCheckSum = "0x8a8dbbe919f80ca7e96a824d61763503df15166f"
+const hederaTokenCheckSum = "0xdb740b2cdc598bdd54045c1f9401c011785032a6"
+
+const TOKEN_ADDRESSES: Record<string, Address | string> = {
     USDC: "0xDb740b2CdC598bDD54045c1f9401c011785032A6", 
     bUSDC: "0xabbd60313073EB1673940f0f212C7baC5333707e", 
-    hUSDC: "0xDb740b2CdC598bDD54045c1f9401c011785032A6", 
+    hUSDC: "0.0.7091786", 
     ETH: "0x0", 
     BNB: "0x0", 
     HBAR: "0x0", 
@@ -58,7 +65,7 @@ const TOKEN_DECIMALS: Record<string, number> = {
 const EXPLORER_URLS: Record<string, string> = {
   sepolia: "https://sepolia.etherscan.io/tx/",
   bsc: "https://testnet.bscscan.com/tx/",
-  hedera: "https://testnet.hederaexplorer.io/transactions/", // Hedera testnet explorer
+  hedera: "https://hashscan.io/testnet/transaction/", // Hedera testnet explorer
 };
 
 const getExplorerLink = (txHash: string, network: NetworkOption) => {
@@ -96,9 +103,6 @@ type BridgeStatus = {
     error?: string;
 };
 
-
-
-
 // ----------------------------------------------------------------------
 // --- BRIDGE FORM COMPONENT ---
 // ----------------------------------------------------------------------
@@ -110,8 +114,13 @@ export default function BridgeForm() {
     const { switchChain } = useSwitchChain();
     const { writeContract } = useWriteContract();
 
+     
+
     // --- HEDERA HOOKS ---
-    const { connected: hederaConnected, accountId: hederaAccount, connectWallet: hederaConnect } = useHederaWallet();
+    const { isConnected: hederaConnected,  connect: hederaConnect } = useWallet(HashpackConnector);
+    const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected }); 
+    const { writeContract: WriteContract } = UseWriteContract();
+    const { approve } = useApproveTokenAllowance()
     
     // --- STATE ---
     const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum");
@@ -123,6 +132,7 @@ export default function BridgeForm() {
     const [isPriceLoading, setIsPriceLoading] = useState(false);
     const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
     const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
+    const [withdrawalTxHash, setWithdrawalTxHash] = useState<string | null>(null);
 
     // --- NEW STATES FOR APPROVAL FLOW ---
     const [isApproving, setIsApproving] = useState(false);
@@ -191,23 +201,72 @@ export default function BridgeForm() {
         };
     }, [inputAmount, fromPrice, toPrice]);
 
+ 
 
-    const notifyBackend = async (txHash: string, fromNetwork: NetworkOption, toNetwork: NetworkOption, fromToken: string, toToken: string, amount: string, expectedReceiveAmount: string) => {
-        console.log("Backend notification sent:", { txHash, fromNetwork, toNetwork, fromToken, toToken, amount, expectedReceiveAmount });
+    const notifyBackend = async (
+        txHash: string, 
+        fromNetwork: NetworkOption, 
+        toNetwork: NetworkOption, 
+        fromToken: string, 
+        toToken: string, 
+        amount: string, // Human-readable amount (e.g., '10.5')
+        expectedReceiveAmount: string, // Human-readable amount (e.g., '10.5')
+    ) => {
+        // Determine if the withdrawal is Native (ETH/HBAR/BNB) or ERC20 (USDC/bUSDC/hUSDC)
+        const isNativeWithdrawal = ["ETH", "BNB", "HBAR"].includes(toToken);
+        const decimals = TOKEN_DECIMALS[toToken] || 18; // Default to 18 if not found
+
+        const userToAddress = receivingAddress; 
+        // --- 1. Address Determination ---
+        let finalContractAddress;
+        let finalTokenAddress;
+        let finalRecipientAddress;
+
+        if (toNetwork === 'hedera') {
+
+            finalContractAddress = hederaCheckSum;
+            finalTokenAddress = isNativeWithdrawal ? "0x0000000000000000000000000000000000000000" : hederaTokenCheckSum;
+            finalRecipientAddress = convertHederaIdToEVMAddress(userToAddress);
+        } else {
+            finalContractAddress = CONTRACT_ADDRESSES[toNetwork];
+            finalTokenAddress = isNativeWithdrawal ? "0x0000000000000000000000000000000000000000" : TOKEN_ADDRESSES[toToken];
+            finalRecipientAddress = userToAddress;
+        }
+        const amountInWeiString = parseUnits(expectedReceiveAmount, decimals).toString();
+
+        const payload = {
+            chainId: toNetwork,
+            contractAddress: finalContractAddress,
+            recipient: finalRecipientAddress, 
+            
+            nativeAmount: isNativeWithdrawal ? amountInWeiString : '0',
+            tokenAddress: finalTokenAddress,
+            tokenAmount: isNativeWithdrawal ? '0' : amountInWeiString,
+        };
+
+        console.log("Sending Withdrawal Request to Backend:", payload);
         
         try {
-            // MOCK: Replace with your actual backend fetch
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            const data = { success: true, withdrawalTxHash: "0xMockWithdrawalTxHash" }; 
+            const response = await fetch('/api/bridge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
 
-            if (data.success) {
-                 setBridgeStatus({ step: 4, message: `✅ Bridge complete!` });
-            } else {
-                 setBridgeStatus({ step: 4, message: `❌ Bridge failed on relay. Contact support.`, txHash, error: "Relay Failed" });
-            }
-        } catch (error) {
-            setBridgeStatus({ step: 4, message: `❌ Bridge failed: Could not reach relayer service.`, txHash, error: String(error) });
+            const data = await response.json();
+
+        if (response.status === 202) { // Expect 202 Accepted
+            setWithdrawalTxHash(data.hash); 
+            setBridgeStatus({ step: 4, message: `✅ Withdrawal transaction submitted on ${toNetwork}` });
+        } else {
+            // Handle 400 or 500 errors from the backend
+            setBridgeStatus({ step: 4, message: `❌ Withdrawal failed: ${data.error || 'Unknown error'}`, error: data.details || data.error });
         }
+    } catch (error) {
+        setBridgeStatus({ step: 4, message: `❌ Withdrawal failed: Could not reach relayer service.`, txHash, error: String(error) });
+    }
     };
 
     // --- CORE DEPOSIT FUNCTION (Extracted for sequential flow) ---
@@ -321,7 +380,7 @@ const handleDepositTx = useCallback((depositValue: bigint) => {
                         toToken,
                         amount,
                         finalToAmount
-                    );
+                    ); 
             }
         }, [
             isConfirming,
@@ -433,9 +492,8 @@ const handleDepositTx = useCallback((depositValue: bigint) => {
              }
         }
 
-        
-        // 3. Hedera Deposit Logic (MOCK)
-if (fromNetwork === "hedera") {
+        if (fromNetwork === "hedera") {
+    // 1. Initial connection checks
     if (!hederaConnected || !hederaAccount) {
         setBridgeStatus({ step: 1, message: "❌ Hedera wallet not connected.", error: "Connect wallet" });
         return;
@@ -444,30 +502,46 @@ if (fromNetwork === "hedera") {
     try {
         setBridgeStatus({ step: 2, message: `Step 2/3: Initiating Hedera deposit of ${amount} ${fromToken}...`, txHash: "pending" });
 
-        // Example using your context helper
-        const hbarOrToken = fromToken === "HBAR" ? "HBAR" : "hUSDC";
-        const contractId = CONTRACT_ADDRESSES.hedera;
+        const contractId = hederContractAddress;
+        // parseUnits returns the token amount with decimals as a BigInt
         const amountBig = parseUnits(amount, TOKEN_DECIMALS[fromToken]);
-
-        let txHash: string | undefined;
+        let txHash: string | undefined | any;
 
         if (fromToken === "HBAR") {
             // Deposit native HBAR
-            txHash = await hederaSendTransaction({
-                contractId,
-                functionName: "depositNative",
-                params: [],
-                payableAmount: amountBig
-            });
+            const hbarAmount = amount;
+            txHash = await WriteContract({
+                contractId: ContractId.fromString(contractId),
+                abi: BRIDGE_VOLT_ABI,
+                functionName: 'depositNative',
+                args: [], // required by the hook's type even when there are no parameters
+                metaArgs: { gas: 120_000, amount:Number(hbarAmount) },
+            }); 
         } else {
-            // Deposit HTS token (USDC, etc.)
-            txHash = await hederaSendTransaction({
-                contractId,
-                functionName: "depositERC20",
-                params: [TOKEN_ADDRESSES[fromToken], amountBig],
-                payableAmount: 0n
-            });
+            console.log('got here and here')
+            try {
+                await WriteContract({
+                    contractId: ContractId.fromString(TOKEN_ADDRESSES[fromToken]),
+                    abi: ERC20_ABI,
+                    functionName: 'approve',
+                    args: [hederaCheckSum, value], // required by the hook's type even when there are no parameters
+                    metaArgs: { gas: 120_000 },
+                }); 
+
+                txHash = await WriteContract({
+                    contractId: ContractId.fromString(contractId),
+                    abi: BRIDGE_VOLT_ABI,
+                    functionName: 'depositERC20',
+                    args: [hederaTokenCheckSum, amountBig.toString()], // required by the hook's type even when there are no parameters
+                    metaArgs: { gas: 120_000 },
+                }); 
+                setDepositTxHash(txHash)
+            } catch (e) {
+                console.error(e)
+            }
         }
+
+        console.log(txHash)
 
         if (!txHash) throw new Error("Failed to get transaction hash");
 
@@ -478,8 +552,8 @@ if (fromNetwork === "hedera") {
         });
 
         // Wait for confirmation (polling your SDK helper)
-        const confirmed = await waitForHederaConfirmation(txHash);
-        if (!confirmed) throw new Error("Hedera transaction not confirmed");
+        // const confirmed = await waitForHederaConfirmation(txHash);
+        // if (!confirmed) throw new Error("Hedera transaction not confirmed");
 
         // When confirmed
         setBridgeStatus({
@@ -487,8 +561,16 @@ if (fromNetwork === "hedera") {
             message: "Step 3/3: Deposit confirmed. Notifying relayer...",
             txHash
         });
-
-        await notifyBackend(txHash, fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount);
+        
+        await notifyBackend(
+            txHash,
+            fromNetwork,
+            toNetwork,
+            fromToken,
+            toToken,
+            amount,
+            finalToAmount
+        );
 
     } catch (err: any) {
         setBridgeStatus({
@@ -500,6 +582,8 @@ if (fromNetwork === "hedera") {
 
     return;
 }
+       
+
 
 
         // --- 4. EVM ERC-20 APPROVAL CHECK (START) ---
@@ -652,6 +736,21 @@ if (fromNetwork === "hedera") {
                     className="text-blue-400 hover:underline"
                     >
                     {truncateHash(depositTxHash)}
+                    </a>
+                </p>
+            )}
+
+            {withdrawalTxHash && (
+                <p className="text-xs text-gray-500 truncate">
+                    Withdrawal TX Hash:{" "}
+                    <a
+                    href={getExplorerLink(withdrawalTxHash, toNetwork)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Verify"
+                    className="text-blue-400 hover:underline"
+                    >
+                    {truncateHash(withdrawalTxHash)}
                     </a>
                 </p>
             )}

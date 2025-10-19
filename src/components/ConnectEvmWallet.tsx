@@ -1,9 +1,17 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useEvmWallet } from "@/hooks/useEvmWallet";
 
 export default function ConnectEvmWallet() {
   const { address, isConnected, connect, disconnectWallet } = useEvmWallet();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // Avoid rendering during SSR
 
   return (
     <div className="p-4 bg-gray-800 rounded-2xl shadow-lg text-center">

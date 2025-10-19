@@ -9,8 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@buidlerlabs/hashgraph-react-wallets": "^2.5.0",
     "@hashgraph/hedera-wallet-connect": "^2.0.3",
-    "@hashgraph/sdk": "^2.74.0",
+    "@hashgraph/sdk": "^2.75.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@rainbow-me/rainbowkit": "^2.2.8",

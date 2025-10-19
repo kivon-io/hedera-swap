@@ -1,3 +1,5 @@
+import { AccountId } from '@hashgraph/sdk'; 
+
 type TokenPrices = Record<string, number>;
 export const fetchTokenPrices = async (): Promise<TokenPrices> => {
   // 🎯 FRONTEND CALL: Call your OWN local backend API route
@@ -33,5 +35,20 @@ export const fetchTokenPrices = async (): Promise<TokenPrices> => {
     console.error('Failed to connect to local API route or parse response:', error);
     // Return zero prices to force the "Bridging Unavailable" state
     return safeZeroPrices; 
+  }
+};
+
+
+
+
+
+export const convertHederaIdToEVMAddress = (address: string): string => {
+  try {
+    const accountId = AccountId.fromString(address);
+    const solidityAddress = accountId.toEvmAddress();
+    const evmAddress = `0x${solidityAddress}`;
+    return evmAddress;
+  } catch (e: any) {
+    throw new Error(`Invalid Hedera address format: ${address}. Details: ${e.message || e}`);
   }
 };

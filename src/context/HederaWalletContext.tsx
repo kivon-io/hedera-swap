@@ -1,17 +1,57 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { useHederaWalletConnect } from "@/hooks/useHederaWalletConnect";
+import React, { createContext, useContext } from "react";
+import { HWBridgeProvider, useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
+import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
+import { HederaTestnet } from "@buidlerlabs/hashgraph-react-wallets/chains";
 
-const HederaWalletContext = createContext<any>(null);
+import DAppLogo from "../app/fake_logo.png";
 
-export const HederaWalletProvider = ({ children }: { children: React.ReactNode }) => {
-  const wallet = useHederaWalletConnect();
+interface HederaContextType {
+  isConnected: boolean;
+  connect: (...args: any[]) => Promise<any>;
+  disconnect: (...args: any[]) => Promise<any>;
+  accountId: any; 
+}
+
+const HederaContext = createContext<HederaContextType | undefined>(undefined);
+
+export const useHedera = () => {
+  const context = useContext(HederaContext);
+  if (!context) throw new Error("useHedera must be used within HederaProvider");
+  return context;
+};
+
+export const HederaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <HederaWalletContext.Provider value={wallet}>
-      {children}
-    </HederaWalletContext.Provider>
+    <HWBridgeProvider
+      metadata={{
+        name: "MultiChain Bridge",
+        description: "MultiChain Bridge",
+        icons: [DAppLogo.src],
+        url: typeof window !== "undefined" ? window.location.origin : "",
+      }}
+      projectId={process.env.NEXT_PUBLIC_WC_PROJECT_ID!}
+      connectors={[HashpackConnector, KabilaConnector]}
+      chains={[HederaTestnet]}
+    >
+      <HederaConsumer>{children}</HederaConsumer>
+    </HWBridgeProvider>
   );
 };
 
-export const useHederaWallet = () => useContext(HederaWalletContext);
+// Wraps useWallet and exposes only the needed methods via context
+const HederaConsumer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isConnected, connect, disconnect } = useWallet(HashpackConnector);
+  const { data: accountId } = useAccountId({ autoFetch: isConnected }) 
+  return (
+    <HederaContext.Provider value={{ 
+        isConnected, 
+        connect, 
+        disconnect, 
+        accountId
+        }}>
+      {children}
+    </HederaContext.Provider>
+  );
+};
