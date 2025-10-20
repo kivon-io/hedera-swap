@@ -1,29 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useEvmWallet } from "@/hooks/useEvmWallet";
+import { useEvmWallet } from "@/hooks/useEvmWallet"
+import { useEffect, useState } from "react"
 
 export default function ConnectEvmWallet() {
-  const { address, isConnected, connect, disconnectWallet } = useEvmWallet();
-  const [mounted, setMounted] = useState(false);
+  const { address, isConnected, connect, disconnectWallet } = useEvmWallet()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
-  if (!mounted) return null; // Avoid rendering during SSR
+  if (!mounted) return null
 
   return (
-    <div className="p-4 bg-gray-800 rounded-2xl shadow-lg text-center">
-      <h2 className="text-lg font-semibold mb-2 text-indigo-400">
-        EVM Wallet (RainbowKit)
-      </h2>
+    <div className='p-4 bg-gray-800 rounded-2xl shadow-lg text-center'>
+      <h2 className='text-lg font-semibold mb-2 text-indigo-400'>EVM Wallet (RainbowKit)</h2>
       {isConnected ? (
         <>
-          <p className="text-sm text-green-400">Connected: {address}</p>
+          <p className='text-sm text-green-400'>Connected: {address}</p>
           <button
             onClick={disconnectWallet}
-            className="mt-3 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md text-sm"
+            className='mt-3 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md text-sm'
           >
             Disconnect
           </button>
@@ -31,11 +29,11 @@ export default function ConnectEvmWallet() {
       ) : (
         <button
           onClick={connect}
-          className="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-md text-sm"
+          className='bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-md text-sm'
         >
           Connect EVM Wallet
         </button>
       )}
     </div>
-  );
+  )
 }

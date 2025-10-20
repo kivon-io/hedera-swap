@@ -1,53 +1,57 @@
-"use client";
-import "../styles/globals.css";
-import "@rainbow-me/rainbowkit/styles.css";
+"use client"
 
-import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"; 
-import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
-import { HederaTestnet } from "@buidlerlabs/hashgraph-react-wallets/chains"; 
+import "@rainbow-me/rainbowkit/styles.css"
+import "../styles/globals.css"
 
-import DAppLogo from "./fake_logo.png";
+import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
+import { HederaTestnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
+import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { WagmiProvider } from "wagmi";
-import { bscTestnet, sepolia } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import DAppLogo from "./fake_logo.png"
 
-  const WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
+import Header from "@/components/header"
+import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { WagmiProvider } from "wagmi"
+import { bscTestnet, sepolia } from "wagmi/chains"
 
-  const config = getDefaultConfig({
-    appName: "MultiChain Bridge",
-    projectId: WALLET_CONNECT_PROJECT_ID,
-    chains: [bscTestnet, sepolia],
-  });
+const WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WC_PROJECT_ID!
 
-  const metadata={
-    name: "MultiChain Bridge",
-    description: "MultiChain Bridge",
-    icons: [DAppLogo.src],
-    url: typeof window !== "undefined" ? window.location.origin : "",
-  }; 
+const config = getDefaultConfig({
+  appName: "Kivon Hedera Bridge",
+  projectId: WALLET_CONNECT_PROJECT_ID,
+  chains: [bscTestnet, sepolia],
+})
 
-const queryClient = new QueryClient();
+const metadata = {
+  name: "Kivon Hedera Bridge",
+  description: "Kivon Hedera Bridge",
+  icons: [DAppLogo.src],
+  url: typeof window !== "undefined" ? window.location.origin : "",
+}
+
+const queryClient = new QueryClient()
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>
         <HWBridgeProvider
-        metadata={metadata}
-        projectId={WALLET_CONNECT_PROJECT_ID}
-        connectors={[HashpackConnector, KabilaConnector]}
-        chains={[HederaTestnet]}>
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={config}>
-            <RainbowKitProvider>
-                <main className="max-w-4xl mx-auto mt-10 px-6">{children}</main>
-            </RainbowKitProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
+          metadata={metadata}
+          projectId={WALLET_CONNECT_PROJECT_ID}
+          connectors={[HashpackConnector, KabilaConnector]}
+          chains={[HederaTestnet]}
+        >
+          <QueryClientProvider client={queryClient}>
+            <WagmiProvider config={config}>
+              <RainbowKitProvider>
+                <Header />
+                <main className='max-w-4xl mx-auto mt-10 px-6'>{children}</main>
+              </RainbowKitProvider>
+            </WagmiProvider>
+          </QueryClientProvider>
         </HWBridgeProvider>
       </body>
     </html>
-  );
+  )
 }
