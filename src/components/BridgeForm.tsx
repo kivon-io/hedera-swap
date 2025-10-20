@@ -135,7 +135,7 @@ export default function BridgeForm() {
   const { isConnected: hederaConnected, connect: hederaConnect } = useWallet(HashpackConnector)
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
   const { writeContract: WriteContract } = UseWriteContract()
-  const { approve } = useApproveTokenAllowance()
+  //const { approve } = useApproveTokenAllowance()
 
   // --- STATE ---
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
@@ -282,8 +282,11 @@ export default function BridgeForm() {
 
       if (response.status === 202) {
         // Expect 202 Accepted
-        setWithdrawalTxHash(data.hash)
-        setBridgeStatus({ step: 4, message: `✅ Withdrawal transaction submitted on ${toNetwork}` })
+        setTimeout(() => {
+          setWithdrawalTxHash(data.hash)
+          setBridgeStatus({ step: 4, message: `✅ Withdrawal transaction submitted on ${toNetwork}` })
+        }, 2000)
+
       } else {
         // Handle 400 or 500 errors from the backend
         setBridgeStatus({
@@ -292,6 +295,7 @@ export default function BridgeForm() {
           error: data.details || data.error,
         })
       }
+      
     } catch (error) {
       setBridgeStatus({
         step: 4,
@@ -321,6 +325,9 @@ export default function BridgeForm() {
         txHash: "pending",
       })
 
+      setDepositTxHash(""); 
+      setWithdrawalTxHash(""); 
+
       writeContract(
         {
           address: voltContractAddress,
@@ -337,8 +344,18 @@ export default function BridgeForm() {
               message: "Step 2/3: Transaction sent. Waiting for confirmation...",
               txHash: hash,
             })
+
             setDepositTxHash(hash)
             setApprovalTxHash(undefined) // Reset approval hash
+            notifyBackend(
+              hash,
+              fromNetwork,
+              toNetwork,
+              fromToken,
+              toToken,
+              amount,
+              finalToAmount
+            )
           },
           onError: (e: any) => {
             setApprovalTxHash(undefined) // Reset hash on failure
@@ -402,10 +419,10 @@ export default function BridgeForm() {
   }, [isApprovalConfirmed, approvalTxHash, handleDepositTx, refetchAllowance, value])
 
   // 2. Deposit Confirmation Effect (Relayer call)
-  const notifiedRef = useRef(false)
-
+  const confirmingHandledRef = useRef(false);
   useEffect(() => {
-    if (isConfirming) {
+    if (isConfirming && !confirmingHandledRef.current) {
+       confirmingHandledRef.current = true;
       setBridgeStatus((prev) => ({
         ...prev!,
         message: "Step 2/3: Transaction is confirming on the From Network...",
@@ -413,21 +430,12 @@ export default function BridgeForm() {
     }
 
     if (isConfirmed && bridgeStatus?.step === 2 && depositTxHash) {
-      setBridgeStatus({
-        step: 3,
-        message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
-        txHash: depositTxHash,
-      })
-
-      notifyBackend(
-        depositTxHash,
-        fromNetwork,
-        toNetwork,
-        fromToken,
-        toToken,
-        amount,
-        finalToAmount
-      )
+        confirmingHandledRef.current = false;
+        setBridgeStatus({
+          step: 3,
+          message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
+          txHash: depositTxHash,
+        })
     }
   }, [
     isConfirming,
@@ -438,9 +446,7 @@ export default function BridgeForm() {
     fromToken,
     toToken,
     amount,
-    finalToAmount,
-    notifyBackend,
-    bridgeStatus?.step,
+    finalToAmount
   ])
 
   // --- HANDLER FUNCTIONS ---
@@ -598,13 +604,14 @@ export default function BridgeForm() {
               args: [hederaTokenCheckSum, amountBig.toString()], // required by the hook's type even when there are no parameters
               metaArgs: { gas: 120_000 },
             })
-            setDepositTxHash(txHash)
+
+            
           } catch (e) {
             console.error(e)
           }
         }
 
-        console.log(txHash)
+        setDepositTxHash(txHash)
 
         if (!txHash) throw new Error("Failed to get transaction hash")
 
@@ -776,7 +783,7 @@ export default function BridgeForm() {
       if (status.step > step) return "text-green-500"
       if (status.step === step && status.error) return "text-red-500"
       if (status.step === step) return "text-yellow-500"
-      return "text-gray-600"
+      return "text-gray-500"
     }
 
     return (
@@ -814,21 +821,21 @@ export default function BridgeForm() {
         </div>
         <div
           className={`text-sm font-medium ${
-            status.error ? "text-red-500" : status.step === 4 ? "text-green-500" : "text-zinc-800"
+            status.error ? "text-red-500" : status.step === 4 ? "text-green-500" : "text-white"
           }`}
         >
           {status.message}
         </div>
 
         {depositTxHash && (
-          <p className='text-xs text-gray-500 truncate'>
+          <p className='text-xs text-gray-300 truncate'>
             Deposit TX Hash:{" "}
             <a
               href={getExplorerLink(depositTxHash, fromNetwork)}
               target='_blank'
               rel='noopener noreferrer'
               title='Verify'
-              className='text-blue-400 hover:underline'
+              className='text-blue-300 hover:underline'
             >
               {truncateHash(depositTxHash)}
             </a>
@@ -836,7 +843,7 @@ export default function BridgeForm() {
         )}
 
         {withdrawalTxHash && (
-          <p className='text-xs text-gray-500 truncate'>
+          <p className='text-xs text-gray-300 truncate'>
             Withdrawal TX Hash:{" "}
             <a
               href={getExplorerLink(withdrawalTxHash, toNetwork)}
@@ -874,7 +881,9 @@ export default function BridgeForm() {
     !isReceivingWalletConnected ||
     // Only disable if an actual TX or approval is in progress
     isApproving ||
-    bridgeStatus?.txHash === "pending"
+    bridgeStatus?.txHash === "pending" 
+    || isConfirming 
+    || (bridgeStatus?.step === 3 && !bridgeStatus.error)
 
   // Display a loading state if prices are not ready
   if (isPriceLoading || Object.keys(prices).length === 0) {
