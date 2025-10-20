@@ -6,6 +6,7 @@ import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { ChevronDownIcon } from "lucide-react"
 import { useEffect, useState } from "react"
+import Logo from "./logo"
 import { Button } from "./ui/button"
 import { ButtonGroup } from "./ui/button-group"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
@@ -17,8 +18,7 @@ const Header = () => {
       <div className='relative max-w-7xl mx-auto w-full flex items-center justify-between'>
         <div className='flex items-center gap-2 '>
           <div className='flex items-center gap-2'>
-            <div className='h-8 w-8 rounded-sm bg-zinc-800'></div>
-            <p className='text-sm font-medium text-zinc-900 hidden md:block'>Kivon Hedera Bridge</p>
+            <Logo />
           </div>
         </div>
         <div className='flex gap-2'>
