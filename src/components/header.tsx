@@ -5,6 +5,7 @@ import { formatAddress } from "@/lib/utils"
 import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { ChevronDownIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import { ButtonGroup } from "./ui/button-group"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
@@ -33,6 +34,13 @@ export default Header
 
 const EVMWallet = () => {
   const { address, isConnected, connect, disconnectWallet } = useEvmWallet()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   return (
     <div>
@@ -70,6 +78,14 @@ const EVMWallet = () => {
 const HederaWallet = () => {
   const { isConnected, connect, disconnect } = useWallet(HashpackConnector)
   const { data: accountId } = useAccountId({ autoFetch: isConnected })
+
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   return (
     <div>
