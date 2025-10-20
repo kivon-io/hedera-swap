@@ -62,16 +62,14 @@ const TOKEN_ADDRESSES: Record<string, Address | string> = {
 }
 
 const TOKENS: Record<NetworkOption, string[]> = {
-  ethereum: ["ETH", "USDC"],
-  bsc: ["BNB", "bUSDC"],
-  hedera: ["HBAR", "hUSDC"],
+  ethereum: ["ETH", "USDCt"],
+  bsc: ["BNB", "USDCt"],
+  hedera: ["HBAR", "USDCt"],
 }
 
 const TOKEN_DECIMALS: Record<string, number> = {
   // Stablecoins typically use 6 decimals
-  USDC: 6,
-  bUSDC: 6,
-  hUSDC: 6,
+  USDCt: 6,
   // Native assets and others, default to 18
   ETH: 18,
   BNB: 18,
@@ -147,6 +145,7 @@ export default function BridgeForm() {
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null)
   const [depositTxHash, setDepositTxHash] = useState<string | null>(null)
+  const [hederaDepositTxHash, setHederaDepositTxHash] = useState<string | null>(null)
   const [withdrawalTxHash, setWithdrawalTxHash] = useState<string | null>(null)
 
   // --- NEW STATES FOR APPROVAL FLOW ---
@@ -252,7 +251,7 @@ export default function BridgeForm() {
       finalContractAddress = CONTRACT_ADDRESSES[toNetwork]
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
-        : TOKEN_ADDRESSES[toToken]
+        :  toNetwork == 'bsc' ? TOKEN_ADDRESSES['bUSDC'] : TOKEN_ADDRESSES['USDC'];
       finalRecipientAddress = userToAddress
     }
     const amountInWeiString = parseUnits(expectedReceiveAmount, decimals).toString()
@@ -266,8 +265,6 @@ export default function BridgeForm() {
       tokenAddress: finalTokenAddress,
       tokenAmount: isNativeWithdrawal ? "0" : amountInWeiString,
     }
-
-    console.log("Sending Withdrawal Request to Backend:", payload)
 
     try {
       const response = await fetch("/api/bridge", {
@@ -378,9 +375,11 @@ export default function BridgeForm() {
       voltContractAddress,
       isNative,
       tokenAddress,
+      toToken, 
       writeContract,
       BRIDGE_VOLT_ABI,
       units,
+      finalToAmount
     ]
   )
 
@@ -488,6 +487,7 @@ export default function BridgeForm() {
   }
 
   const handleToTokenChange = (newToken: string) => {
+    console.log("To Token Changed:", newToken);
     setToToken(newToken)
     setAmount("")
     setBridgeStatus(null)
@@ -511,13 +511,6 @@ export default function BridgeForm() {
 
   // --- MAIN BRIDGE LOGIC ---
   const handleBridge = async () => {
-    setBridgeStatus(null) // Reset status
-
-    if (!amount || Number(amount) <= 0) {
-      setBridgeStatus({ step: 1, message: "❌ Enter a valid amount.", error: "Invalid Amount" })
-      return
-    }
-
     // 1. Connection and Chain Enforcement
     if (fromNetwork !== "hedera") {
       const requiredChainId = CHAIN_IDS[fromNetwork]

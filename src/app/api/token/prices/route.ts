@@ -7,7 +7,7 @@ const COINGECKO_IDS = {
   HBAR: 'hedera-hashgraph', // CoinGecko ID for HBAR
 };
 // All symbols whose prices we need to return
-const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDC', 'bUSDC', 'hUSDC'];
+const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDCt'];
 
 export async function GET(request: Request) {
 
@@ -36,9 +36,7 @@ export async function GET(request: Request) {
       HBAR: data['hedera-hashgraph']?.usd || 0,
       
       // Hardcode stablecoins to 1.00 for testing
-      USDC: 1.00, 
-      bUSDC: 1.00,
-      hUSDC: 1.00,
+      USDCt: 1.00, 
     };
 
     // 3. BACKEND RESPONSE: Send the final structured data to the frontend
