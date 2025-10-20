@@ -7,7 +7,13 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "vercel-build": "npm install --legacy-peer-deps && next build"
+    "vercel-build": "next build"
+  },
+  "overrides": {
+    "@buidlerlabs/hashgraph-react-wallets": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0"
+    }
   },
   "dependencies": {
     "@buidlerlabs/hashgraph-react-wallets": "^2.5.0",
