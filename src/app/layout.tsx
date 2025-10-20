@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import "@rainbow-me/rainbowkit/styles.css"
 import "../styles/globals.css"
