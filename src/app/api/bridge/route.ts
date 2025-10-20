@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     let rpcUrl = ""
     if (chainId === "ethereum") {
       // Using your frontend string keys
-      rpcUrl = "https://sepolia.infura.io"
+      rpcUrl = "https://sepolia.drpc.org"
     } else if (chainId === "hedera") {
       rpcUrl = "https://testnet.hashio.io/api"
     } else if (chainId === "bsc") {

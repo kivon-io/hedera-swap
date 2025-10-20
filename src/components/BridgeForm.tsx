@@ -172,6 +172,9 @@ export default function BridgeForm() {
     data: txReceipt,
   } = useWaitForTransactionReceipt({
     hash: depositTxHash as Address,
+     query: {
+      enabled: fromNetwork != "hedera",
+    },
   })
 
   // 2. Monitor the approval transaction confirmation
@@ -583,7 +586,7 @@ export default function BridgeForm() {
           console.log("got here and here")
           try {
             await WriteContract({
-              contractId: ContractId.fromString(TOKEN_ADDRESSES[fromToken]),
+              contractId: ContractId.fromString(TOKEN_ADDRESSES['hUSDC']),
               abi: ERC20_ABI,
               functionName: "approve",
               args: [hederaCheckSum, value], // required by the hook's type even when there are no parameters
@@ -728,7 +731,7 @@ export default function BridgeForm() {
     if (bridgeStatus?.step === 1 && approvalTxHash) return "Waiting for Approval Confirmation..."
     if (bridgeStatus?.step === 2 && bridgeStatus.txHash === "pending")
       return "Waiting for Deposit Signature..."
-    if (isConfirming) return "Confirming Deposit..."
+    if (isConfirming && toNetwork != 'hedera') return "Confirming Deposit..."
     if (bridgeStatus && bridgeStatus.step === 3) return "Relayer Processing..."
     if (bridgeStatus?.step === 4 && !bridgeStatus.error) return "Bridge Tokens"
 
@@ -875,7 +878,7 @@ export default function BridgeForm() {
     // Only disable if an actual TX or approval is in progress
     isApproving ||
     bridgeStatus?.txHash === "pending" 
-    || isConfirming 
+    || isConfirming && fromNetwork != 'hedera'
     || (bridgeStatus?.step === 3 && !bridgeStatus.error)
 
   // Display a loading state if prices are not ready
