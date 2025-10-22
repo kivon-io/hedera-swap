@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   Client,
   ContractExecuteTransaction,
+  ContractFunctionParameters,
   PrivateKey,
   AccountId,
+  ContractId,
 } from "@hashgraph/sdk";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -12,11 +14,6 @@ import {
 const VAULT_ABI = [
   "function withdraw(address to, uint256 nativeAmount, address token, uint256 tokenAmount) external",
   "event WithdrawExecuted(address indexed to, uint256 nativeAmount, address indexed token, uint256 tokenAmount)",
-];
-
-const VAULT_ABI2 = [
-  "function withdraw(address to, uint256 nativeAmount, address token, int64 tokenAmount) external",
-  "event WithdrawExecuted(address indexed to, uint256 nativeAmount, address indexed token, int64 tokenAmount)",
 ];
 
 export async function POST(req: NextRequest) {
@@ -42,12 +39,8 @@ export async function POST(req: NextRequest) {
     const privateKey = process.env.POC_WITHDRAW_KEY;
     const operatorId = "0.0.6987678";
 
-    if (!privateKey) {
-      return NextResponse.json(
-        { error: "Admin private key not configured." },
-        { status: 500 }
-      );
-    }
+    if (!privateKey)
+      return NextResponse.json({ error: "Admin private key not configured." }, { status: 500 });
 
     // ----------------------------------------------------------------
     // 🔹 Case 1: Ethereum / BSC → use ethers.js
@@ -57,13 +50,12 @@ export async function POST(req: NextRequest) {
       if (chainId === "ethereum") rpcUrl = "https://sepolia.drpc.org";
       else if (chainId === "bsc")
         rpcUrl = "https://data-seed-prebsc-1-s1.bnbchain.org:8545";
-      else
-        return NextResponse.json({ error: "Unsupported chainId" }, { status: 400 });
+      else return NextResponse.json({ error: "Unsupported chainId" }, { status: 400 });
 
       const provider = new JsonRpcProvider(rpcUrl);
       const signer = new Wallet(privateKey, provider);
-
       const vaultContract = new Contract(contractAddress, VAULT_ABI, signer);
+
       console.log(`📤 Executing withdrawal on ${chainId}...`);
 
       const tx = await vaultContract.withdraw(
@@ -86,13 +78,6 @@ export async function POST(req: NextRequest) {
     // ----------------------------------------------------------------
     // 🔹 Case 2: Hedera → use Hashgraph SDK
     // ----------------------------------------------------------------
-    if (!operatorId) {
-      return NextResponse.json(
-        { error: "Missing Hedera operator ID." },
-        { status: 500 }
-      );
-    }
-
     const client = Client.forTestnet().setOperator(
       AccountId.fromString(operatorId),
       PrivateKey.fromString(privateKey)
@@ -101,25 +86,20 @@ export async function POST(req: NextRequest) {
     console.log("📤 Executing Hedera withdraw...");
 
     const tx = await new ContractExecuteTransaction()
-      .setContractId(contractAddress) // must be a valid CONTRACT ID like 0.0.xxxxx
+      .setContractId(ContractId.fromString(contractAddress)) // <-- Frontend sends 0.0.x
       .setGas(2_000_000)
       .setFunction(
         "withdraw",
-        Buffer.from(
-          // Manual ABI encoding since we are using evm-style params
-          JSON.stringify({
-            to: recipient,
-            nativeAmount: nativeAmount,
-            token: tokenAddress,
-            tokenAmount: tokenAmount,
-          })
-        )
+        new ContractFunctionParameters()
+          .addAddress(recipient) // already evm-style from frontend
+          .addUint256(nativeAmount)
+          .addAddress(tokenAddress)
+          .addInt64(tokenAmount)
       )
-      .freezeWith(client)
-      .sign(PrivateKey.fromString(privateKey));
+      .execute(client);
 
-    const submit = await tx.execute(client);
-    const txHash = submit.transactionId.toString();
+    // Return immediately with transaction ID (no waiting for receipt)
+    const txHash = tx.transactionId.toString();
 
     return NextResponse.json(
       {
