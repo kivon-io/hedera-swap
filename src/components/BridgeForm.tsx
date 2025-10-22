@@ -22,6 +22,7 @@ import {
 } from "wagmi"
 
 import ERC20_ABI from "@/Abi/erc20.json"
+import HEDERA_VOLT_ABI from "@/Abi/hedera_vault.json" 
 import BRIDGE_VOLT_ABI from "@/Abi/vault.json"
 import { convertHederaIdToEVMAddress, fetchTokenPrices } from "@/helpers"
 import { ArrowLeftRight } from "lucide-react"
@@ -45,17 +46,17 @@ const CHAIN_IDS: Record<NetworkOption, number> = {
 const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
   ethereum: "0x8A8Dbbe919f80Ca7E96A824D61763503dF15166f",
   bsc: "0xA1C6545861c572fc44320f9A52CF1DE32Da84Ab8",
-  hedera: "0.0.7091818",
+  hedera: "0.0.7103690",
 }
 
-const hederContractAddress = "0.0.7091818"
-const hederaCheckSum = "0x8a8dbbe919f80ca7e96a824d61763503df15166f"
-const hederaTokenCheckSum = "0xdb740b2cdc598bdd54045c1f9401c011785032a6"
+const hederContractAddress = "0.0.7103690"
+const hederaCheckSum = "0xe8C85D68B840c6c5A880D5E19B81F3AfE87e2404"
+const hederaTokenCheckSum = "0x00000000000000000000000000000000006c6456"
 
 const TOKEN_ADDRESSES: Record<string, Address | string> = {
   USDC: "0xDb740b2CdC598bDD54045c1f9401c011785032A6",
   bUSDC: "0xabbd60313073EB1673940f0f212C7baC5333707e",
-  hUSDC: "0.0.7091786",
+  hUSDC: "0.0.7103574",
   ETH: "0x0",
   BNB: "0x0",
   HBAR: "0x0",
@@ -577,7 +578,7 @@ export default function BridgeForm() {
           const hbarAmount = amount
           txHash = await WriteContract({
             contractId: ContractId.fromString(contractId),
-            abi: BRIDGE_VOLT_ABI,
+            abi: HEDERA_VOLT_ABI,
             functionName: "depositNative",
             args: [], // required by the hook's type even when there are no parameters
             metaArgs: { gas: 120_000, amount: Number(hbarAmount) },
@@ -585,18 +586,23 @@ export default function BridgeForm() {
         } else {
           console.log("got here and here")
           try {
-            await WriteContract({
-              contractId: ContractId.fromString(TOKEN_ADDRESSES['hUSDC']),
-              abi: ERC20_ABI,
-              functionName: "approve",
-              args: [hederaCheckSum, value], // required by the hook's type even when there are no parameters
-              metaArgs: { gas: 120_000 },
-            })
+
+            //later improvement 
+            //check for token balance before initiation.
+            //check for token balance in desChain
+
+            // await WriteContract({
+            //   contractId: ContractId.fromString(TOKEN_ADDRESSES['hUSDC']),
+            //   abi: ERC20_ABI,
+            //   functionName: "approve",
+            //   args: [hederaCheckSum, value], // required by the hook's type even when there are no parameters
+            //   metaArgs: { gas: 120_000 },
+            // })
 
             txHash = await WriteContract({
               contractId: ContractId.fromString(contractId),
-              abi: BRIDGE_VOLT_ABI,
-              functionName: "depositERC20",
+              abi: HEDERA_VOLT_ABI,
+              functionName: "depositHTS",
               args: [hederaTokenCheckSum, amountBig.toString()], // required by the hook's type even when there are no parameters
               metaArgs: { gas: 120_000 },
             })
@@ -659,6 +665,10 @@ export default function BridgeForm() {
           })
           return
         }
+
+        //check if user has associated account to the hedera token first.
+        //check user balance 
+        //calculate network fee. 
 
         // Check if allowance is insufficient (safely checking for bigint type)
         if (typeof allowance !== "bigint" || allowance < value) {

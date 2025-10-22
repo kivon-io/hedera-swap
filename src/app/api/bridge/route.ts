@@ -10,6 +10,13 @@ const VAULT_ABI = [
   "event WithdrawExecuted(address indexed to, uint256 nativeAmount, address indexed token, uint256 tokenAmount)",
 ]
 
+const VAULT_ABI2 = [
+  "function withdraw(address to, uint256 nativeAmount, address token, int64 tokenAmount) external",
+  // Add the event for better confirmation logging
+  "event WithdrawExecuted(address indexed to, uint256 nativeAmount, address indexed token, int64 tokenAmount)",
+]
+
+
 export async function POST(req: NextRequest) {
   console.log("API hit with method: POST")
 
@@ -54,8 +61,10 @@ export async function POST(req: NextRequest) {
     const provider = new JsonRpcProvider(rpcUrl)
     const signer = new Wallet(privateKey, provider)
 
+    let abi = chainId == "hedera" ? VAULT_ABI2 : VAULT_ABI; 
+
     // --- 3. Interact with the Contract ---
-    const vaultContract = new Contract(contractAddress, VAULT_ABI, signer)
+    const vaultContract = new Contract(contractAddress, abi, signer)
 
     console.log(
       `Executing withdrawal on ${chainId} for ${nativeAmount} native and ${tokenAmount} token to ${recipient}...`
