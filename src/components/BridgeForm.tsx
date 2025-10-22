@@ -246,7 +246,7 @@ export default function BridgeForm() {
     let finalRecipientAddress
 
     if (toNetwork === "hedera") {
-      finalContractAddress = hederaCheckSum
+      finalContractAddress = hederContractAddress
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
         : hederaTokenCheckSum
