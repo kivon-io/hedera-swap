@@ -250,7 +250,7 @@ export default function BridgeForm() {
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
         : hederaTokenCheckSum
-      finalRecipientAddress = userToAddress
+      finalRecipientAddress = convertHederaIdToEVMAddress(userToAddress)
     } else {
       finalContractAddress = CONTRACT_ADDRESSES[toNetwork]
       finalTokenAddress = isNativeWithdrawal
