@@ -1,4 +1,4 @@
-import { Client, AccountId, AccountInfoQuery, PrivateKey  } from "@hashgraph/sdk"
+import { AccountId, AccountInfoQuery, Client } from "@hashgraph/sdk"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -50,43 +50,38 @@ export const convertHederaIdToEVMAddress = (address: string): string => {
   }
 }
 
-export async function getEvmAddressFromAccountId(accountIdString, client) {
-    const accountId = AccountId.fromString(accountIdString);
+export async function getEvmAddressFromAccountId(
+  accountIdString: string,
+  client: Client
+): Promise<string> {
+  const accountId = AccountId.fromString(accountIdString)
 
-    try {
-        // 1. Query the network for the account's information
-        const info = await new AccountInfoQuery()
-            .setAccountId(accountId)
-            .execute(client);
+  try {
+    // 1. Query the network for the account's information
+    const info = await new AccountInfoQuery().setAccountId(accountId).execute(client)
 
-        // 2. Extract the EVM Address
-        let evmAddressBytes = info.contractAccountId;
+    // 2. Extract the EVM Address
+    let evmAddressBytes = info.contractAccountId
 
-        // The contractAccountId property holds the EVM address as a hex string (Solidity address)
-        if (evmAddressBytes) {
-            // Check if the address starts with '0x' or if it's the 20-byte hex string
-            // For key-derived accounts, it usually returns the 20-byte alias.
-            
-            // Clean up the string to ensure it's a valid 20-byte hex string
-            // If it's the 40-character hex string, ensure it has the '0x' prefix
-            if (evmAddressBytes.length === 40) {
-                 evmAddressBytes = "0x" + evmAddressBytes;
-            }
-            
-            // NOTE: For accounts with key-derived aliases (like 0x74...), this property
-            // is the most reliable source for the alias once the account has been used.
-            return evmAddressBytes.toLowerCase(); 
-            
-        } else {
-            return convertHederaIdToEVMAddress(accountIdString); 
-        }
+    // The contractAccountId property holds the EVM address as a hex string (Solidity address)
+    if (evmAddressBytes) {
+      // Check if the address starts with '0x' or if it's the 20-byte hex string
+      // For key-derived accounts, it usually returns the 20-byte alias.
 
-    } catch (error) {
-        console.error("Error fetching account info:", error);
-        throw new Error(`Failed to resolve EVM address for ${accountIdString}.`);
+      // Clean up the string to ensure it's a valid 20-byte hex string
+      // If it's the 40-character hex string, ensure it has the '0x' prefix
+      if (evmAddressBytes.length === 40) {
+        evmAddressBytes = "0x" + evmAddressBytes
+      }
+
+      // NOTE: For accounts with key-derived aliases (like 0x74...), this property
+      // is the most reliable source for the alias once the account has been used.
+      return evmAddressBytes.toLowerCase()
+    } else {
+      return convertHederaIdToEVMAddress(accountIdString)
     }
+  } catch (error) {
+    console.error("Error fetching account info:", error)
+    throw new Error(`Failed to resolve EVM address for ${accountIdString}.`)
+  }
 }
-
-
-
-
