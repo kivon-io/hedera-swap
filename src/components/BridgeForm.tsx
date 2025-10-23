@@ -238,8 +238,6 @@ export default function BridgeForm() {
     // Determine if the withdrawal is Native (ETH/HBAR/BNB) or ERC20 (USDC/bUSDC/hUSDC)
     const isNativeWithdrawal = ["ETH", "BNB", "HBAR"].includes(toToken)
     const decimals = TOKEN_DECIMALS[toToken] || 18 // Default to 18 if not found
-
-    const userToAddress = receivingAddress
     // --- 1. Address Determination ---
     let finalContractAddress
     let finalTokenAddress
@@ -250,14 +248,13 @@ export default function BridgeForm() {
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
         : hederaTokenCheckSum
-      finalRecipientAddress = userToAddress; 
     } else {
       finalContractAddress = CONTRACT_ADDRESSES[toNetwork]
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
         :  toNetwork == 'bsc' ? TOKEN_ADDRESSES['bUSDC'] : TOKEN_ADDRESSES['USDC'];
-      finalRecipientAddress = userToAddress
     }
+    finalRecipientAddress = receivingAddress; 
     const amountInWeiString = parseUnits(expectedReceiveAmount, decimals).toString()
 
     const payload = {
