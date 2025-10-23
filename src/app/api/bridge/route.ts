@@ -7,7 +7,10 @@ import {
   PrivateKey,
   AccountId,
   ContractId,
+  AccountInfoQuery
 } from "@hashgraph/sdk"; 
+
+import { getEvmAddressFromAccountId } from "@/helpers" 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -15,6 +18,9 @@ const VAULT_ABI = [
   "function withdraw(address to, uint256 nativeAmount, address token, uint256 tokenAmount) external",
   "event WithdrawExecuted(address indexed to, uint256 nativeAmount, address indexed token, uint256 tokenAmount)",
 ];
+
+
+
 
 export async function POST(req: NextRequest) {
   console.log("🚀 API hit with method: POST");
@@ -74,16 +80,15 @@ export async function POST(req: NextRequest) {
         { status: 202 }
       );
     }
-
     // ----------------------------------------------------------------
     // 🔹 Case 2: Hedera → use Hashgraph SDK
-    // ----------------------------------------------------------------
+    // --------------------------------------------------------------
     const client = Client.forTestnet().setOperator(
       AccountId.fromString(operatorId),
-      PrivateKey.fromString(privateKey)
+      PrivateKey.fromStringECDSA(privateKey)
     );
 
-    console.log("📤 Executing Hedera withdraw...");
+    const recipientEVMAddress = await getEvmAddressFromAccountId(recipient, client);
 
     const tx = await new ContractExecuteTransaction()
       .setContractId(ContractId.fromString(contractAddress)) // <-- Frontend sends 0.0.x
@@ -91,7 +96,7 @@ export async function POST(req: NextRequest) {
       .setFunction(
         "withdraw",
         new ContractFunctionParameters()
-          .addAddress(recipient) // already evm-style from frontend
+          .addAddress(recipientEVMAddress)
           .addUint256(nativeAmount)
           .addAddress(tokenAddress)
           .addInt64(tokenAmount)
