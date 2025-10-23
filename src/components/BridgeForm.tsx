@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   useAccountId,
-  useApproveTokenAllowance,
   useWallet,
   useWriteContract as UseWriteContract,
 } from "@buidlerlabs/hashgraph-react-wallets"
@@ -22,9 +21,9 @@ import {
 } from "wagmi"
 
 import ERC20_ABI from "@/Abi/erc20.json"
-import HEDERA_VOLT_ABI from "@/Abi/hedera_vault.json" 
+import HEDERA_VOLT_ABI from "@/Abi/hedera_vault.json"
 import BRIDGE_VOLT_ABI from "@/Abi/vault.json"
-import { convertHederaIdToEVMAddress, fetchTokenPrices } from "@/helpers"
+import { fetchTokenPrices } from "@/helpers"
 import { ArrowLeftRight } from "lucide-react"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
@@ -173,7 +172,7 @@ export default function BridgeForm() {
     data: txReceipt,
   } = useWaitForTransactionReceipt({
     hash: depositTxHash as Address,
-     query: {
+    query: {
       enabled: fromNetwork != "hedera",
     },
   })
@@ -241,7 +240,7 @@ export default function BridgeForm() {
     // --- 1. Address Determination ---
     let finalContractAddress
     let finalTokenAddress
-    let finalRecipientAddress
+    const finalRecipientAddress = receivingAddress
 
     if (toNetwork === "hedera") {
       finalContractAddress = hederContractAddress
@@ -252,9 +251,10 @@ export default function BridgeForm() {
       finalContractAddress = CONTRACT_ADDRESSES[toNetwork]
       finalTokenAddress = isNativeWithdrawal
         ? "0x0000000000000000000000000000000000000000"
-        :  toNetwork == 'bsc' ? TOKEN_ADDRESSES['bUSDC'] : TOKEN_ADDRESSES['USDC'];
+        : toNetwork == "bsc"
+        ? TOKEN_ADDRESSES["bUSDC"]
+        : TOKEN_ADDRESSES["USDC"]
     }
-    finalRecipientAddress = receivingAddress; 
     const amountInWeiString = parseUnits(expectedReceiveAmount, decimals).toString()
 
     const payload = {
@@ -282,9 +282,11 @@ export default function BridgeForm() {
         // Expect 202 Accepted
         setTimeout(() => {
           setWithdrawalTxHash(data.hash)
-          setBridgeStatus({ step: 4, message: `✅ Withdrawal transaction submitted on ${toNetwork}` })
+          setBridgeStatus({
+            step: 4,
+            message: `✅ Withdrawal transaction submitted on ${toNetwork}`,
+          })
         }, 2000)
-
       } else {
         // Handle 400 or 500 errors from the backend
         setBridgeStatus({
@@ -293,7 +295,6 @@ export default function BridgeForm() {
           error: data.details || data.error,
         })
       }
-      
     } catch (error) {
       setBridgeStatus({
         step: 4,
@@ -323,8 +324,8 @@ export default function BridgeForm() {
         txHash: "pending",
       })
 
-      setDepositTxHash(""); 
-      setWithdrawalTxHash(""); 
+      setDepositTxHash("")
+      setWithdrawalTxHash("")
 
       writeContract(
         {
@@ -345,15 +346,7 @@ export default function BridgeForm() {
 
             setDepositTxHash(hash)
             setApprovalTxHash(undefined) // Reset approval hash
-            notifyBackend(
-              hash,
-              fromNetwork,
-              toNetwork,
-              fromToken,
-              toToken,
-              amount,
-              finalToAmount
-            )
+            notifyBackend(hash, fromNetwork, toNetwork, fromToken, toToken, amount, finalToAmount)
           },
           onError: (e: any) => {
             setApprovalTxHash(undefined) // Reset hash on failure
@@ -376,11 +369,11 @@ export default function BridgeForm() {
       voltContractAddress,
       isNative,
       tokenAddress,
-      toToken, 
+      toToken,
       writeContract,
       BRIDGE_VOLT_ABI,
       units,
-      finalToAmount
+      finalToAmount,
     ]
   )
 
@@ -419,10 +412,10 @@ export default function BridgeForm() {
   }, [isApprovalConfirmed, approvalTxHash, handleDepositTx, refetchAllowance, value])
 
   // 2. Deposit Confirmation Effect (Relayer call)
-  const confirmingHandledRef = useRef(false);
+  const confirmingHandledRef = useRef(false)
   useEffect(() => {
     if (isConfirming && !confirmingHandledRef.current) {
-       confirmingHandledRef.current = true;
+      confirmingHandledRef.current = true
       setBridgeStatus((prev) => ({
         ...prev!,
         message: "Step 2/3: Transaction is confirming on the From Network...",
@@ -430,12 +423,12 @@ export default function BridgeForm() {
     }
 
     if (isConfirmed && bridgeStatus?.step === 2 && depositTxHash) {
-        confirmingHandledRef.current = false;
-        setBridgeStatus({
-          step: 3,
-          message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
-          txHash: depositTxHash,
-        })
+      confirmingHandledRef.current = false
+      setBridgeStatus({
+        step: 3,
+        message: "Step 3/3: Deposit confirmed. Notifying relayer to complete bridge...",
+        txHash: depositTxHash,
+      })
     }
   }, [
     isConfirming,
@@ -446,7 +439,7 @@ export default function BridgeForm() {
     fromToken,
     toToken,
     amount,
-    finalToAmount
+    finalToAmount,
   ])
 
   // --- HANDLER FUNCTIONS ---
@@ -488,7 +481,7 @@ export default function BridgeForm() {
   }
 
   const handleToTokenChange = (newToken: string) => {
-    console.log("To Token Changed:", newToken);
+    console.log("To Token Changed:", newToken)
     setToToken(newToken)
     setAmount("")
     setBridgeStatus(null)
@@ -583,8 +576,7 @@ export default function BridgeForm() {
         } else {
           console.log("got here and here")
           try {
-
-            //later improvement 
+            //later improvement
             //check for token balance before initiation.
             //check for token balance in desChain
 
@@ -603,8 +595,6 @@ export default function BridgeForm() {
               args: [hederaTokenCheckSum, amountBig.toString()], // required by the hook's type even when there are no parameters
               metaArgs: { gas: 120_000 },
             })
-
-            
           } catch (e) {
             console.error(e)
           }
@@ -664,8 +654,8 @@ export default function BridgeForm() {
         }
 
         //check if user has associated account to the hedera token first.
-        //check user balance 
-        //calculate network fee. 
+        //check user balance
+        //calculate network fee.
 
         // Check if allowance is insufficient (safely checking for bigint type)
         if (typeof allowance !== "bigint" || allowance < value) {
@@ -738,7 +728,7 @@ export default function BridgeForm() {
     if (bridgeStatus?.step === 1 && approvalTxHash) return "Waiting for Approval Confirmation..."
     if (bridgeStatus?.step === 2 && bridgeStatus.txHash === "pending")
       return "Waiting for Deposit Signature..."
-    if (isConfirming && toNetwork != 'hedera') return "Confirming Deposit..."
+    if (isConfirming && toNetwork != "hedera") return "Confirming Deposit..."
     if (bridgeStatus && bridgeStatus.step === 3) return "Relayer Processing..."
     if (bridgeStatus?.step === 4 && !bridgeStatus.error) return "Bridge Tokens"
 
@@ -884,9 +874,9 @@ export default function BridgeForm() {
     !isReceivingWalletConnected ||
     // Only disable if an actual TX or approval is in progress
     isApproving ||
-    bridgeStatus?.txHash === "pending" 
-    || isConfirming && fromNetwork != 'hedera'
-    || (bridgeStatus?.step === 3 && !bridgeStatus.error)
+    bridgeStatus?.txHash === "pending" ||
+    (isConfirming && fromNetwork != "hedera") ||
+    (bridgeStatus?.step === 3 && !bridgeStatus.error)
 
   // Display a loading state if prices are not ready
   if (isPriceLoading || Object.keys(prices).length === 0) {
