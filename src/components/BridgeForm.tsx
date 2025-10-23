@@ -581,7 +581,7 @@ export default function BridgeForm() {
             //check for token balance before initiation.
             //check for token balance in desChain
 
-            const TOKENS = [{ tokenId:TOKEN_ADDRESSES.hUSDC, amount: amountBig }];
+            const TOKENS = [{ tokenId:TOKEN_ADDRESSES.hUSDC, amount: Number(amountBig) }];
             const SPENDER = CONTRACT_ADDRESSES.hedera;
              setIsApproving(true)
             await approve(TOKENS, SPENDER);
