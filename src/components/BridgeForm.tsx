@@ -133,7 +133,7 @@ export default function BridgeForm() {
   const { isConnected: hederaConnected, connect: hederaConnect } = useWallet(HashpackConnector)
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
   const { writeContract: WriteContract } = UseWriteContract()
-  //const { approve } = useApproveTokenAllowance()
+  const { approve } = useApproveTokenAllowance()
 
   // --- STATE ---
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
@@ -580,14 +580,11 @@ export default function BridgeForm() {
             //check for token balance before initiation.
             //check for token balance in desChain
 
-            // await WriteContract({
-            //   contractId: ContractId.fromString(TOKEN_ADDRESSES['hUSDC']),
-            //   abi: ERC20_ABI,
-            //   functionName: "approve",
-            //   args: [hederaCheckSum, value], // required by the hook's type even when there are no parameters
-            //   metaArgs: { gas: 120_000 },
-            // })
-
+            const TOKENS = [{ tokenId:TOKEN_ADDRESSES.hUSDC, amount: amountBig }];
+            const SPENDER = CONTRACT_ADDRESSES.hedera;
+             setIsApproving(true)
+            await approve(TOKENS, SPENDER);
+             setIsApproving(false)
             txHash = await WriteContract({
               contractId: ContractId.fromString(contractId),
               abi: HEDERA_VOLT_ABI,
@@ -596,6 +593,7 @@ export default function BridgeForm() {
               metaArgs: { gas: 120_000 },
             })
           } catch (e) {
+             setIsApproving(false)
             console.error(e)
           }
         }
