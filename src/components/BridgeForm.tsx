@@ -6,6 +6,7 @@ import {
   useAccountId,
   useWallet,
   useWriteContract as UseWriteContract,
+  useApproveTokenAllowance
 } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { ContractId } from "@hashgraph/sdk"
