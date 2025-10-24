@@ -6,12 +6,15 @@ import {
   useAccountId,
   useWallet,
   useWriteContract as UseWriteContract,
-  useApproveTokenAllowance
+  useApproveTokenAllowance,
+  useBalance, 
+  useTokensBalance
 } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { ContractId } from "@hashgraph/sdk"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { type Address, parseUnits } from "viem"
+import { type Address, parseUnits, erc20Abi, formatUnits} from "viem"
+
 import {
   useAccount,
   useChainId,
@@ -19,7 +22,9 @@ import {
   useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
+  useBalance as wUseBalance
 } from "wagmi"
+
 
 import ERC20_ABI from "@/Abi/erc20.json"
 import HEDERA_VOLT_ABI from "@/Abi/hedera_vault.json"
@@ -29,6 +34,7 @@ import { ArrowLeftRight } from "lucide-react"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { toReadableAmount } from "@/helpers"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -61,6 +67,10 @@ const TOKEN_ADDRESSES: Record<string, Address | string> = {
   BNB: "0x0",
   HBAR: "0x0",
 }
+
+  const getTokenAddress = (network:any, )=>{
+
+  }
 
 const TOKENS: Record<NetworkOption, string[]> = {
   ethereum: ["ETH", "USDCt"],
@@ -135,6 +145,8 @@ export default function BridgeForm() {
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
   const { writeContract: WriteContract } = UseWriteContract()
   const { approve } = useApproveTokenAllowance()
+  const { data: hBarbalance } = useBalance({ autoFetch: hederaConnected })
+  const { data: hTokensBalance } = useTokensBalance({ autoFetch: hederaConnected, tokens: [TOKEN_ADDRESSES.hUSDC] })
 
   // --- STATE ---
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
@@ -164,6 +176,8 @@ export default function BridgeForm() {
   }, [amount, units])
 
   const receivingAddress = toNetwork === "hedera" ? hederaAccount : evmAddress
+
+  const [balanceMsg, setBalalanceMsg] = useState(""); 
 
   // --- WAGMI HOOKS FOR MONITORING ---
   // 1. Monitor the deposit transaction confirmation
@@ -504,8 +518,86 @@ export default function BridgeForm() {
     setApprovalTxHash(undefined)
   }
 
+
+  
+    function useEthBalance(address?: `0x${string}`) {
+      const { data, isLoading, isError } = wUseBalance({
+        address, // user wallet address
+        unit: 'ether'
+      });
+      return data; 
+    }
+
+    function useErc20TokenBalance(tokenAddress:any, walletAddress:any) {
+    const { data: decimals } = useReadContract({
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: "decimals",
+      query: { enabled: !!tokenAddress },
+    });
+
+    const { data: rawBalance } = useReadContract({
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: walletAddress ? [walletAddress] : undefined,
+      query: { enabled: !!tokenAddress && !!walletAddress },
+    });
+
+    const balance = useMemo(() => {
+      if (!rawBalance || decimals === undefined) return "0";
+      return formatUnits(rawBalance as bigint, decimals as number);
+    }, [rawBalance, decimals]);
+
+    return balance;
+  }
+
+
+
+  // useEffect(()=>{
+  //     if(fromNetwork == 'hedera'){
+  //       if(isNative){
+  //         if( amount > hBarbalance.value ){
+  //             setBalalanceMsg("You don't have enough "+fromToken); 
+  //         }else{
+  //             setBalalanceMsg(""); 
+  //         }
+  //       }else{
+  //           const TokenBalance = toReadableAmount(hTokensBalance, TOKEN_DECIMALS.USDCt); 
+  //           if(amount > TokenBalance){
+  //             setBalalanceMsg("You don't have enough "+fromToken); 
+  //           }else{
+  //             setBalalanceMsg("");
+  //           }
+  //       }
+  //   }else{
+  //     if(isNative){
+  //         const { formatted: ethBalance } = useEthBalance(evmAddress); 
+  //         if(amount > ethBalance){
+  //            setBalalanceMsg("You don't have enough "+fromToken); 
+  //         }
+  //     }else{
+  //         const tokenBalance = useErc20TokenBalance(tokenAddress, evmAddress);
+  //         if(amount > tokenBalance){
+  //            setBalalanceMsg("You don't have enough "+fromToken); 
+  //         }
+  //     }
+  //   }
+     
+  // }, [amount])
+
+
+
+
+const tokenBalance = useErc20TokenBalance(TOKEN_ADDRESSES[fromToken], evmAddress);
+
   // --- MAIN BRIDGE LOGIC ---
   const handleBridge = async () => {
+    console.log('token')
+    console.log(TOKEN_ADDRESSES.USDC)
+    
+    console.log(tokenBalance); 
+    return ;
     // 1. Connection and Chain Enforcement
     if (fromNetwork !== "hedera") {
       const requiredChainId = CHAIN_IDS[fromNetwork]
@@ -575,7 +667,6 @@ export default function BridgeForm() {
             metaArgs: { gas: 120_000, amount: Number(hbarAmount) },
           })
         } else {
-          console.log("got here and here")
           try {
             //later improvement
             //check for token balance before initiation.
@@ -882,7 +973,7 @@ export default function BridgeForm() {
     return (
       <Card className='max-w-lg w-full mx-auto mt-10 bg-zinc-900 border-zinc-800 text-zinc-800'>
         <CardContent className='p-6 text-center'>
-          <p>Loading Bridge data....</p>
+          <p className="text-white">Loading Bridge data....</p>
         </CardContent>
       </Card>
     )
@@ -1045,6 +1136,8 @@ export default function BridgeForm() {
           </div>
 
           {/* Action Button */}
+
+          {balanceMsg && <div className="text-red-500">{balanceMsg}</div>}
           <Button
             className='w-full'
             onClick={handleBridge}

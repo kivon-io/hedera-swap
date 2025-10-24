@@ -1,4 +1,6 @@
 import { AccountId, AccountInfoQuery, Client } from "@hashgraph/sdk"
+import {formatUnits} from "viem";
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -85,3 +87,14 @@ export async function getEvmAddressFromAccountId(
     throw new Error(`Failed to resolve EVM address for ${accountIdString}.`)
   }
 }
+
+export function toReadableAmount(amount: bigint | string | number, decimals: number): string {
+  try {
+    return formatUnits(BigInt(amount), decimals);
+  } catch (err) {
+    console.error("Invalid amount or decimals:", err);
+    return '0';
+  }
+}
+
+
