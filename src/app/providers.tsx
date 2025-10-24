@@ -1,7 +1,7 @@
 "use client"
 export const dynamic = "force-dynamic"
 
-import { ReactNode, useMemo, useState } from "react"
+import { ReactNode, useMemo, useState,useEffect } from "react"
 
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaTestnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
@@ -19,7 +19,12 @@ type ProvidersProps = {
 
 const Providers = ({ children }: ProvidersProps) => {
   const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(() => new QueryClient()) 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const wagmiConfig = useMemo(() => {
     if (!projectId || typeof window === "undefined") {
@@ -43,8 +48,8 @@ const Providers = ({ children }: ProvidersProps) => {
     []
   )
 
-  if (!projectId || !wagmiConfig) {
-    return null
+  if (!mounted || !projectId || !wagmiConfig) {
+    return null;
   }
 
   return (

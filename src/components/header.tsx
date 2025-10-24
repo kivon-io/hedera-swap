@@ -11,6 +11,7 @@ import { Button } from "./ui/button"
 import { ButtonGroup } from "./ui/button-group"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Separator } from "./ui/separator"
+import { useAutoConnect } from '@/hooks/useAutoConnect'; 
 
 const Header = () => {
   return (
@@ -33,8 +34,10 @@ const Header = () => {
 export default Header
 
 const EVMWallet = () => {
-  const { address, isConnected, connect, disconnectWallet } = useEvmWallet()
+  const { address, connect, disconnectWallet } = useEvmWallet()
   const [mounted, setMounted] = useState(false)
+  const { isConnected, guardedDisconnect } = useAutoConnect();
+
 
   useEffect(() => {
     setMounted(true)
@@ -59,7 +62,7 @@ const EVMWallet = () => {
               </div>
               <Separator />
               <div className='p-2'>
-                <Button className='w-full' variant='outline' onClick={disconnectWallet}>
+                <Button className='w-full' variant='outline' onClick={guardedDisconnect}>
                   Disconnect
                 </Button>
               </div>
