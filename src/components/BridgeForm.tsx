@@ -34,7 +34,7 @@ import { ArrowLeftRight } from "lucide-react"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { toReadableAmount } from "@/helpers"
+import { toReadableAmount, fetchEvmBalance, calculateGasCostInToken } from "@/helpers"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -68,10 +68,6 @@ const TOKEN_ADDRESSES: Record<string, Address | string> = {
   HBAR: "0x0",
 }
 
-  const getTokenAddress = (network:any, )=>{
-
-  }
-
 const TOKENS: Record<NetworkOption, string[]> = {
   ethereum: ["ETH", "USDCt"],
   bsc: ["BNB", "USDCt"],
@@ -101,7 +97,7 @@ const getExplorerLink = (txHash: string, network: NetworkOption) => {
     case "bsc":
       return EXPLORER_URLS.bsc + txHash
     case "hedera":
-      return EXPLORER_URLS.hedera + txHash
+      return EXPLORER_URLS.hedera + txHash  
     default:
       return "#"
   }
@@ -164,10 +160,22 @@ export default function BridgeForm() {
   // --- NEW STATES FOR APPROVAL FLOW ---
   const [isApproving, setIsApproving] = useState(false)
   const [approvalTxHash, setApprovalTxHash] = useState<Address | undefined>(undefined)
+  const [networkFee, setNetworkFee] = useState<number>(0);
 
   // --- CONSTANTS DERIVED FROM STATE ---
   const isNative = fromToken === "ETH" || fromToken === "BNB" || fromToken === "HBAR"
-  const tokenAddress = TOKEN_ADDRESSES[fromToken] as Address
+  const tokenAddress = fromNetwork === 'bsc'
+        ? TOKEN_ADDRESSES.bUSDC
+        : fromNetwork == "hedera"
+        ? TOKEN_ADDRESSES.hUSDC
+        : TOKEN_ADDRESSES.USDC
+
+  const tokenToAddress = toNetwork === 'bsc'
+      ? TOKEN_ADDRESSES.bUSDC
+      : toNetwork == "hedera"
+      ? TOKEN_ADDRESSES.hUSDC
+      : TOKEN_ADDRESSES.USDC
+
   const voltContractAddress = CONTRACT_ADDRESSES[fromNetwork] as Address
   const units = getTokenDecimals(fromToken)
 
@@ -207,7 +215,7 @@ export default function BridgeForm() {
     isLoading: isLoadingAllowance,
   } = useReadContract({
     abi: ERC20_ABI,
-    address: evmConnected && !isNative ? tokenAddress : undefined,
+    address: evmConnected && !isNative ? tokenAddress as Address: undefined,
     functionName: "allowance",
     args: evmConnected && evmAddress ? [evmAddress as Address, voltContractAddress] : undefined,
     chainId: CHAIN_IDS[fromNetwork],
@@ -221,6 +229,7 @@ export default function BridgeForm() {
   const fromPrice = prices[fromToken] || 0
   const toPrice = prices[toToken] || 0
   const inputAmount = Number(amount)
+  
 
   const { feeAmount, finalToAmount } = useMemo(() => {
     let rawToAmount = 0
@@ -233,7 +242,7 @@ export default function BridgeForm() {
       fee = rawToAmount * PROTOCOL_FEE_RATE
       finalAmount = rawToAmount * DEDUCE_FEE_RATE
     }
-
+    finalAmount -= networkFee; 
     return {
       feeAmount: fee.toFixed(4),
       finalToAmount: finalAmount.toFixed(4),
@@ -525,79 +534,122 @@ export default function BridgeForm() {
         address, // user wallet address
         unit: 'ether'
       });
-      return data; 
+      return data?.formatted; 
     }
 
     function useErc20TokenBalance(tokenAddress:any, walletAddress:any) {
-    const { data: decimals } = useReadContract({
-      address: tokenAddress,
-      abi: erc20Abi,
-      functionName: "decimals",
-      query: { enabled: !!tokenAddress },
-    });
+      
+      const { data: decimals } = useReadContract({
+        address: tokenAddress,
+        abi: erc20Abi,
+        functionName: "decimals",
+        query: { enabled: !!tokenAddress },
+      });
 
-    const { data: rawBalance } = useReadContract({
-      address: tokenAddress,
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      args: walletAddress ? [walletAddress] : undefined,
-      query: { enabled: !!tokenAddress && !!walletAddress },
-    });
+      const { data: rawBalance } = useReadContract({
+        address: tokenAddress,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: walletAddress ? [walletAddress] : undefined,
+        query: { enabled: !!tokenAddress && !!walletAddress },
+      });
 
-    const balance = useMemo(() => {
-      if (!rawBalance || decimals === undefined) return "0";
-      return formatUnits(rawBalance as bigint, decimals as number);
-    }, [rawBalance, decimals]);
+      const balance = useMemo(() => {
+        if (!rawBalance || decimals === undefined) return "0";
+        return formatUnits(rawBalance as bigint, decimals as number);
+      }, [rawBalance, decimals]);
+      return balance;
+    }
 
-    return balance;
+
+  const tokenBalance = useErc20TokenBalance(tokenAddress, evmAddress);
+  const ethBalance = useEthBalance(evmAddress);
+  const TokenBalance = toReadableAmount(hTokensBalance, TOKEN_DECIMALS.USDCt);
+
+  useEffect(() => {
+    setBalalanceMsg("");
+    const amt = Number(amount);
+    if (!amt) return;
+
+    if (fromNetwork === "hedera") {
+      if (isNative) {
+        if (amt > Number(hBarbalance?.value)) {
+          setBalalanceMsg(`You don't have enough ${fromToken}`);
+        }
+      } else {
+        if (amt > Number(TokenBalance || 0)) {
+          setBalalanceMsg(`You don't have enough ${fromToken}`);
+        }
+      }
+    } else {
+      if (isNative) {
+        const ethVal = Number(ethBalance);
+        if (amt > ethVal) {
+          setBalalanceMsg(`You don't have enough ${fromToken}`);
+        }
+      } else {
+        const tokenVal = Number(tokenBalance);
+        if (amt > tokenVal) {
+          setBalalanceMsg(`You don't have enough ${fromToken}`);
+        }
+      }
+    }
+  }, [
+    amount
+  ]);
+
+
+useEffect(() => {
+  let timeoutId: NodeJS.Timeout;
+
+  if (toNetwork && toNetwork !== 'hedera') {
+    timeoutId = setTimeout(() => {
+      const nativeSymbol = toNetwork === 'bsc' ? 'BNB' : 'ETH';
+
+      calculateGasCostInToken(
+        toNetwork,
+        70000,
+        prices[toToken],
+        prices[nativeSymbol]
+      )
+        .then((result) => {
+          setNetworkFee(result.gasCostInToken);
+        })
+        .catch((err) => {
+          console.error("Failed to calculate gas cost:", err);
+        });
+    }, 2000);
   }
+  return () => clearTimeout(timeoutId);
+}, [toNetwork, toToken]);
 
-
-
-  // useEffect(()=>{
-  //     if(fromNetwork == 'hedera'){
-  //       if(isNative){
-  //         if( amount > hBarbalance.value ){
-  //             setBalalanceMsg("You don't have enough "+fromToken); 
-  //         }else{
-  //             setBalalanceMsg(""); 
-  //         }
-  //       }else{
-  //           const TokenBalance = toReadableAmount(hTokensBalance, TOKEN_DECIMALS.USDCt); 
-  //           if(amount > TokenBalance){
-  //             setBalalanceMsg("You don't have enough "+fromToken); 
-  //           }else{
-  //             setBalalanceMsg("");
-  //           }
-  //       }
-  //   }else{
-  //     if(isNative){
-  //         const { formatted: ethBalance } = useEthBalance(evmAddress); 
-  //         if(amount > ethBalance){
-  //            setBalalanceMsg("You don't have enough "+fromToken); 
-  //         }
-  //     }else{
-  //         const tokenBalance = useErc20TokenBalance(tokenAddress, evmAddress);
-  //         if(amount > tokenBalance){
-  //            setBalalanceMsg("You don't have enough "+fromToken); 
-  //         }
-  //     }
-  //   }
-     
-  // }, [amount])
-
-
-
-
-const tokenBalance = useErc20TokenBalance(TOKEN_ADDRESSES[fromToken], evmAddress);
 
   // --- MAIN BRIDGE LOGIC ---
   const handleBridge = async () => {
-    console.log('token')
-    console.log(TOKEN_ADDRESSES.USDC)
-    
-    console.log(tokenBalance); 
-    return ;
+      let liquidityBalance : any;
+
+      const  IsNative = toToken === "ETH" || toToken === "BNB" || toToken === "HBAR";
+      if(IsNative){
+        liquidityBalance = await fetchEvmBalance(toNetwork, CONTRACT_ADDRESSES[toNetwork] as Address);
+      }else{
+        liquidityBalance = await fetchEvmBalance(toNetwork, CONTRACT_ADDRESSES[toNetwork] as Address, tokenToAddress)
+      }
+
+      let { nativeBalance, tokenBalance } = liquidityBalance; 
+
+     if(IsNative){
+        if( Number(finalToAmount) > Number(nativeBalance) ){
+          setBalalanceMsg("Amount too large for bridge. Reduce amount or try later."); 
+          return; 
+        }
+     }else{
+        if( Number(finalToAmount) > Number(tokenBalance) ){
+          setBalalanceMsg("Amount too large for bridge. Reduce amount or try later."); 
+          return; 
+        }
+     }
+
+  
     // 1. Connection and Chain Enforcement
     if (fromNetwork !== "hedera") {
       const requiredChainId = CHAIN_IDS[fromNetwork]
@@ -743,10 +795,6 @@ const tokenBalance = useErc20TokenBalance(TOKEN_ADDRESSES[fromToken], evmAddress
           return
         }
 
-        //check if user has associated account to the hedera token first.
-        //check user balance
-        //calculate network fee.
-
         // Check if allowance is insufficient (safely checking for bigint type)
         if (typeof allowance !== "bigint" || allowance < value) {
           setBridgeStatus({
@@ -760,7 +808,7 @@ const tokenBalance = useErc20TokenBalance(TOKEN_ADDRESSES[fromToken], evmAddress
             // Call the ERC-20 approve function on the TOKEN ADDRESS
             writeContract(
               {
-                address: tokenAddress, // Token contract address
+                address: tokenAddress as Address, // Token contract address
                 abi: ERC20_ABI,
                 functionName: "approve",
                 args: [voltContractAddress, value], // Approve bridge contract to spend this amount
@@ -1127,6 +1175,17 @@ const tokenBalance = useErc20TokenBalance(TOKEN_ADDRESSES[fromToken], evmAddress
                 {PROTOCOL_FEE_PERCENT}% ({Number(feeAmount) > 0 ? feeAmount : "0.00"} {toToken})
               </span>
             </div>
+
+             {toNetwork !== "hedera" &&
+
+              <div className='flex justify-between'>
+                <span className='text-zinc-600'>Network Fee:</span>
+                <span className='text-zinc-800'>
+                 {Number(networkFee) > 0 ? networkFee : "0.00"} {toToken}
+                </span>
+              </div>
+            }
+
             <div className='flex justify-between font-semibold text-sm mt-2'>
               <span className='text-gray-800'>Total Received:</span>
               <span className='text-green-400'>

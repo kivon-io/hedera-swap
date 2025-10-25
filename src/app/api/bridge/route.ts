@@ -6,8 +6,7 @@ import {
   ContractFunctionParameters,
   PrivateKey,
   AccountId,
-  ContractId,
-  AccountInfoQuery
+  ContractId
 } from "@hashgraph/sdk"; 
 
 import { getEvmAddressFromAccountId } from "@/helpers" 
@@ -20,10 +19,7 @@ const VAULT_ABI = [
 ];
 
 
-
-
 export async function POST(req: NextRequest) {
-  console.log("🚀 API hit with method: POST");
 
   try {
     const {
