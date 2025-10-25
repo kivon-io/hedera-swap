@@ -1,4 +1,6 @@
 import { AccountId, AccountInfoQuery, Client } from "@hashgraph/sdk"
+import {formatUnits} from "viem";
+import { ethers } from "ethers";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -84,4 +86,104 @@ export async function getEvmAddressFromAccountId(
     console.error("Error fetching account info:", error)
     throw new Error(`Failed to resolve EVM address for ${accountIdString}.`)
   }
+}
+
+export function toReadableAmount(amount: bigint | string | number, decimals: number): string {
+  try {
+    return amount != undefined ? formatUnits(BigInt(amount), decimals) : '0';
+  } catch (err) {
+    return '0';
+  }
+}
+
+
+
+
+export async function fetchEvmBalance(chainId:any, address:any, tokenAddress:any = null) {
+  try {
+    const res = await fetch("/api/getBalance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chainId,       // e.g. "ethereum" or "bsc"
+        address,       // EVM wallet address
+        tokenAddress,  // optional ERC20 token contract
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    console.log("💰 Balance data:", data);
+    return data; // { network, nativeBalance, tokenBalance }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("❌ Error fetching EVM balance:", message);
+  }
+}
+
+export async function fetchHederaBalance(accountId:any, tokenId:any = null) {
+  try {
+    const res = await fetch("/api/getBalance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chainId: "hedera",
+        address: accountId, // e.g. "0.0.6987678"
+        tokenAddress: tokenId, // optional "0.0.x" HTS token ID
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    console.log("🌿 Hedera balances:", data);
+    return data; // { network, hbarBalance, tokenBalance }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("❌ Error fetching Hedera balance:", message);
+  }
+}
+
+
+/**
+ * Calculates gas cost in token-out units using a provided token price.
+ *
+ * @param chainId - "ethereum" | "bsc" | etc.
+ * @param gasLimit - estimated gas units for the tx
+ * @param tokenOutPriceUsd - price of tokenOut in USD
+ * @param nativePriceUsd - price of the native coin (ETH/BNB) in USD
+ * @returns gas cost details
+ */
+export async function calculateGasCostInToken(
+  chainId: string,
+  gasLimit: number,
+  tokenOutPriceUsd: number,
+  nativePriceUsd: number
+) {
+  let rpcUrl: string;
+  if (chainId === "ethereum") rpcUrl = "https://1rpc.io/sepolia";
+  else if (chainId === "bsc")
+    rpcUrl = "https://data-seed-prebsc-1-s1.bnbchain.org:8545";
+  else throw new Error("Unsupported chainId");
+
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+  const feeData = await provider.getFeeData();
+  const gasPrice = feeData.gasPrice ?? BigInt(0);
+
+  const gasCostWei = gasPrice * BigInt(gasLimit);
+  const gasCostNative = Number(ethers.formatEther(gasCostWei));
+  const gasCostUsd = gasCostNative * nativePriceUsd;
+  const gasCostInToken = gasCostUsd / tokenOutPriceUsd;
+  return {
+    gasPrice: ethers.formatUnits(gasPrice, "gwei") + " gwei",
+    gasCostNative,
+    gasCostUsd,
+    gasCostInToken,
+  };
 }
