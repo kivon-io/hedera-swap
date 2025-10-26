@@ -82,11 +82,13 @@ export async function POST(req: NextRequest) {
       nativeBalance,
       tokenBalance,
     });
-  } catch (err: any) {
-    console.error("❌ Balance check error:", err);
-    return NextResponse.json(
-      { error: err.message || "Balance query failed" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("❌ Balance check error:", err.message);
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+
+    console.error("❌ Unknown error:", err);
+    return NextResponse.json({ error: "Balance query failed" }, { status: 500 });
   }
 }

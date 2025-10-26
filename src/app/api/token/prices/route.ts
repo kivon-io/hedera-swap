@@ -9,7 +9,7 @@ const COINGECKO_IDS = {
 // All symbols whose prices we need to return
 const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDCt'];
 
-export async function GET(request: Request) {
+export async function GET() {
 
   const idsToFetch = Object.values(COINGECKO_IDS).join(',');
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idsToFetch}&vs_currencies=usd`;
