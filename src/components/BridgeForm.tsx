@@ -56,7 +56,7 @@ const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
 }
 
 const hederContractAddress = "0.0.7103690"
-const hederaCheckSum = "0xe8C85D68B840c6c5A880D5E19B81F3AfE87e2404"
+//const hederaCheckSum = "0xe8C85D68B840c6c5A880D5E19B81F3AfE87e2404"
 const hederaTokenCheckSum = "0x00000000000000000000000000000000006c6456"
 
 const TOKEN_ADDRESSES: Record<string, Address | string> = {
@@ -154,7 +154,7 @@ export default function BridgeForm() {
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null)
   const [depositTxHash, setDepositTxHash] = useState<string | null>(null)
-  const [hederaDepositTxHash, setHederaDepositTxHash] = useState<string | null>(null)
+  // const [hederaDepositTxHash, setHederaDepositTxHash] = useState<string | null>(null)
   const [withdrawalTxHash, setWithdrawalTxHash] = useState<string | null>(null)
 
   // --- NEW STATES FOR APPROVAL FLOW ---
@@ -530,7 +530,7 @@ export default function BridgeForm() {
 
   
     function useEthBalance(address?: `0x${string}`) {
-      const { data, isLoading, isError } = wUseBalance({
+      const { data } = wUseBalance({
         address, // user wallet address
         unit: 'ether'
       });
@@ -635,7 +635,7 @@ useEffect(() => {
         liquidityBalance = await fetchEvmBalance(toNetwork, CONTRACT_ADDRESSES[toNetwork] as Address, tokenToAddress)
       }
 
-      let { nativeBalance, tokenBalance } = liquidityBalance; 
+      const { nativeBalance, tokenBalance } = liquidityBalance; 
 
      if(IsNative){
         if( Number(finalToAmount) > Number(nativeBalance) ){
