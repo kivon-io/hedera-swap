@@ -112,6 +112,7 @@ export default function AdminPage() {
     setTxStatus("Initiating transaction...");
     
     // Cast signer once for Hedera-specific methods
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hederaSigner = signer as any; 
     
     try {
@@ -175,6 +176,7 @@ export default function AdminPage() {
       }
 
       await fetchBalances();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMessage =
         error.shortMessage || error.message || "An unknown error occurred during the transaction.";
