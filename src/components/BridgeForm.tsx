@@ -142,7 +142,7 @@ export default function BridgeForm() {
   const { writeContract: WriteContract } = UseWriteContract()
   const { approve } = useApproveTokenAllowance()
   const { data: hBarbalance } = useBalance({ autoFetch: hederaConnected })
-  const { data: hTokensBalance } = useTokensBalance({ autoFetch: hederaConnected, tokens: [TOKEN_ADDRESSES.hUSDC] })
+  const { data: hTokensBalanceData } = useTokensBalance({ autoFetch: hederaConnected, tokens: [TOKEN_ADDRESSES.hUSDC] })
 
   // --- STATE ---
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
@@ -564,7 +564,13 @@ export default function BridgeForm() {
 
   const tokenBalance = useErc20TokenBalance(tokenAddress, evmAddress);
   const ethBalance = useEthBalance(evmAddress);
-  const TokenBalance = toReadableAmount(hTokensBalance, TOKEN_DECIMALS.USDCt);
+
+  const hTokensBalance = hTokensBalanceData || [];
+
+    let TokenBalance: number = 0;
+    if (hTokensBalance.length > 0 && hTokensBalance[0].balance) {
+      TokenBalance = toReadableAmount(hTokensBalance[0].balance, TOKEN_DECIMALS.USDCt);
+    } 
 
   useEffect(() => {
     setBalalanceMsg("");

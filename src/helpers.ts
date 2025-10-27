@@ -88,11 +88,11 @@ export async function getEvmAddressFromAccountId(
   }
 }
 
-export function toReadableAmount(amount: bigint | string | number, decimals: number): string {
+export function toReadableAmount(amount: bigint | string | number, decimals: number): number {
   try {
-    return amount != undefined ? formatUnits(BigInt(amount), decimals) : '0';
-  } catch (err) {
-    return '0';
+    return amount != undefined ? Number(formatUnits(BigInt(amount), decimals)) : 0;
+  } catch {
+    return 0;
   }
 }
 
