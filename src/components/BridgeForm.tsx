@@ -36,88 +36,15 @@ import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { toReadableAmount, fetchEvmBalance, calculateGasCostInToken } from "@/helpers"
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { getExplorerLink, truncateHash} from "@/helpers/token"
+import { NETWORKS, CHAIN_IDS, CONTRACT_ADDRESSES, type NetworkOption } from "@/config/networks";
 
-type NetworkOption = "ethereum" | "bsc" | "hedera"
-
-const NETWORKS: NetworkOption[] = ["ethereum", "bsc", "hedera"]
-
-// --- CONSTANTS AND ADDRESSES ---
-const CHAIN_IDS: Record<NetworkOption, number> = {
-  ethereum: 11155111, // Sepolia
-  bsc: 97, // BSC Testnet
-  hedera: 296,
-}
-
-const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
-  ethereum: "0x8A8Dbbe919f80Ca7E96A824D61763503dF15166f",
-  bsc: "0xA1C6545861c572fc44320f9A52CF1DE32Da84Ab8",
-  hedera: "0.0.7103690",
-}
-
-const hederContractAddress = "0.0.7103690"
-//const hederaCheckSum = "0xe8C85D68B840c6c5A880D5E19B81F3AfE87e2404"
-const hederaTokenCheckSum = "0x00000000000000000000000000000000006c6456"
-
-const TOKEN_ADDRESSES: Record<string, Address | string> = {
-  USDC: "0xDb740b2CdC598bDD54045c1f9401c011785032A6",
-  bUSDC: "0xabbd60313073EB1673940f0f212C7baC5333707e",
-  hUSDC: "0.0.7103574",
-  ETH: "0x0",
-  BNB: "0x0",
-  HBAR: "0x0",
-}
-
-const TOKENS: Record<NetworkOption, string[]> = {
-  ethereum: ["ETH", "USDCt"],
-  bsc: ["BNB", "USDCt"],
-  hedera: ["HBAR", "USDCt"],
-}
-
-const TOKEN_DECIMALS: Record<string, number> = {
-  // Stablecoins typically use 6 decimals
-  USDCt: 6,
-  // Native assets and others, default to 18
-  ETH: 18,
-  BNB: 18,
-  // HBAR uses 8 decimals
-  HBAR: 8,
-}
-
-const EXPLORER_URLS: Record<string, string> = {
-  sepolia: "https://sepolia.etherscan.io/tx/",
-  bsc: "https://testnet.bscscan.com/tx/",
-  hedera: "https://hashscan.io/testnet/transaction/", // Hedera testnet explorer
-}
-
-const getExplorerLink = (txHash: string, network: NetworkOption) => {
-  switch (network) {
-    case "ethereum":
-      return EXPLORER_URLS.sepolia + txHash
-    case "bsc":
-      return EXPLORER_URLS.bsc + txHash
-    case "hedera":
-      return EXPLORER_URLS.hedera + txHash  
-    default:
-      return "#"
-  }
-}
-
-const truncateHash = (hash: string) => {
-  if (!hash) return ""
-  return `${hash.slice(0, 6)}...${hash.slice(-4)}`
-}
-
-const getTokenDecimals = (tokenSymbol: string): number => {
-  return TOKEN_DECIMALS[tokenSymbol] ?? 18 // Default to 18 if not found
-}
 
 const PROTOCOL_FEE_PERCENT = 2
 const PROTOCOL_FEE_RATE = PROTOCOL_FEE_PERCENT / 100
 const DEDUCE_FEE_RATE = 1 - PROTOCOL_FEE_RATE
 
 type TokenPrices = Record<string, number>
-
 type BridgeStatus = {
   step: number
   message: string
@@ -142,6 +69,7 @@ export default function BridgeForm() {
   const { writeContract: WriteContract } = UseWriteContract()
   const { approve } = useApproveTokenAllowance()
   const { data: hBarbalance } = useBalance({ autoFetch: hederaConnected })
+
   const { data: hTokensBalanceData } = useTokensBalance({ autoFetch: hederaConnected, tokens: [TOKEN_ADDRESSES.hUSDC] })
 
   // --- STATE ---
