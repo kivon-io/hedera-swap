@@ -7,7 +7,7 @@ import type { NetworkOption } from "@/config/networks";
  * One unified object that stores token metadata (symbol, address, decimals)
  * for each network. You can easily add new networks or tokens here.
  */
-export const TOKENS: Record<
+export const TOKENS: Record< 
   NetworkOption,
   Record<
     string,
@@ -57,15 +57,15 @@ export const TOKENS: Record<
     SAUCE: {
       symbol: "SAUCE",
       address: "0.0.1183558",
-      decimals: 8,
+      decimals: 6,
     },
-    Calaxy: {
-      symbol: "Calaxy",
+    CLXY: {
+      symbol: "CLXY",
       address: "0.0.5365",
-      decimals: 8,
+      decimals: 6,
     },
-    Dai: {
-      symbol: "Dai",
+    DAI: {
+      symbol: "DAI",
       address: "0.0.5529",
       decimals: 8,
     }

@@ -124,7 +124,7 @@ export async function fetchEvmBalance(chainId:any, address:any, tokenAddress:any
   }
 }
 
-export async function fetchHederaBalance(accountId:any, tokenId:any = null) {
+export async function fetchHederaBalance(accountId:any) {
   try {
     const res = await fetch("/api/getBalance", {
       method: "POST",
@@ -134,7 +134,7 @@ export async function fetchHederaBalance(accountId:any, tokenId:any = null) {
       body: JSON.stringify({
         chainId: "hedera",
         address: accountId, // e.g. "0.0.6987678"
-        tokenAddress: tokenId, // optional "0.0.x" HTS token ID
+        tokenAddress: null, // optional "0.0.x" HTS token ID
       }),
     });
 
