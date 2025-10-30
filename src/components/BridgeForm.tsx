@@ -7,10 +7,9 @@ import {
   useWriteContract as UseWriteContract,
   useApproveTokenAllowance,
   useBalance, 
-  useTokensBalance
+  useAssociateTokens 
 } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
-import { ContractId } from "@hashgraph/sdk"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { type Address, parseUnits, erc20Abi as ERC20_ABI, formatUnits} from "viem"
 
@@ -25,7 +24,6 @@ import {
 } from "wagmi"
 
 
-import HEDERA_VOLT_ABI from "@/Abi/hedera_vault.json"
 import BRIDGE_VOLT_ABI from "@/Abi/vault.json"
 import { fetchHederaBalance, fetchTokenPrices } from "@/helpers"
 import { ArrowLeftRight } from "lucide-react"
@@ -34,7 +32,7 @@ import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { toReadableAmount, fetchEvmBalance, calculateGasCostInToken } from "@/helpers"
 
-import { getExplorerLink, truncateHash, useErc20TokenBalance, useEthBalance} from "@/helpers/token"
+import { truncateHash, useErc20TokenBalance, useEthBalance, convertTokenByUSD, checkTokenAssociation } from "@/helpers/token"
 import { NETWORKS, CHAIN_IDS, CONTRACT_ADDRESSES, type NetworkOption } from "@/config/networks";
 import { TOKENS } from "@/config/tokens";
 import { type BridgeStatus, BridgeStatusTracker, getButtonText, notifyBackend } from "@/helpers/bridge"
@@ -65,7 +63,8 @@ export default function BridgeForm() {
   const { approve } = useApproveTokenAllowance()
   const { data: hBarbalance } = useBalance({ autoFetch: hederaConnected })
   const receivingAddress = hederaAccount ? hederaAccount.toString() : null;
- 
+  const { associateTokens } = useAssociateTokens();
+
 
   // --- STATE ---
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
@@ -110,8 +109,8 @@ export default function BridgeForm() {
     loadPrices()
   }, [])
 
-  // --- WAGMI HOOKS FOR MONITORING ---
-  // 1. Monitor the deposit transaction confirmation
+  //--- WAGMI HOOKS FOR MONITORING ---
+  //1. Monitor the deposit transaction confirmation
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
@@ -119,7 +118,7 @@ export default function BridgeForm() {
   } = useWaitForTransactionReceipt({
     hash: depositTxHash as Address,
     query: {
-      enabled: !!depositTxHash && !!fromNetwork,
+       enabled: !!depositTxHash && !!fromNetwork,
     },
   })
 
@@ -161,7 +160,7 @@ export default function BridgeForm() {
   const toPrice = prices[toToken] || 0
   const inputAmount = Number(amount)
   
-  const { feeAmount, finalToAmount } = useMemo(() => {
+  const { feeAmount, finalToAmount, hbarAmount } = useMemo(() => {
     let rawToAmount = 0
     let fee = 0
     let finalAmount = 0
@@ -173,11 +172,15 @@ export default function BridgeForm() {
       finalAmount = rawToAmount * DEDUCE_FEE_RATE
     }
     finalAmount -= networkFee; 
+    const hbarPrice = prices['HBAR']
+    const hbarAmount = convertTokenByUSD(finalAmount??0, toPrice??0, hbarPrice??0);
     return {
-      feeAmount: fee.toFixed(4),
-      finalToAmount: finalAmount.toFixed(4),
+      feeAmount: fee.toFixed(6),
+      finalToAmount: finalAmount.toFixed(6),
+      hbarAmount: hbarAmount
     }
-  }, [inputAmount, fromPrice, toPrice])
+
+  }, [inputAmount, fromPrice, toPrice, networkFee])
 
 
 
@@ -221,7 +224,7 @@ export default function BridgeForm() {
               })
               setDepositTxHash(hash)
               setApprovalTxHash(undefined) // Reset approval hash
-              notifyBackend(hash, toNetwork, toToken, finalToAmount, receivingAddress, setBridgeStatus, setWithdrawalTxHash)
+              notifyBackend(hash, toNetwork, toToken, hbarAmount, receivingAddress, setBridgeStatus, setWithdrawalTxHash)
             },
             onError: (e: any) => {
               setApprovalTxHash(undefined) // Reset hash on failure
@@ -254,90 +257,107 @@ export default function BridgeForm() {
 
 
     const handleBridge = async () => {
-
       let liquidityBalance : any;
       liquidityBalance = await fetchHederaBalance(CONTRACT_ADDRESSES[toNetwork]);
-      const { nativeBalance } = liquidityBalance; 
-      
-      if( Number(finalToAmount) > Number(nativeBalance) ){
+      const { nativeBalance } = liquidityBalance;
+      if( hbarAmount > Number(nativeBalance) ){
         setBalalanceMsg("Amount too large for bridge. Reduce amount or try later."); 
         return; 
       }
-    
-    
-    try {
-      const token = TOKENS[fromNetwork][fromToken];
-      if (!isNative) {
-        if (isLoadingAllowance) {
-          setBridgeStatus({
-            step: 1,
-            message: "Step 1/3: Checking token allowance...",
-            txHash: "N/A",
-          })
-          return
-        }
-    
-        // Check if allowance is insufficient (safely checking for bigint type)
-        if (typeof allowance !== "bigint" || allowance < value) {
-          setBridgeStatus({
-            step: 1,
-            message: `Step 1/3: Awaiting wallet signature for ${fromToken} approval...`,
-            txHash: "pending",
-          })
-          setIsApproving(true)
-    
+
+
+      const theToToken = TOKENS[toNetwork][toToken]; 
+      if(!theToToken.native){
+        const isAssociated = await checkTokenAssociation(hederaAccount, theToToken.address);
+        if(!isAssociated){
+            setBridgeStatus({
+                step: 1,
+                message: "Step 1/3: Checking token association...",
+                txHash: "N/A",
+            })
           try {
-            // Call the ERC-20 approve function on the TOKEN ADDRESS
-            writeContract(
-              {
-                address: tokenAddress as Address, // Token contract address
-                abi: ERC20_ABI,
-                functionName: "approve",
-                args: [voltContractAddress, value], // Approve bridge contract to spend this amount
-                value: parseUnits("0", units) // ERC-20 approve does not send native currency
-              },
-              {
-                onSuccess: (hash) => {
-                  setIsApproving(false)
-                  setBridgeStatus({
-                    step: 1,
-                    message: "Step 1/3: Approval transaction sent. Waiting for confirmation...",
-                    txHash: hash,
-                  })
-                  setApprovalTxHash(hash) // Save hash to monitor confirmation
-                },
-                onError: (e: any) => {
-                  setIsApproving(false)
-                  const errMsg = e?.shortMessage || e.message
-                  setBridgeStatus({
-                    step: 1,
-                    message: "❌ Approval failed/rejected.",
-                    error: errMsg,
-                  })
-                },
-              }
-            )
-            return // Stop here, waiting for approval TX
-          } catch (e: any) {
-            setIsApproving(false)
-            const errMsg = e?.shortMessage || e.message
-            setBridgeStatus({ step: 1, message: "❌ Prepare approval failed.", error: errMsg })
-            return
+            await associateTokens([TOKENS[toNetwork][toToken].address]);
+          } catch (e) {
+            setBridgeStatus({
+                step: 1,
+                message: "Could not get token association",
+                txHash: "N/A",
+            })
+            return; 
           }
         }
-        setIsApproving(false) // Allowance is sufficient, proceed to deposit
       }
+
     
-      // --- 5. EVM DEPOSIT (Called if native OR ERC20 approval is sufficient/completed) ---
-      handleDepositTx(value)
-    } catch (e: any) {
-      const errMsg = e?.shortMessage || e.message
-      setBridgeStatus({
-        step: 2,
-        message: "❌ Prepare transaction failed.",
-        error: errMsg,
-      })
-    }
+      try {
+        if (!isNative) {
+          if (isLoadingAllowance) {
+              setBridgeStatus({
+                step: 1,
+                message: "Step 1/3: Checking token allowance...",
+                txHash: "N/A",
+              })
+              return
+          }
+      
+          // Check if allowance is insufficient (safely checking for bigint type)
+          if (typeof allowance !== "bigint" || allowance < value) {
+              setBridgeStatus({
+                step: 1,
+                message: `Step 1/3: Awaiting wallet signature for ${fromToken} approval...`,
+                txHash: "pending",
+              })
+              setIsApproving(true)
+            try {
+              // Call the ERC-20 approve function on the TOKEN ADDRESS
+              writeContract(
+                {
+                  address: tokenAddress as Address, // Token contract address
+                  abi: ERC20_ABI,
+                  functionName: "approve",
+                  args: [voltContractAddress, value], // Approve bridge contract to spend this amount
+                },
+                {
+                  onSuccess: (hash) => {
+                    setIsApproving(false)
+                    setBridgeStatus({
+                      step: 1,
+                      message: "Step 1/3: Approval transaction sent. Waiting for confirmation...",
+                      txHash: hash,
+                    })
+                    setApprovalTxHash(hash) // Save hash to monitor confirmation
+                  },
+                  onError: (e: any) => {
+                    setIsApproving(false)
+                    const errMsg = e?.shortMessage || e.message
+                    setBridgeStatus({
+                      step: 1,
+                      message: "❌ Approval failed/rejected.",
+                      error: errMsg,
+                    })
+                  },
+                }
+              )
+              return // Stop here, waiting for approval TX
+            } catch (e: any) {
+              setIsApproving(false)
+              const errMsg = e?.shortMessage || e.message
+              setBridgeStatus({ step: 1, message: "❌ Prepare approval failed.", error: errMsg })
+              return
+            }
+          }
+          setIsApproving(false) // Allowance is sufficient, proceed to deposit
+        }
+        // --- 5. EVM DEPOSIT (Called if native OR ERC20 approval is sufficient/completed) ---
+        handleDepositTx(value)
+      } catch (e: any) {
+        const errMsg = e?.shortMessage || e.message
+        setBridgeStatus({
+          step: 2,
+          message: "❌ Prepare transaction failed.",
+          error: errMsg,
+        })
+      }
     }
     
 
@@ -605,7 +625,7 @@ useEffect(() => {
                       })}
                   </SelectContent>
                 </Select>
-                <p className='text-xs text-gray-500 mt-1'>Price: ${fromPrice.toFixed(2)}</p>
+                <p className='text-xs text-gray-500 mt-1'>Price: ${fromPrice.toFixed(6)}</p>
               </div>
 
               <div className='w-1/2'>
@@ -628,7 +648,7 @@ useEffect(() => {
                       })}
                   </SelectContent>
                 </Select>
-                <p className='text-xs text-gray-500 mt-1'>Price: ${toPrice.toFixed(2)}</p>
+                <p className='text-xs text-gray-500 mt-1'>Price: ${toPrice.toFixed(6)}</p>
               </div>
             </div>
 
@@ -672,7 +692,7 @@ useEffect(() => {
               <div className='flex justify-between'>
                 <span className='text-zinc-600'>Conversion Rate:</span>
                 <span className='text-zinc-800'>
-                  1 {fromToken} ≈ {(fromPrice / toPrice).toFixed(4)} {toToken}
+                  1 {fromToken} ≈ {(fromPrice / toPrice).toFixed(6)} {toToken}
                 </span>
               </div>
 

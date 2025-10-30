@@ -81,7 +81,10 @@ async function main() {
   }
 
   // 4) Execute swapExactETHForTokens (payable)
-  const amountOutMin = 0; // for testing only (no slippage guard)
+const slippage = 0.005; // 0.5%
+const amounts = await router.getAmountsOut(amountIn, path);
+const amountOutMin = amounts[1] - (amounts[1] * BigInt(Math.floor(slippage * 1000)) / 1000n)
+
   const to = await wallet.getAddress();
   const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes
   console.log(`Swapping ${amountInHBAR} HBAR -> token (path[0]=whbar token).`);

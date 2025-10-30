@@ -13,22 +13,18 @@ export const notifyBackend = async (
     txHash: string,
     toNetwork: NetworkOption,
     toToken: string,
-    expectedReceiveAmount: string,  // Human-readable amount (e.g., '10.5') //hbar
+    expectedReceiveAmount: string | number,  // Human-readable amount (e.g., '10.5') //hbar
     receivingAddress: string, 
     setBridgeStatus: (status: BridgeStatus) => void,
     setWithdrawalTxHash: (hash: string) => void,
   ) => {
     const token = TOKENS[toNetwork][toToken]; 
-    const isNativeWithdrawal = token.native; 
-    const decimals = token.decimals; 
-    //const amountInWeiString = parseUnits(expectedReceiveAmount, decimals).toString()
-
     const payload = {
       chainId: toNetwork,
       recipient: receivingAddress,
-      nativeAmount: isNativeWithdrawal ? expectedReceiveAmount : "0",
+      amount: expectedReceiveAmount,
       tokenAddress: token.address,
-      tokenAmount: isNativeWithdrawal ? "0" : expectedReceiveAmount,
+      isNative: !!token.native
     }
 
     try {
