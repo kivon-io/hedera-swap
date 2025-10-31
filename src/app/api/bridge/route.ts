@@ -7,7 +7,8 @@ import {
     Hbar,
     TransferTransaction
 } from "@hashgraph/sdk";
-import { getEvmAddressFromAccountId } from "@/helpers";
+import { getEvmAddressFromAccountId, convertHederaIdToEVMAddress } from "@/helpers";
+import { safeHbar } from "@/helpers/token"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -48,9 +49,11 @@ export async function POST(req: NextRequest) {
         if (!RPC || !PRIVATE_KEY || !OPERATOR_ID) {
             return NextResponse.json({ error: "Server configuration missing: RPC URL or Admin Keys." }, { status: 500 });
         }
-        if (typeof amount !== 'string' || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+
+        if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             return NextResponse.json({ error: "Invalid amount provided." }, { status: 400 });
         }
+
         if (!recipient) {
             return NextResponse.json({ error: "Recipient address is required." }, { status: 400 });
         }
@@ -69,8 +72,7 @@ export async function POST(req: NextRequest) {
         // ----------------------------------------------------------------
         if (isNative) {
             console.log(`💸 Executing native HBAR transfer to ${recipient}...`);
-
-            const amountInHbar = Hbar.fromString(amount);
+            const amountInHbar =  safeHbar(amount);
             const senderId = AccountId.fromString(OPERATOR_ID);
             const recipientId = AccountId.fromString(recipient);
 
@@ -82,13 +84,15 @@ export async function POST(req: NextRequest) {
             const receipt = await tx.getReceipt(client);
             const txHash = tx.transactionId.toString();
 
+            console.log(`The hbar amount sent ${amountInHbar}`)
+
             return NextResponse.json(
                 {
                     status: "Transfer Confirmed",
                     message: `Native HBAR transfer confirmed. Status: ${receipt.status.toString()}`,
                     hash: txHash,
                 },
-                { status: 200 }
+                { status: 202 }
             );
         }
 
@@ -102,7 +106,7 @@ export async function POST(req: NextRequest) {
 
         const router = new ethers.Contract(ROUTER, routerAbi, wallet);
         const whbar = new ethers.Contract(WHBAR_CONTRACT, whbarAbi, provider);
-        const TOKEN_OUT =  await getEvmAddressFromAccountId(tokenAddress, client); 
+        const TOKEN_OUT = convertHederaIdToEVMAddress(tokenAddress); 
 
         // 1) Resolve whbar token address (the token pair token, not the wrapper contract)
         const whbarToken = await whbar.token();
@@ -110,11 +114,15 @@ export async function POST(req: NextRequest) {
 
         // 2) Prepare swap parameters
         const amountInHBAR = amount;
-        const amountIn = ethers.parseUnits(amountInHBAR, 18); // HBAR decimals (use 18)
+
+        console.log(`amount to be swapped ${amountInHBAR}`)
+        const amountIn = ethers.parseUnits(Number(amountInHBAR).toString(), 18); // HBAR decimals (use 18)
         const path = [whbarToken, TOKEN_OUT];
 
         // 3) Get amount out to calculate slippage (using 0.5% slippage)
         const amounts = await router.getAmountsOut(amountIn, path);
+
+        console.log(`estimated amount out ${amounts}`)
         if (!amounts || amounts.length === 0) {
             throw new Error("getAmountsOut failed — likely no liquidity or broken path.");
         }
@@ -122,14 +130,19 @@ export async function POST(req: NextRequest) {
         const slippage = 0.005; // 0.5%
         const amountOutMin = amounts[1] - (amounts[1] * BigInt(Math.floor(slippage * 1000)) / BigInt(1000));
 
+        console.log(`estimated amount min out ${amountOutMin}`)
+
         // NOTE: If recipient is a Hedera Account ID (0.0.x), you must convert it to an EVM address (0x...) here.
         // Assuming 'recipient' is already a valid EVM address (0x...). If it's a 0.0.x ID, use a helper like getEvmAddressFromAccountId.
-        const to = recipient; 
+        const to = await getEvmAddressFromAccountId(recipient, client);
         const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes
+
+        console.log("Token address", TOKEN_OUT);
+        console.log("user address", to);
 
         // 4) Execute swapExactETHForTokens
         const tx = await router.swapExactETHForTokens(
-            amountOutMin,
+            0,
             path,
             to,
             deadline,
@@ -151,7 +164,7 @@ export async function POST(req: NextRequest) {
                 hash: receipt.hash,
                 block: receipt.blockNumber,
             },
-            { status: 200 }
+            { status: 202 }
         );
 
     } catch (error: any) {

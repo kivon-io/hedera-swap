@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { erc20Abi, formatUnits } from "viem";
 import {type NetworkOption } from "@/config/networks";
 import { useReadContract, useBalance } from "wagmi"
+import { Hbar } from "@hashgraph/sdk";
 
 export const EXPLORER_URLS = {
   ethereum: "https://sepolia.etherscan.io/tx/",
@@ -98,3 +99,32 @@ export const checkTokenAssociation = async (accountId: string, tokenId: string):
     }
 };
 
+/**
+ * Safely parse any numeric input into a valid Hbar instance.
+ * 
+ * Handles:
+ * - numbers or strings
+ * - commas, spaces, etc.
+ * - rounding to 8 decimal places (tinybar precision)
+ * - clear error messages for invalid input
+ */
+export function safeHbar(amount:number | string) {
+  if (amount === null || amount === undefined)
+    throw new Error("Amount is required.");
+
+  // Convert to string, remove commas/spaces
+  const clean = String(amount).replace(/,/g, "").trim();
+
+  // Validate numeric
+  const num = Number(clean);
+  if (isNaN(num)) throw new Error(`Invalid numeric amount: "${amount}"`);
+
+  // Clamp to 8 decimal places (tinybar precision)
+  const rounded = num.toFixed(8);
+
+  try {
+    return Hbar.fromString(rounded);
+  } catch (err:any) {
+    throw new Error(`Invalid HBAR amount "${amount}": ${err.message}`);
+  }
+}

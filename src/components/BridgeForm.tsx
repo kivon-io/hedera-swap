@@ -704,15 +704,15 @@ useEffect(() => {
               </div>
 
             
-              <div className='flex justify-between'>
+              {/* <div className='flex justify-between'>
                 <span className='text-zinc-600'>Network Fee:</span>
                 <span className='text-zinc-800'>
                   {Number(networkFee) > 0 ? networkFee : "0.00"} {toToken}
                 </span>
-              </div>
+              </div>  */}
 
               <div className='flex justify-between font-semibold text-sm mt-2'>
-                <span className='text-gray-800'>Total Received:</span>
+                <span className='text-gray-800'>Est. Total Received:</span>
                 <span className='text-green-400'>
                   {Number(amount) > 0 ? finalToAmount : "0.00"} {toToken}
                 </span>

@@ -17,7 +17,7 @@ const BridgeStatusTracker: React.FC<{ status: BridgeStatus }> = ({ status }) => 
 
     return (
         <div className='p-3 bg-zinc-800 rounded-lg border border-zinc-700 space-y-2 mt-4'>
-            <p className='font-semibold text-zinc-400'>Bridge Status:</p>
+            <p className='font-semibold text-white'>Bridge Status:</p>
 
             <div className={`text-sm ${getStatusColor(1)}`}>
                 {status.step > 1
