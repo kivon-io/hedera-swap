@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { erc20Abi, formatUnits } from "viem";
+import { erc20Abi, formatUnits, type Address } from "viem";
 import {type NetworkOption } from "@/config/networks";
 import { useReadContract, useBalance } from "wagmi"
 import { Hbar } from "@hashgraph/sdk";
@@ -26,7 +26,7 @@ export function useEthBalance(address?: `0x${string}`) {
   return data?.formatted; 
 }
 
-export function useErc20TokenBalance(tokenAddress:any, walletAddress:any) {
+export function useErc20TokenBalance(tokenAddress:Address, walletAddress:Address) {
   
   const { data: decimals } = useReadContract({
     address: tokenAddress,
@@ -124,7 +124,11 @@ export function safeHbar(amount:number | string) {
 
   try {
     return Hbar.fromString(rounded);
-  } catch (err:any) {
-    throw new Error(`Invalid HBAR amount "${amount}": ${err.message}`);
+  } catch (err:unknown) {
+     if (err instanceof Error) {
+      throw new Error(`Invalid HBAR amount "${amount}": ${err.message}`);
+     }else {
+      console.error('Unknown error', err);
+    }
   }
 }

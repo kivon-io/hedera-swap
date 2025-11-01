@@ -226,17 +226,26 @@ export default function BridgeForm() {
               setApprovalTxHash(undefined) // Reset approval hash
               notifyBackend(hash, toNetwork, toToken, hbarAmount, receivingAddress, setBridgeStatus, setWithdrawalTxHash)
             },
-            onError: (e: any) => {
-              setApprovalTxHash(undefined) // Reset hash on failure
-              const errMsg = e?.shortMessage || e.message
-  
+            onError: (e: unknown) => {
+              setApprovalTxHash(undefined); // Reset hash on failure
+
+              let errMsg: string;
+
+              if (e instanceof Error) {
+                errMsg = e.message;
+              } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+                // @ts-ignore shortMessage might exist
+                errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+              } else {
+                errMsg = "Unknown error";
+              }
+
               setBridgeStatus({
                 step: 2,
                 message: "❌ Transaction failed/rejected.",
                 error: errMsg,
-              })
-              // 🧹 Optional: clear the deposit TX hash if failed/rejected
-              setDepositTxHash("")
+              });
+              setDepositTxHash(""); // Optional cleanup
             },
           }
         )
@@ -257,8 +266,8 @@ export default function BridgeForm() {
 
 
     const handleBridge = async () => {
-      let liquidityBalance : any;
-      liquidityBalance = await fetchHederaBalance(CONTRACT_ADDRESSES[toNetwork]);
+      
+      const liquidityBalance = await fetchHederaBalance(CONTRACT_ADDRESSES[toNetwork]);
       const { nativeBalance } = liquidityBalance;
       if( hbarAmount > Number(nativeBalance) ){
         setBalalanceMsg("Amount too large for bridge. Reduce amount or try later."); 
@@ -327,36 +336,71 @@ export default function BridgeForm() {
                     })
                     setApprovalTxHash(hash) // Save hash to monitor confirmation
                   },
-                  onError: (e: any) => {
-                    setIsApproving(false)
-                    const errMsg = e?.shortMessage || e.message
+                  onError: (e: unknown) => {
+                    setIsApproving(false);
+                    let errMsg: string;
+                    if (e instanceof Error) {
+                      // Standard Error object
+                      errMsg = e.message;
+                    } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+                      // @ts-ignore: we know shortMessage might exist
+                      errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+                    } else {
+                      errMsg = "Unknown error";
+                    }
+
                     setBridgeStatus({
                       step: 1,
                       message: "❌ Approval failed/rejected.",
                       error: errMsg,
-                    })
+                    });
                   },
                 }
               )
               return // Stop here, waiting for approval TX
-            } catch (e: any) {
-              setIsApproving(false)
-              const errMsg = e?.shortMessage || e.message
-              setBridgeStatus({ step: 1, message: "❌ Prepare approval failed.", error: errMsg })
-              return
+            } catch (e: unknown) {
+              setIsApproving(false);
+              let errMsg: string;
+              if (e instanceof Error) {
+                errMsg = e.message; // standard Error
+              } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+                // library-specific error object
+                // @ts-ignore
+                errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+              } else {
+                errMsg = "Unknown error";
+              }
+              setBridgeStatus({
+                step: 1,
+                message: "❌ Prepare approval failed.",
+                error: errMsg,
+              });
+              return;
             }
           }
           setIsApproving(false) // Allowance is sufficient, proceed to deposit
         }
         // --- 5. EVM DEPOSIT (Called if native OR ERC20 approval is sufficient/completed) ---
         handleDepositTx(value)
-      } catch (e: any) {
-        const errMsg = e?.shortMessage || e.message
+      } catch (e: unknown) {
+        let errMsg: string;
+
+        if (e instanceof Error) {
+          // standard Error object
+          errMsg = e.message;
+        } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+          // some libraries throw objects with shortMessage
+          // @ts-ignore
+          errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+        } else {
+          errMsg = "Unknown error";
+        }
+
         setBridgeStatus({
           step: 2,
           message: "❌ Prepare transaction failed.",
           error: errMsg,
-        })
+        });
       }
     }
     
@@ -366,11 +410,12 @@ export default function BridgeForm() {
   useEffect(() => {
     // Triggers deposit ONLY if approval is confirmed and we are still in step 1 (waiting state)
     if (isApprovalConfirmed && bridgeStatus?.step === 1 && approvalTxHash) {
-      setBridgeStatus((prev: any) => ({
-        ...prev!,
-        message: "Step 1/3: Approval confirmed. Preparing deposit...",
-        txHash: approvalTxHash,
-      }))
+
+    setBridgeStatus((prev: BridgeStatus | null) => ({
+      ...prev!,
+      message: "Step 1/3: Approval confirmed. Preparing deposit...",
+      txHash: approvalTxHash,
+    }));
       // Refetch allowance immediately to update hook status
       refetchAllowance()
       // Trigger the deposit transaction
@@ -384,7 +429,7 @@ export default function BridgeForm() {
   useEffect(() => {
     if (isConfirming && !confirmingHandledRef.current) {
       confirmingHandledRef.current = true
-      setBridgeStatus((prev: any) => ({
+      setBridgeStatus((prev:  BridgeStatus | null) => ({
         ...prev!,
         message: "Step 2/3: Transaction is confirming on the From Network...",
       }))
@@ -461,7 +506,7 @@ export default function BridgeForm() {
     setBridgeStatus(null)
   }
 
-  const tokenBalance = useErc20TokenBalance(TOKENS[fromNetwork][fromToken].address, evmAddress);
+  const tokenBalance = useErc20TokenBalance(TOKENS[fromNetwork][fromToken].address as Address, evmAddress as Address);
   const ethBalance = useEthBalance(evmAddress);
   useEffect(() => {
       setBalalanceMsg("");
