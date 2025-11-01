@@ -343,7 +343,7 @@ export default function BridgeForm() {
                       // Standard Error object
                       errMsg = e.message;
                     } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
-                      // @ts-ignore: we know shortMessage might exist
+                      
                       errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
                     } else {
                       errMsg = "Unknown error";
@@ -365,7 +365,7 @@ export default function BridgeForm() {
                 errMsg = e.message; // standard Error
               } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
                 // library-specific error object
-                // @ts-ignore
+             
                 errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
               } else {
                 errMsg = "Unknown error";
@@ -390,7 +390,7 @@ export default function BridgeForm() {
           errMsg = e.message;
         } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
           // some libraries throw objects with shortMessage
-          // @ts-ignore
+          
           errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
         } else {
           errMsg = "Unknown error";
