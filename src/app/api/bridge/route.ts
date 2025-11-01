@@ -4,7 +4,6 @@ import {
     Client,
     PrivateKey,
     AccountId,
-    Hbar,
     TransferTransaction
 } from "@hashgraph/sdk";
 import { getEvmAddressFromAccountId, convertHederaIdToEVMAddress } from "@/helpers";
@@ -72,19 +71,20 @@ export async function POST(req: NextRequest) {
         // ----------------------------------------------------------------
         if (isNative) {
             console.log(`💸 Executing native HBAR transfer to ${recipient}...`);
-            const amountInHbar =  safeHbar(amount);
+            const amount_InHbar =  safeHbar(amount);
+
             const senderId = AccountId.fromString(OPERATOR_ID);
             const recipientId = AccountId.fromString(recipient);
 
             const tx = await new TransferTransaction()
-                .addHbarTransfer(senderId, amountInHbar.negated())
-                .addHbarTransfer(recipientId, amountInHbar)
+                .addHbarTransfer(senderId, amount_InHbar.negated())
+                .addHbarTransfer(recipientId, amount_InHbar)
                 .execute(client);
 
             const receipt = await tx.getReceipt(client);
             const txHash = tx.transactionId.toString();
 
-            console.log(`The hbar amount sent ${amountInHbar}`)
+            console.log(`The hbar amount sent ${amount_InHbar}`)
 
             return NextResponse.json(
                 {

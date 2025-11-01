@@ -11,7 +11,7 @@ import {
 } from "@buidlerlabs/hashgraph-react-wallets"
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { type Address, parseUnits, erc20Abi as ERC20_ABI, formatUnits} from "viem"
+import { type Address, parseUnits, erc20Abi as ERC20_ABI} from "viem"
 
 import {
   useAccount,
@@ -30,7 +30,7 @@ import { ArrowLeftRight } from "lucide-react"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { toReadableAmount, fetchEvmBalance, calculateGasCostInToken } from "@/helpers"
+import { calculateGasCostInToken } from "@/helpers"
 
 import { truncateHash, useErc20TokenBalance, useEthBalance, convertTokenByUSD, checkTokenAssociation } from "@/helpers/token"
 import { NETWORKS, CHAIN_IDS, CONTRACT_ADDRESSES, type NetworkOption } from "@/config/networks";

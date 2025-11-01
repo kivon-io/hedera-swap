@@ -128,7 +128,7 @@ export function safeHbar(amount:number | string) {
      if (err instanceof Error) {
       throw new Error(`Invalid HBAR amount "${amount}": ${err.message}`);
      }else {
-      console.error('Unknown error', err);
+      throw new Error(`Unknown error parsing HBAR amount: ${err}`);
     }
   }
 }
