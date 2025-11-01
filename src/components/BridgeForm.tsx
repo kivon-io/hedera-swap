@@ -234,7 +234,7 @@ export default function BridgeForm() {
               if (e instanceof Error) {
                 errMsg = e.message;
               } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
-                // @ts-ignore shortMessage might exist
+                
                 errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
               } else {
                 errMsg = "Unknown error";
