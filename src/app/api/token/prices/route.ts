@@ -5,9 +5,11 @@ const COINGECKO_IDS = {
   ETH: 'ethereum',
   BNB: 'binancecoin', // CoinGecko ID for BNB
   HBAR: 'hedera-hashgraph', // CoinGecko ID for HBAR
+  CLXY: 'calaxy', 
+  SAUCE: 'saucerswap',
 };
 // All symbols whose prices we need to return
-const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDCt'];
+const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDCt', 'CLXY', 'SAUCE', 'DAI'];
 
 export async function GET() {
 
@@ -34,7 +36,10 @@ export async function GET() {
       ETH: data['ethereum']?.usd || 0,
       BNB: data['binancecoin']?.usd || 0,
       HBAR: data['hedera-hashgraph']?.usd || 0,
-      
+      CLXY: data['calaxy']?.usd || 0, 
+      // SAUCE: data['saucerswap']?.usd || 0,
+      SAUCE:0.00032949,
+      DAI: 2.18,
       // Hardcode stablecoins to 1.00 for testing
       USDCt: 1.00, 
     };
