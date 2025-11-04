@@ -78,14 +78,15 @@ export default function LiquidityDashboard() {
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
-        .addHbarTransfer(accountId, hbarAmount.negated())
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+        .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
       // @ts-ignore: HWBridgeSigner is compatible at runtime
       const signedTx = await tx.freezeWithSigner(hederaSigner);
       // @ts-ignore: HWBridgeSigner is compatible at runtime
       const result = await signedTx.executeWithSigner(hederaSigner);
 
-      setTxStatus("Transaction sent! Recording in backend...");
+      setTxStatus("Transaction sent! Recording data");
 
       // ✅ Notify backend
       const backendRes = await fetch("/api/liquidity/add", {
@@ -153,8 +154,6 @@ export default function LiquidityDashboard() {
       setTimeout(() => setTxStatus(null), 8000);
     }
   }
-
-
 
 
   return (

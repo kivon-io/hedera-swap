@@ -116,7 +116,8 @@ export default function AdminPage() {
       }
       const hbarAmount = new Hbar(amount);
       const transaction = new TransferTransaction()
-        .addHbarTransfer(accountId, hbarAmount.negated())
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+        .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
       setTxStatus("Awaiting Hedera wallet confirmation...");
