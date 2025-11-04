@@ -143,6 +143,13 @@ export default function AdminPage() {
     }
   };
 
+
+  const withdrawProfit = async () => {
+    setIsProcessing(true);
+    setTxStatus("Withdrawing pool profit...");      
+
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-2xl font-bold mb-6 text-center">
@@ -246,7 +253,7 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto mt-10">
         <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className="text-lg font-semibold mb-4 text-green-700">
-            Pool Profit Summary
+            Pool Profit
           </h2>
 {/* 
           <p className="text-gray-700 text-sm mb-2">
@@ -257,14 +264,14 @@ export default function AdminPage() {
             💵 Total Pool Profit: {profit.toFixed(4)} HBAR
           </div>
 
-          {/* <Button
-            onClick={fetchFees}
+          <Button
+            onClick={withdrawProfit}
             variant="outline"
             className="mt-4"
             disabled={isProcessing}
           >
-            Refresh Profit Data
-          </Button> */}
+            Withdraw Profit
+          </Button>
         </Card>
       </div>
 
