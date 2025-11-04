@@ -175,11 +175,11 @@ export default function AdminPage() {
           )}
 
           <div className="mt-4 text-sm text-gray-600">
-            <p>
+            {/* <p>
               <strong>Account:</strong> {accountId || "N/A"}
-            </p>
+            </p> */}
             <p>
-              <strong>HBAR Balance:</strong>{" "}
+              <strong>POOL Balance:</strong>{" "}
               {loading ? "Loading..." : `${balances.hedera.toFixed(4)} HBAR`}
             </p>
           </div>
