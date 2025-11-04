@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { TransferTransaction, Hbar } from "@hashgraph/sdk";
+import { TransferTransaction, Hbar, Signer } from "@hashgraph/sdk";
 
 // ✅ Hedera Contract
 const POOL_ADDRESS = "0.0.6987678";
@@ -82,9 +82,14 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error("Failed to update fees");
       setTxStatus("✅ Fees updated successfully!");
-    } catch (err: any) {
-      console.error("Fee update error:", err);
-      setTxStatus(`❌ ${err.message}`);
+    }catch (err: unknown) {
+      let errorMessage = "An unexpected error occurred";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      console.error("Fee update error:", errorMessage);
+      setTxStatus(`❌ ${errorMessage}`);
     } finally {
       setIsProcessing(false);
       setTimeout(() => setTxStatus(null), 6000);
@@ -101,7 +106,7 @@ export default function AdminPage() {
     setIsProcessing(true);
     setTxStatus("Initiating Hedera transaction...");
 
-    const hederaSigner = signer as any;
+    const hederaSigner = signer as unknown as Signer;
 
     try {
       if (!isHederaWalletReady || !hederaSigner) {
@@ -126,12 +131,16 @@ export default function AdminPage() {
 
       setTxStatus(`✅ Hedera Transaction Successful`);
       await fetchBalances();
-    } catch (error: any) {
-      const message =
-        error?.message || "An unknown error occurred during the transaction.";
-      setTxStatus(`❌ Error: ${message}`);
-      console.error("Add Liquidity Error:", error);
-    } finally {
+    } catch (error: unknown) {
+        let message = "An unknown error occurred during the transaction.";
+
+        if (error instanceof Error) {
+          message = error.message;
+        }
+
+        setTxStatus(`❌ Error: ${message}`);
+        console.error("Add Liquidity Error:", error);
+    }finally {
       setIsProcessing(false);
       setTimeout(() => setTxStatus(null), 8000);
     }

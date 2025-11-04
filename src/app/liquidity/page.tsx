@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { TransferTransaction, Hbar } from "@hashgraph/sdk";
+import { TransferTransaction, Hbar, Signer } from "@hashgraph/sdk";
 
 interface LiquidityHistoryItem {
   amount: number;
@@ -22,13 +22,14 @@ interface UserLiquidityData {
 
 const POOL_ADDRESS = "0.0.6987678";
 
+
 export default function LiquidityDashboard() {
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [txStatus, setTxStatus] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
   const [profit, setProfit] = useState(0);
-  const [history, setHistory] = useState<LiquidityHistoryItem[]>([]);
+  // const [history, setHistory] = useState<LiquidityHistoryItem[]>([]);
 
   const { signer, isConnected } = useWallet();
   const { data: accountId } = useAccountId();
@@ -44,7 +45,7 @@ export default function LiquidityDashboard() {
       const data: UserLiquidityData = await res.json();
       setBalance(data.total_liquidity ?? 0);
       setProfit(data.profit ?? 0);
-      setHistory(data.history ?? []);
+      // setHistory(data.history ?? []);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unexpected error occurred";
@@ -74,7 +75,7 @@ export default function LiquidityDashboard() {
     setTxStatus("Preparing Hedera transaction...");
 
     try {
-      const hederaSigner = signer as any;
+      const hederaSigner = signer as unknown as Signer;
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
