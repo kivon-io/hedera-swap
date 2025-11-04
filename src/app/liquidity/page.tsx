@@ -55,8 +55,8 @@ export default function LiquidityDashboard() {
   }
 
   useEffect(() => {
-    if (accountId) void fetchUserData();
-  }, [accountId]);
+    if (accountId) fetchUserData();
+  }, [accountId, fetchUserData]);
 
   // ✅ Add liquidity safely
   async function handleAddLiquidity(): Promise<void> {
