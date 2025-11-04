@@ -12,6 +12,22 @@ import { TransferTransaction, Hbar, Signer } from "@hashgraph/sdk";
 // ✅ Hedera Contract
 const POOL_ADDRESS = "0.0.6987678";
 
+    // Runtime type guard
+  function isHederaSigner(obj: unknown): obj is { 
+    getAccountId: () => string;
+    freezeWithSigner: (tx: TransferTransaction) => Promise<any>;
+    executeWithSigner: (tx: TransferTransaction) => Promise<any>;
+  } {
+    return (
+      obj !== null &&
+      typeof obj === "object" &&
+      obj !== undefined &&
+      "getAccountId" in obj &&
+      "freezeWithSigner" in obj &&
+      "executeWithSigner" in obj
+    );
+  }
+
 export default function AdminPage() {
   const [hederaAmount, setHederaAmount] = useState("");
   const [balances, setBalances] = useState({ hedera: 0 });
@@ -26,8 +42,6 @@ export default function AdminPage() {
   const { data: accountId } = useAccountId();
 
   const isHederaWalletReady = isHederaConnected && signer && accountId;
-
- 
 
   // ✅ Fetch balance
   async function fetchBalances() {
@@ -106,9 +120,16 @@ export default function AdminPage() {
     setIsProcessing(true);
     setTxStatus("Initiating Hedera transaction...");
 
-    const hederaSigner = signer as unknown as Signer;
+
+    if (!isHederaSigner(signer)) {
+        setTxStatus("⚠️ Connected wallet is not a Hedera wallet.");
+        return;
+    }
+
+    const hederaSigner = signer;
 
     try {
+
       if (!isHederaWalletReady || !hederaSigner) {
         throw new Error("Hedera wallet not connected or signer unavailable.");
       }
@@ -126,8 +147,8 @@ export default function AdminPage() {
 
       setTxStatus("Awaiting Hedera wallet confirmation...");
 
-      const signTx = await transaction.freezeWithSigner(hederaSigner);
-      await signTx.executeWithSigner(hederaSigner);
+      const signTx = await transaction.freezeWithSigner(hederaSigner as any);
+      await signTx.executeWithSigner(hederaSigner as any);
 
       setTxStatus(`✅ Hedera Transaction Successful`);
       await fetchBalances();

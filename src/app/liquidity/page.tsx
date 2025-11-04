@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { TransferTransaction, Hbar, Signer } from "@hashgraph/sdk";
+import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
 interface LiquidityHistoryItem {
   amount: number;
@@ -21,6 +21,24 @@ interface UserLiquidityData {
 }
 
 const POOL_ADDRESS = "0.0.6987678";
+
+// Runtime type guard
+function isHederaSigner(obj: unknown): obj is { 
+  getAccountId: () => string;
+  freezeWithSigner: (tx: TransferTransaction) => Promise<any>;
+  executeWithSigner: (tx: TransferTransaction) => Promise<any>;
+} {
+  return (
+    obj !== null &&
+    typeof obj === "object" &&
+    obj !== undefined &&
+    "getAccountId" in obj &&
+    "freezeWithSigner" in obj &&
+    "executeWithSigner" in obj
+  );
+}
+
+
 
 
 export default function LiquidityDashboard() {
@@ -75,15 +93,21 @@ export default function LiquidityDashboard() {
     setTxStatus("Preparing Hedera transaction...");
 
     try {
-      const hederaSigner = signer as unknown as Signer;
+
+    if (!isHederaSigner(signer)) {
+        setTxStatus("⚠️ Connected wallet is not a Hedera wallet.");
+      return;
+    }
+
+      const hederaSigner = signer;
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
         .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
-      const signedTx = await tx.freezeWithSigner(hederaSigner);
-      const result = await signedTx.executeWithSigner(hederaSigner);
+      const signedTx = await tx.freezeWithSigner(hederaSigner as any);
+      const result = await signedTx.executeWithSigner(hederaSigner as any);
 
       setTxStatus("Transaction sent! Recording in backend...");
 
