@@ -12,6 +12,7 @@ import { ButtonGroup } from "./ui/button-group"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Separator } from "./ui/separator"
 import { useAutoConnect } from '@/hooks/useAutoConnect'; 
+import { useAccount } from 'wagmi';
 
 const Header = () => {
   return (
@@ -34,7 +35,7 @@ const Header = () => {
 export default Header
 
 const EVMWallet = () => {
-  const { address, connect, disconnectWallet } = useEvmWallet()
+  const { address, connect} = useEvmWallet()
   const [mounted, setMounted] = useState(false)
   const { isConnected, guardedDisconnect } = useAutoConnect();
 

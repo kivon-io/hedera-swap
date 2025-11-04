@@ -11,6 +11,7 @@ import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
 //Hedera Contract
 const POOL_ADDRESS = "0.0.6987678";
+const ADMIN = "0.0.7096962"; 
 
 export default function AdminPage() {
   const [hederaAmount, setHederaAmount] = useState("");
@@ -99,6 +100,8 @@ export default function AdminPage() {
     fetchFees();
   }, []);
 
+
+
   // ✅ Add liquidity (HBAR transfer)
   const handleAddLiquidity = async () => {
     setIsProcessing(true);
@@ -145,13 +148,52 @@ export default function AdminPage() {
 
 
   const withdrawProfit = async () => {
+    if (!accountId) {
+      setTxStatus("⚠️ Please connect your wallet first.");
+      return;
+    }
     setIsProcessing(true);
-    setTxStatus("Withdrawing pool profit...");      
+    setTxStatus("⏳ Withdrawing pool profit...");
 
+    try {
+      const payload = {
+        recipient: accountId, // user's wallet/accountId
+        amount: profit,       // or whatever amount you’re withdrawing
+        type: "admin"
+      };
+
+      // Call your Next.js API route
+      const res = await fetch("/api/liquidity/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Withdrawal failed: ${text}`);
+      }
+      const data = await res.json();
+      setTxStatus(`✅ ${data.message || "Withdrawal successful!"}`);
+      // Optionally refresh user data
+      await fetchFees();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("Withdraw error:", message);
+      setTxStatus(`❌ Withdrawal failed: ${message}`);
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setTxStatus(null), 8000);
+    }
+  };
+  
+  if( !isHederaWalletReady || accountId != ADMIN ){
+    return <div>Unauthorized</div>
   }
-
   return (
     <main className="min-h-screen bg-gray-50 p-8">
+
+      
       <h1 className="text-2xl font-bold mb-6 text-center">
         Hedera Admin Liquidity Panel
       </h1>
@@ -268,7 +310,7 @@ export default function AdminPage() {
             onClick={withdrawProfit}
             variant="outline"
             className="mt-4"
-            disabled={isProcessing}
+            disabled={isProcessing || profit <= 0}
           >
             Withdraw Profit
           </Button>
