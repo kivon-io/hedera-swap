@@ -9,25 +9,8 @@ import { Label } from "@/components/ui/label";
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
 import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
-// ✅ Hedera Contract
-  const POOL_ADDRESS = "0.0.6987678";
-
-    // Runtime type guard
-  function isHederaSigner(obj: unknown): obj is {
-    getAccountId: () => string;
-    freezeWithSigner: Function;
-    executeWithSigner: Function;
-  } {
-    return (
-      obj !== null &&
-      typeof obj === "object" &&
-      obj !== undefined &&
-      // allow inherited properties
-      typeof (obj as any).getAccountId === "function" &&
-      typeof (obj as any).freezeWithSigner === "function" &&
-      typeof (obj as any).executeWithSigner === "function"
-    );
-  }
+//Hedera Contract
+const POOL_ADDRESS = "0.0.6987678";
 
 export default function AdminPage() {
   const [hederaAmount, setHederaAmount] = useState("");
@@ -137,9 +120,10 @@ export default function AdminPage() {
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
       setTxStatus("Awaiting Hedera wallet confirmation...");
-
-      const signTx = await transaction.freezeWithSigner(hederaSigner as any);
-      await signTx.executeWithSigner(hederaSigner as any);
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      const signTx = await transaction.freezeWithSigner(hederaSigner);
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      await signTx.executeWithSigner(hederaSigner);
 
       setTxStatus(`✅ Hedera Transaction Successful`);
       await fetchBalances();

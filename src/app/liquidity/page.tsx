@@ -74,18 +74,16 @@ export default function LiquidityDashboard() {
     setTxStatus("Preparing Hedera transaction...");
 
     try {
-
-
-
       const hederaSigner = signer; 
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
         .addHbarTransfer(accountId, hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
-
-      const signedTx = await tx.freezeWithSigner(hederaSigner as any);
-      const result = await signedTx.executeWithSigner(hederaSigner as any);
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      const signedTx = await tx.freezeWithSigner(hederaSigner);
+      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      const result = await signedTx.executeWithSigner(hederaSigner);
 
       setTxStatus("Transaction sent! Recording in backend...");
 
