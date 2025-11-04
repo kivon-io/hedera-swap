@@ -81,35 +81,38 @@ async function main() {
   }
 
   // 4) Execute swapExactETHForTokens (payable)
-const slippage = 0.005; // 0.5%
-const amounts = await router.getAmountsOut(amountIn, path);
-const amountOutMin = amounts[1] - (amounts[1] * BigInt(Math.floor(slippage * 1000)) / 1000n)
+// const slippage = 0.005; // 0.5%
+// const amounts = await router.getAmountsOut(amountIn, path);
+// const amountOutMin = amounts[1] - (amounts[1] * BigInt(Math.floor(slippage * 1000)) / 1000n)
 
-  const to = await wallet.getAddress();
-  const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes
-  console.log(`Swapping ${amountInHBAR} HBAR -> token (path[0]=whbar token).`);
-  try {
-    const tx = await router.swapExactETHForTokens(
-      amountOutMin,
-      path,
-      to,
-      deadline,
-      {
-        value: amountIn,
-        gasLimit: 1000000n, // bump if needed (Hedera needs explicit gas)
-      }
-    );
-    console.log("Tx submitted:", tx.hash);
-    const receipt = await tx.wait();
-    console.log("the full receipt")
-    console.log(receipt)
-    console.log("Tx confirmed:", receipt.hash, "block:", receipt.blockNumber);
-  } catch (err) {
-    console.error("Swap failed:", err);
-    // If revert, print helpful pieces:
-    if (err?.reason) console.error("Revert reason:", err.reason);
-    if (err?.data) console.error("Revert data:", err.data);
-  }
+//   const to = await wallet.getAddress();
+//   const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes
+//   console.log(`Swapping ${amountInHBAR} HBAR -> token (path[0]=whbar token).`);
+
+//   console.log(`The amount out value ${amountOutMin}`)
+
+  // try {
+  //   const tx = await router.swapExactETHForTokens(
+  //     amountOutMin,
+  //     path,
+  //     to,
+  //     deadline,
+  //     {
+  //       value: amountIn,
+  //       gasLimit: 1000000n, // bump if needed (Hedera needs explicit gas)
+  //     }
+  //   );
+  //   console.log("Tx submitted:", tx.hash);
+  //   const receipt = await tx.wait();
+  //   console.log("the full receipt")
+  //   console.log(receipt)
+  //   console.log("Tx confirmed:", receipt.hash, "block:", receipt.blockNumber);
+  // } catch (err) {
+  //   console.error("Swap failed:", err);
+  //   // If revert, print helpful pieces:
+  //   if (err?.reason) console.error("Revert reason:", err.reason);
+  //   if (err?.data) console.error("Revert data:", err.data);
+  // }
 }
 
 main().catch((e)=>{ console.error("Fatal:", e); });

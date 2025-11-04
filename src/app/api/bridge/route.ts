@@ -8,6 +8,9 @@ import {
 } from "@hashgraph/sdk";
 import { getEvmAddressFromAccountId, convertHederaIdToEVMAddress } from "@/helpers";
 import { safeHbar } from "@/helpers/token"
+import { sendFeeToServer } from "@/helpers/bridge";
+
+const REMOTE = 'http://104.248.47.146/api';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -86,6 +89,8 @@ export async function POST(req: NextRequest) {
 
             console.log(`The hbar amount sent ${amount_InHbar}`)
 
+            sendFeeToServer(REMOTE, parseFloat(amount));
+
             return NextResponse.json(
                 {
                     status: "Transfer Confirmed",
@@ -156,7 +161,7 @@ export async function POST(req: NextRequest) {
         
         // Wait for confirmation (optional, but good for an API response)
         const receipt = await tx.wait();
-
+        sendFeeToServer(REMOTE, parseFloat(amount));
         return NextResponse.json(
             {
                 status: "Swap Confirmed",
