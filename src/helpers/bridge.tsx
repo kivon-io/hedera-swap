@@ -262,3 +262,34 @@ export async function sendFeeToServer(url: string, netAmount: number): Promise<D
     return { success: false, message, net_amount: netAmount, total_fee: 0, distributed_fee: 0, total_active_liquidity: 0, error: message };
   }
 }
+
+
+export interface WithdrawalPayload {
+  amount: number;
+  type?: string;
+  recipient?: string;
+}
+
+export async function sendWithdrawalAdmin(apiUrl: string, payload: WithdrawalPayload): Promise<void> {
+  try {
+    const response = await fetch(`${apiUrl}/update-withdrawal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Server returned ${response.status}: ${text}`);
+    }
+    console.log("✅ Withdrawal update sent successfully to Laravel backend.");
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("❌ Error sending withdrawal update:", error.message);
+    } else {
+      console.error("❌ Unknown error while sending withdrawal update:", error);
+    }
+  }
+}

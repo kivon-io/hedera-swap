@@ -129,10 +129,15 @@ export default function LiquidityDashboard() {
     setTxStatus("Processing withdrawal...");
 
     try {
+      const payload = {
+        recipient: accountId, // user's wallet/accountId
+        amount: profit,       // or whatever amount you’re withdrawing
+        type: "user"
+      };
       const res = await fetch("/api/liquidity/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: accountId }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error(`Withdraw failed with ${res.status}`);
@@ -210,13 +215,13 @@ export default function LiquidityDashboard() {
             <strong>Profit:</strong> {profit.toFixed(3)} HBAR
           </p>
 
-          {/* <Button
+          <Button
             variant="outline"
             onClick={handleWithdrawProfit}
             disabled={isProcessing || profit <= 0}
           >
             Withdraw Profit
-          </Button> */}
+          </Button>
         </Card>
 
         {/* History Section */}
