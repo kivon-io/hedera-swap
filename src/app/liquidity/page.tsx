@@ -78,12 +78,12 @@ export default function LiquidityDashboard() {
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
         .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
       const signedTx = await tx.freezeWithSigner(hederaSigner);
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
       const result = await signedTx.executeWithSigner(hederaSigner);
 
       setTxStatus("Transaction sent! Recording data");

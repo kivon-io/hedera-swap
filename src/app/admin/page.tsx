@@ -116,14 +116,14 @@ export default function AdminPage() {
       }
       const hbarAmount = new Hbar(amount);
       const transaction = new TransferTransaction()
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
         .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
       setTxStatus("Awaiting Hedera wallet confirmation...");
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
       const signTx = await transaction.freezeWithSigner(hederaSigner);
-      // @ts-ignore: HWBridgeSigner is compatible at runtime
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
       await signTx.executeWithSigner(hederaSigner);
 
       setTxStatus(`✅ Hedera Transaction Successful`);
