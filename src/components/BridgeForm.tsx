@@ -609,7 +609,7 @@ useEffect(() => {
                     <SelectValue placeholder='Select network' />
                   </SelectTrigger>
                   <SelectContent>
-                    {NETWORKS.map((net) => (
+                    {NETWORKS.map((net) => ( net != 'hedera' &&
                       <SelectItem key={net} value={net}>
                         {net.toUpperCase()}
                       </SelectItem>
