@@ -223,3 +223,42 @@ export const BridgeStatusTracker: React.FC<BridgeStatusTrackerProps> = ({
         </div>
     )
 }
+
+
+
+
+interface DistributeFeeResponse {
+  success: boolean;
+  message: string;
+  net_amount: number;
+  total_fee: number;
+  distributed_fee: number;
+  total_active_liquidity: number;
+  error?: string;
+}
+
+export async function sendFeeToServer(url: string, netAmount: number): Promise<DistributeFeeResponse> {
+  try {
+    if (netAmount <= 0) {
+      throw new Error("Net amount must be greater than 0");
+    }
+
+    const res = await fetch(`${url}/distribute-fee`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ net_amount: netAmount }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server responded with status ${res.status}`);
+    }
+
+    const data: DistributeFeeResponse = await res.json();
+    return data;
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    console.error("Error sending fee:", message);
+    return { success: false, message, net_amount: netAmount, total_fee: 0, distributed_fee: 0, total_active_liquidity: 0, error: message };
+  }
+}

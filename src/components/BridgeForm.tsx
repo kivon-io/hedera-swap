@@ -37,11 +37,6 @@ import { NETWORKS, CHAIN_IDS, CONTRACT_ADDRESSES, type NetworkOption } from "@/c
 import { TOKENS } from "@/config/tokens";
 import { type BridgeStatus, BridgeStatusTracker, getButtonText, notifyBackend } from "@/helpers/bridge"
 
-
-const PROTOCOL_FEE_PERCENT = 2
-const PROTOCOL_FEE_RATE = PROTOCOL_FEE_PERCENT / 100
-const DEDUCE_FEE_RATE = 1 - PROTOCOL_FEE_RATE
-
 type TokenPrices = Record<string, number>
 
 
@@ -65,8 +60,11 @@ export default function BridgeForm() {
   const receivingAddress = hederaAccount ? hederaAccount.toString() : null;
   const { associateTokens } = useAssociateTokens();
 
+  
+
 
   // --- STATE ---
+  const [PROTOCOL_FEE_PERCENT, setProtocalFee] = useState(0); 
   const [fromNetwork, setFromNetwork] = useState<NetworkOption>("ethereum")
   const [toNetwork, setToNetwork] = useState<NetworkOption>("hedera")
   const [fromToken, setFromToken] = useState<string>("ETH")
@@ -83,6 +81,9 @@ export default function BridgeForm() {
   const [approvalTxHash, setApprovalTxHash] = useState< Address | undefined>(undefined)
   const [networkFee, setNetworkFee] = useState<number>(0);
 
+  const PROTOCOL_FEE_RATE = PROTOCOL_FEE_PERCENT / 100
+  const DEDUCE_FEE_RATE = 1 - PROTOCOL_FEE_RATE
+
 
   const units = TOKENS[fromNetwork][fromToken]?.decimals || 18;
   const value = useMemo(() => {
@@ -92,14 +93,28 @@ export default function BridgeForm() {
 
   const [balanceMsg, setBalalanceMsg] = useState(""); 
 
+
+    // ✅ Fetch fees
+  async function fetchFees() {
+    try {
+      const res = await fetch("/api/fee");
+      const data = await res.json();
+      return data.data.fee_pct ?? 0; 
+    } catch (err) {
+      console.error("Error fetching fees:", err);
+    }
+  }
+
   
   // Price Fetching
   useEffect(() => {
     const loadPrices = async () => {
       setIsPriceLoading(true)
       try {
-        const fetchedPrices = await fetchTokenPrices()
-        setPrices(fetchedPrices)
+        const fetchedPrices = await fetchTokenPrices(); 
+        const fee = await fetchFees();
+        setPrices(fetchedPrices); 
+        setProtocalFee(fee); 
       } catch (error) {
         console.error("Failed to fetch token prices:", error)
       } finally {

@@ -4,95 +4,45 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { type Address, parseEther } from "viem";
-import {
-  useAccount,
-  useChainId,
-  useSendTransaction,
-  useSwitchChain,
-} from "wagmi";
-import { sepolia, bscTestnet } from "wagmi/chains";
+import { Label } from "@/components/ui/label";
 
-import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"; 
+import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
 import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
-// Helper type for network selection
-type EVMNetworkOption = "ethereum" | "bsc";
-type NetworkOption = EVMNetworkOption | "hedera";
-
-const ETHEREUM_CHAIN_ID = sepolia.id; // Sepolia Testnet
-const BSC_CHAIN_ID = bscTestnet.id; // BSC Testnet
-
-const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
-  ethereum: "0x8A8Dbbe919f80Ca7E96A824D61763503dF15166f",
-  bsc: "0xA1C6545861c572fc44320f9A52CF1DE32Da84Ab8",
-  hedera: "0.0.7103690",
-};
+//Hedera Contract
+const POOL_ADDRESS = "0.0.6987678";
 
 export default function AdminPage() {
   const [hederaAmount, setHederaAmount] = useState("");
-  const [evmAmount, setEvmAmount] = useState("");
-  const [balances, setBalances] = useState({ hedera: 0, ethereum: 0, bsc: 0 });
-  const [loading, setLoading] = useState(false); // For balance fetching
-  // 🟢 NEW STATE: Controls button disabling during network switch or transaction
-  const [isProcessing, setIsProcessing] = useState(false); 
-  const [evmNetwork, setEvmNetwork] = useState<EVMNetworkOption>("ethereum");
-  const [txStatus, setTxStatus] = useState<string | null>(null); // For messages
+  const [balances, setBalances] = useState({ hedera: 0 });
+  const [fees, setFees] = useState({ fee_pct: 0, lp_fee_pct: 0 });
+  const [profit, setProfit] = useState(0);
 
-  // Wagmi/Viem Hooks for EVM
-  const { isConnected: isEvmConnected, chain } = useAccount();
-  const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
-  const { sendTransactionAsync } = useSendTransaction();
+  const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [txStatus, setTxStatus] = useState<string | null>(null);
 
-  // Hedera Hooks
   const { signer, isConnected: isHederaConnected } = useWallet();
   const { data: accountId } = useAccountId();
 
-  // Determine required chain ID based on selection
-  const requiredChainId =
-    evmNetwork === "ethereum" ? ETHEREUM_CHAIN_ID : BSC_CHAIN_ID;
-  const isCorrectEVMNetwork = chainId === requiredChainId;
-  const evmContractAddress = CONTRACT_ADDRESSES[evmNetwork] as Address;
-
-  // Convenience boolean to check if Hedera wallet is ready
   const isHederaWalletReady = isHederaConnected && signer && accountId;
 
-  // Function to fetch balances from your API route (omitted for brevity)
-  async function fetchBalances() { 
+  // ✅ Fetch balance
+  async function fetchBalances() {
     setLoading(true);
     try {
-      // ... (balance fetching logic) ...
-       const [hederaRes, ethRes, bscRes] = await Promise.all([
-        fetch("/api/getBalance", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chainId: "hedera", address: CONTRACT_ADDRESSES.hedera, }),
+      const res = await fetch("/api/getBalance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chainId: "hedera",
+          address: POOL_ADDRESS,
         }),
-        fetch("/api/getBalance", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chainId: "ethereum", address: CONTRACT_ADDRESSES.ethereum, }),
-        }),
-        fetch("/api/getBalance", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chainId: "bsc", address: CONTRACT_ADDRESSES.bsc, }),
-        }),
-      ]);
+      });
 
-      const hederaData = await hederaRes.json();
-      const ethData = await ethRes.json();
-      const bscData = await bscRes.json();
-
+      const data = await res.json();
       setBalances({
-        hedera: hederaData.nativeBalance ?? 0,
-        ethereum: ethData.nativeBalance ?? 0,
-        bsc: bscData.nativeBalance ?? 0,
+        hedera: data.nativeBalance ?? 0,
       });
     } catch (err) {
       console.error("Error fetching balances:", err);
@@ -101,150 +51,131 @@ export default function AdminPage() {
     }
   }
 
-  // Effect to fetch balances on initial load
+  // ✅ Fetch fees
+  async function fetchFees() {
+    try {
+      const res = await fetch("/api/fee");
+      const data = await res.json();
+      setFees({
+        fee_pct: data.data.fee_pct ?? 0,
+        lp_fee_pct: data.data.lp_fee_pct ?? 0,
+      });
+      setProfit(data.data.total_fee ?? 0);
+    } catch (err) {
+      console.error("Error fetching fees:", err);
+    }
+  }
+
+ 
+
+  // ✅ Set fees
+  async function updateFees() {
+    setIsProcessing(true);
+    try {
+      const res = await fetch("/api/fee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fees),
+      });
+
+      if (!res.ok) throw new Error("Failed to update fees");
+      setTxStatus("✅ Fees updated successfully!");
+    }catch (err: unknown) {
+      let errorMessage = "An unexpected error occurred";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      console.error("Fee update error:", errorMessage);
+      setTxStatus(`❌ ${errorMessage}`);
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setTxStatus(null), 6000);
+    }
+  }
+
   useEffect(() => {
     fetchBalances();
+    fetchFees();
   }, []);
 
-  // Handler for adding liquidity
-  const handleAddLiquidity = async (chainType: NetworkOption) => {
-    setIsProcessing(true); // 🟢 Start processing
-    setTxStatus("Initiating transaction...");
-    
-    // Cast signer once for Hedera-specific methods
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hederaSigner = signer as any; 
-    
+  // ✅ Add liquidity (HBAR transfer)
+  const handleAddLiquidity = async () => {
+    setIsProcessing(true);
+    setTxStatus("Initiating Hedera transaction...");
+    const hederaSigner = signer;
     try {
-      if (chainType === "hedera") {
-        if (!isHederaWalletReady || !hederaSigner) {
-          throw new Error("Hedera wallet not connected or signer/accountId unavailable.");
-        }
-        
-        const amount = parseFloat(hederaAmount);
-        if (isNaN(amount) || amount <= 0) {
-          throw new Error("Invalid HBAR amount.");
-        }
-        
-        const hbarAmount = new Hbar(amount);
-        
-        // 1️⃣ Construct the transaction
-        const transaction = new TransferTransaction()
-          .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated()) 
-          .addHbarTransfer(CONTRACT_ADDRESSES.hedera, hbarAmount);
 
-        setTxStatus("Awaiting Hedera wallet confirmation...");
-        
-        // 2️⃣ Freeze, sign, and execute
-        const signTx = await transaction.freezeWithSigner(hederaSigner);
-        await signTx.executeWithSigner(hederaSigner); 
-        
-        // 3️⃣ Get receipt
-        // The Signer acts as the client here
-        // await txResponse.getReceipt(hederaSigner); 
-
-        setTxStatus(`Hedera Tx Successful`);
-      } else {
-        // EVM Logic (ethereum/bsc)
-        if (!isEvmConnected) {
-          throw new Error("EVM wallet not connected.");
-        }
-        if (!isCorrectEVMNetwork) {
-          // This case should be handled by the user clicking 'Switch'
-          throw new Error(
-            `EVM wallet on wrong network. Please click 'Switch' or connect to ${evmNetwork.toUpperCase()}.`
-          );
-        }
-
-        const amount = parseFloat(evmAmount);
-        if (isNaN(amount) || amount <= 0) {
-          throw new Error("Invalid EVM amount.");
-        }
-
-        const value = parseEther(evmAmount);
-        setTxStatus(`Awaiting EVM wallet confirmation for ${evmNetwork.toUpperCase()}...`);
-
-        // Use useSendTransaction for native token transfer
-        const hash = await sendTransactionAsync({
-          to: evmContractAddress,
-          value,
-        });
-
-        setTxStatus(`Transaction submitted. Hash: ${hash}. Waiting for confirmation...`);
-        await new Promise(resolve => setTimeout(resolve, 3000)); 
-        setTxStatus(`EVM Tx Confirmed! Hash: ${hash.substring(0, 10)}...`);
+      if (!isHederaWalletReady || !hederaSigner) {
+        throw new Error("Hedera wallet not connected or signer unavailable.");
       }
 
+      const amount = parseFloat(hederaAmount);
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error("Invalid HBAR amount.");
+      }
+      const hbarAmount = new Hbar(amount);
+      const transaction = new TransferTransaction()
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
+        .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
+        .addHbarTransfer(POOL_ADDRESS, hbarAmount);
+
+      setTxStatus("Awaiting Hedera wallet confirmation...");
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
+      const signTx = await transaction.freezeWithSigner(hederaSigner);
+      // @ts-expect-error HWBridgeSigner is compatible at runtime
+      await signTx.executeWithSigner(hederaSigner);
+
+      setTxStatus(`✅ Hedera Transaction Successful`);
       await fetchBalances();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      const errorMessage =
-        error.shortMessage || error.message || "An unknown error occurred during the transaction.";
-      setTxStatus(`Error: ${errorMessage}`);
-      console.error("Add Liquidity Error:", error);
-    } finally {
-      setIsProcessing(false); // 🟢 Stop processing immediately
-      // Keep status message visible for a short time
-      setTimeout(() => setTxStatus(null), 8000); 
+    } catch (error: unknown) {
+        let message = "An unknown error occurred during the transaction.";
+
+        if (error instanceof Error) {
+          message = error.message;
+        }
+
+        setTxStatus(`❌ Error: ${message}`);
+        console.error("Add Liquidity Error:", error);
+    }finally {
+      setIsProcessing(false);
+      setTimeout(() => setTxStatus(null), 8000);
     }
   };
 
-  // Function to handle network switch
-  const handleSwitchNetwork = () => {
-    if (requiredChainId) {
-      setIsProcessing(true); // 🟢 Start processing
-      setTxStatus(`Switching to ${evmNetwork.toUpperCase()}...`);
-      switchChain(
-        { chainId: requiredChainId },
-        {
-          onError: (error) => {
-            setTxStatus(`Error switching chain: ${error.message}`);
-            setIsProcessing(false); // 🟢 Stop processing on error
-            setTimeout(() => setTxStatus(null), 8000);
-          },
-          onSuccess: () => {
-            setTxStatus(`Switched to ${evmNetwork.toUpperCase()}`);
-            setIsProcessing(false); // 🟢 Stop processing on success
-            setTimeout(() => setTxStatus(null), 8000);
-          },
-        }
-      );
-    }
-  };
+
+  const withdrawProfit = async () => {
+    setIsProcessing(true);
+    setTxStatus("Withdrawing pool profit...");      
+
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-2xl font-bold mb-6 text-center">
-        Admin Liquidity Panel
+        Hedera Admin Liquidity Panel
       </h1>
-      <hr className="my-4"/>
+      <hr className="my-4" />
 
-      <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        {/* ===================== HEDERA FORM ===================== */}
+      {/* ===================== HEDERA LIQUIDITY ===================== */}
+      <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
         <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className="text-lg font-semibold mb-4 text-purple-700">
-            Hedera Liquidity
+            Add Hedera Liquidity
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Native Token: <strong>HBAR</strong>
-          </p>
 
-          <div className="mb-4">
-            <label className="text-sm font-medium block mb-2">
-              Enter Amount
-            </label>
-            <Input
-              type="number"
-              placeholder="0.0"
-              value={hederaAmount}
-              onChange={(e) => setHederaAmount(e.target.value)}
-            />
-          </div>
+          <Label className="block text-sm mb-2">Amount (HBAR)</Label>
+          <Input
+            type="number"
+            placeholder="0.0"
+            value={hederaAmount}
+            onChange={(e) => setHederaAmount(e.target.value)}
+            className="mb-4"
+          />
 
           <Button
-            onClick={() => handleAddLiquidity("hedera")}
+            onClick={handleAddLiquidity}
             className="w-full bg-purple-600 hover:bg-purple-700"
-            // 🟢 Use isProcessing here
             disabled={!isHederaWalletReady || loading || isProcessing}
           >
             {loading || isProcessing ? "Processing..." : "Add Liquidity (HBAR)"}
@@ -252,129 +183,120 @@ export default function AdminPage() {
 
           {!isHederaConnected && (
             <p className="mt-2 text-sm text-red-500">
-              ⚠️ Hedera Wallet not connected. Please connect your HashPack or other supported wallet.
+              ⚠️ Please connect your Hedera wallet.
             </p>
-          )}
-          {isHederaConnected && !accountId && (
-             <p className="mt-2 text-sm text-red-500">
-               ⚠️ Wallet connected, but **Account ID is not available**.
-             </p>
           )}
 
           <div className="mt-4 text-sm text-gray-600">
+            {/* <p>
+              <strong>Account:</strong> {accountId || "N/A"}
+            </p> */}
             <p>
-              <strong>HBAR Account:</strong>{" "}
-              {accountId ? accountId : "N/A"}
-            </p>
-            <p>
-              <strong>HBAR Balance:</strong>{" "}
+              <strong>POOL Balance:</strong>{" "}
               {loading ? "Loading..." : `${balances.hedera.toFixed(4)} HBAR`}
             </p>
           </div>
         </Card>
-        {/* --------------------------------------------------------- */}
 
-        {/* ===================== EVM FORM ===================== */}
+        {/* ===================== FEE SETTINGS ===================== */}
         <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className="text-lg font-semibold mb-4 text-blue-700">
-            EVM Liquidity
+            Pool Fee Configuration
           </h2>
-          
-          <div className="mb-4">
-            <label className="text-sm font-medium block mb-2">
-              Select Network
-            </label>
-            <Select
-              value={evmNetwork}
-              onValueChange={(value) =>
-                setEvmNetwork(value as EVMNetworkOption)
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a network" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ethereum">Ethereum (Sepolia)</SelectItem>
-                <SelectItem value="bsc">BSC (Testnet)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500 mt-1">
-              Selected: **{evmNetwork.toUpperCase()}**
-            </p>
-          </div>
 
           <div className="mb-4">
-            <label className="text-sm font-medium block mb-2">
-              Enter Amount
-            </label>
+            <Label className="block text-sm mb-1">Protocol Fee (%)</Label>
             <Input
               type="number"
-              placeholder="0.0"
-              value={evmAmount}
-              onChange={(e) => setEvmAmount(e.target.value)}
-              // 🟢 Use isProcessing here
-              disabled={!isEvmConnected || !isCorrectEVMNetwork || isProcessing}
+              step="0.01"
+              value={fees.fee_pct}
+              onChange={(e) =>
+                setFees((f) => ({ ...f, fee_pct: parseFloat(e.target.value) }))
+              }
             />
           </div>
 
-          {!isEvmConnected && (
-            <p className="mt-2 text-sm text-red-500">
-              ⚠️ EVM Wallet not connected.
-            </p>
-          )}
-
-          {isEvmConnected && !isCorrectEVMNetwork && (
-            <>
-              <p className="mt-2 text-sm text-orange-500 mb-2">
-                ⚠️ Connected to **{chain?.name || 'an unknown chain'}**. Please
-                switch to **{evmNetwork === 'ethereum' ? 'Sepolia' : 'BSC Testnet'}** to continue.
-              </p>
-              <Button
-                onClick={handleSwitchNetwork}
-                className="w-full mb-4 bg-orange-600 hover:bg-orange-700"
-                // 🟢 Use isProcessing here
-                disabled={isProcessing}
-              >
-                {isProcessing ? "Switching..." : `Switch to ${evmNetwork === 'ethereum' ? 'Sepolia' : 'BSC Testnet'}`}
-              </Button>
-            </>
-          )}
+          <div className="mb-4">
+            <Label className="block text-sm mb-1">
+              Liquidity Provider Fee (%)
+            </Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={fees.lp_fee_pct}
+              onChange={(e) =>
+                setFees((f) => ({ ...f, lp_fee_pct: parseFloat(e.target.value) }))
+              }
+            />
+          </div>
 
           <Button
-            onClick={() => handleAddLiquidity(evmNetwork)}
+            onClick={updateFees}
+            disabled={isProcessing}
             className="w-full bg-blue-600 hover:bg-blue-700"
-            // 🟢 Use isProcessing here
-            disabled={!isEvmConnected || !isCorrectEVMNetwork || loading || isProcessing}
           >
-            {loading || isProcessing ? "Processing..." : `Add Liquidity (${evmNetwork === "ethereum" ? "ETH" : "BNB"})`}
+            {isProcessing ? "Updating..." : "Update Fees"}
           </Button>
 
           <div className="mt-4 text-sm text-gray-600">
             <p>
-              <strong>ETH Balance:</strong>{" "}
-              {loading ? "Loading..." : `${balances.ethereum.toFixed(4)} ETH`}
+              <strong>Current Protocol Fee:</strong> {fees.fee_pct}%
             </p>
             <p>
-              <strong>BNB Balance:</strong>{" "}
-              {loading ? "Loading..." : `${balances.bsc.toFixed(4)} BNB`}
+              <strong>Current LP Fee:</strong> {fees.lp_fee_pct}%
             </p>
           </div>
         </Card>
       </div>
-      <hr className="my-4"/>
 
-      <div className="text-center mt-8">
+      {/* ===================== PROFIT OVERVIEW ===================== */}
+      <div className="max-w-4xl mx-auto mt-10">
+        <Card className="p-6 bg-white shadow-md rounded-2xl">
+          <h2 className="text-lg font-semibold mb-4 text-green-700">
+            Pool Profit
+          </h2>
+{/* 
+          <p className="text-gray-700 text-sm mb-2">
+            This section displays the total accumulated profit or pool fees collected over time.
+          </p> */}
+
+          <div className="mt-3 text-lg font-semibold text-green-700">
+            💵 Total Pool Profit: {profit.toFixed(4)} HBAR
+          </div>
+
+          <Button
+            onClick={withdrawProfit}
+            variant="outline"
+            className="mt-4"
+            disabled={isProcessing}
+          >
+            Withdraw Profit
+          </Button>
+        </Card>
+      </div>
+
+      {/* ===================== STATUS + REFRESH ===================== */}
+      <div className="text-center mt-10">
         {txStatus && (
           <p
             className={`text-sm mb-4 p-2 rounded ${
-              txStatus.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+              txStatus.includes("Error") || txStatus.includes("❌")
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
             }`}
           >
             {txStatus}
           </p>
         )}
-        <Button variant="outline" onClick={fetchBalances} disabled={loading || isProcessing}>
-          {loading ? "Refreshing..." : "Refresh Balances"}
+        <Button
+          variant="outline"
+          onClick={() => {
+            fetchBalances();
+            fetchFees();
+          }}
+          disabled={loading || isProcessing}
+        >
+          {loading ? "Refreshing..." : "Refresh All Data"}
         </Button>
       </div>
     </main>

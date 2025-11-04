@@ -38,7 +38,7 @@ export async function GET() {
       HBAR: data['hedera-hashgraph']?.usd || 0,
       CLXY: data['calaxy']?.usd || 0, 
       // SAUCE: data['saucerswap']?.usd || 0,
-      SAUCE:0.00032949,
+      SAUCE:0.00029578,
       DAI: 2.18,
       // Hardcode stablecoins to 1.00 for testing
       USDCt: 1.00, 
