@@ -26,7 +26,7 @@ import {
 
 import BRIDGE_VOLT_ABI from "@/Abi/vault.json"
 import { fetchHederaBalance, fetchTokenPrices } from "@/helpers"
-import { ArrowLeftRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
@@ -639,7 +639,7 @@ useEffect(() => {
                   variant='outline'
                   className='text-zinc-600'
                 >
-                  <ArrowLeftRight className='size-4 rotate-90 md:rotate-0' />
+                  <ArrowRight className='size-4 rotate-90 md:rotate-0' />
                 </Button>
               </div>
               {/* To Network... */}
