@@ -22,25 +22,6 @@ interface UserLiquidityData {
 
 const POOL_ADDRESS = "0.0.6987678";
 
-// Runtime type guard
-function isHederaSigner(obj: unknown): obj is { 
-  getAccountId: () => string;
-  freezeWithSigner: (tx: TransferTransaction) => Promise<any>;
-  executeWithSigner: (tx: TransferTransaction) => Promise<any>;
-} {
-  return (
-    obj !== null &&
-    typeof obj === "object" &&
-    obj !== undefined &&
-    "getAccountId" in obj &&
-    "freezeWithSigner" in obj &&
-    "executeWithSigner" in obj
-  );
-}
-
-
-
-
 export default function LiquidityDashboard() {
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -94,16 +75,13 @@ export default function LiquidityDashboard() {
 
     try {
 
-    if (!isHederaSigner(signer)) {
-        setTxStatus("⚠️ Connected wallet is not a Hedera wallet.");
-      return;
-    }
 
-      const hederaSigner = signer;
+
+      const hederaSigner = signer; 
       const hbarAmount = new Hbar(amt);
 
       const tx = new TransferTransaction()
-        .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
+        .addHbarTransfer(accountId, hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
       const signedTx = await tx.freezeWithSigner(hederaSigner as any);

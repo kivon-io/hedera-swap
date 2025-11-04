@@ -7,24 +7,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { TransferTransaction, Hbar, Signer } from "@hashgraph/sdk";
+import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
 // ✅ Hedera Contract
-const POOL_ADDRESS = "0.0.6987678";
+  const POOL_ADDRESS = "0.0.6987678";
 
     // Runtime type guard
-  function isHederaSigner(obj: unknown): obj is { 
+  function isHederaSigner(obj: unknown): obj is {
     getAccountId: () => string;
-    freezeWithSigner: (tx: TransferTransaction) => Promise<any>;
-    executeWithSigner: (tx: TransferTransaction) => Promise<any>;
+    freezeWithSigner: Function;
+    executeWithSigner: Function;
   } {
     return (
       obj !== null &&
       typeof obj === "object" &&
       obj !== undefined &&
-      "getAccountId" in obj &&
-      "freezeWithSigner" in obj &&
-      "executeWithSigner" in obj
+      // allow inherited properties
+      typeof (obj as any).getAccountId === "function" &&
+      typeof (obj as any).freezeWithSigner === "function" &&
+      typeof (obj as any).executeWithSigner === "function"
     );
   }
 
@@ -119,15 +120,7 @@ export default function AdminPage() {
   const handleAddLiquidity = async () => {
     setIsProcessing(true);
     setTxStatus("Initiating Hedera transaction...");
-
-
-    if (!isHederaSigner(signer)) {
-        setTxStatus("⚠️ Connected wallet is not a Hedera wallet.");
-        return;
-    }
-
     const hederaSigner = signer;
-
     try {
 
       if (!isHederaWalletReady || !hederaSigner) {
@@ -138,11 +131,9 @@ export default function AdminPage() {
       if (isNaN(amount) || amount <= 0) {
         throw new Error("Invalid HBAR amount.");
       }
-
       const hbarAmount = new Hbar(amount);
-
       const transaction = new TransferTransaction()
-        .addHbarTransfer(hederaSigner.getAccountId(), hbarAmount.negated())
+        .addHbarTransfer(accountId, hbarAmount.negated())
         .addHbarTransfer(POOL_ADDRESS, hbarAmount);
 
       setTxStatus("Awaiting Hedera wallet confirmation...");
