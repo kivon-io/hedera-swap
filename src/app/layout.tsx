@@ -17,7 +17,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <Providers>
           <Header />
-          <main className='max-w-4xl mx-auto mt-10 px-6'>{children}</main>
+          <main className='max-w-4xl mx-auto mt-10 lg:px-6'>{children}</main>
         </Providers>
       </body>
     </html>
