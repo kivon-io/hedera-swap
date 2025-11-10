@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic"
+"use client"
+
 import BridgeForm from "@/components/BridgeForm"
 
 export default function Page() {

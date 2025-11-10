@@ -1,60 +1,26 @@
 import { NextResponse } from 'next/server';
 
-// 🎯 Token symbols mapped to their CoinGecko IDs
-const COINGECKO_IDS = {
-  ETH: 'ethereum',
-  BNB: 'binancecoin', // CoinGecko ID for BNB
-  HBAR: 'hedera-hashgraph', // CoinGecko ID for HBAR
-  CLXY: 'calaxy', 
-  SAUCE: 'saucerswap',
-};
-// All symbols whose prices we need to return
-const ALL_SYMBOLS = ['ETH', 'BNB', 'HBAR', 'USDCt', 'CLXY', 'SAUCE', 'DAI'];
+const API_URL = `${process.env.API_URL}/api/token-prices`;
 
 export async function GET() {
-
-  const idsToFetch = Object.values(COINGECKO_IDS).join(',');
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idsToFetch}&vs_currencies=usd`;
-
-  // Define a default safe (zeroed) response in case of error
-  const safeZeroPrices = ALL_SYMBOLS.reduce((acc, symbol) => ({ ...acc, [symbol]: 0 }), {});
-
   try {
-    // 1. BACKEND CALL: Fetch data from CoinGecko
-    const cgResponse = await fetch(url);
-    
-    if (!cgResponse.ok) {
-      console.error(`CoinGecko API returned status: ${cgResponse.status}`);
-      throw new Error('Failed to fetch from external price API.');
+    const response = await fetch(API_URL, { cache: 'no-store' });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch from  API.');
     }
     
-    const data = await cgResponse.json();
-
-    // 2. BACKEND PROCESSING: Structure the data
-    const prices = {
-      // Map the dynamic CoinGecko data
-      ETH: data['ethereum']?.usd || 0,
-      BNB: data['binancecoin']?.usd || 0,
-      HBAR: data['hedera-hashgraph']?.usd || 0,
-      CLXY: data['calaxy']?.usd || 0, 
-      // SAUCE: data['saucerswap']?.usd || 0,
-      SAUCE:0.00029578,
-      DAI: 2.18,
-      // Hardcode stablecoins to 1.00 for testing
-      USDCt: 1.00, 
-    };
-
-    // 3. BACKEND RESPONSE: Send the final structured data to the frontend
+    const prices = await response.json();
     return NextResponse.json(prices, { status: 200 });
-    
+
   } catch (error) {
-    console.error('Price data processing error:', error);
-    // On error, return a 500 status and the safe zero prices
+    console.error('Error fetching token prices from  backend:', error);
+    // Return a safe fallback
+    const safeZeroPrices = {
+      ETH: 0, BNB: 0, HBAR: 0, CLXY: 0, SAUCE: 0, DAI: 0, USDCt: 0,
+    };
     return NextResponse.json(
-      { 
-        message: 'Internal server error while fetching prices.', 
-        prices: safeZeroPrices 
-      }, 
+      { message: 'Failed to fetch token prices.', prices: safeZeroPrices },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 "use client"
 
-import type { TransactionType } from "@/config/bridge"
+import { TRANSACTION_TYPE, type TransactionType } from "@/config/bridge"
 import { NETWORKS_INFO, type NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
 import React, { createContext, useContext, useMemo, useState } from "react"
@@ -30,19 +30,20 @@ type BridgeContextValue = {
   networks: NetworkMetadata[]
   tokensByNetwork: Record<NetworkOption, Record<string, TokenMetadata>>
   selected: {
-    from: { network: NetworkOption; token: string }
-    to: { network: NetworkOption; token: string }
+    from: { network: NetworkOption; token: string; amount: number }
+    to: { network: NetworkOption; token: string; amount: number }
   }
   setSelectedNetwork: (type: TransactionType, network: NetworkOption) => void
   setSelectedToken: (type: TransactionType, token: string) => void
+  setAmount: (type: TransactionType, amount: number) => void
 }
 
 const BridgeContext = createContext<BridgeContextValue | undefined>(undefined)
 
 export function BridgeProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState({
-    from: { network: "ethereum" as NetworkOption, token: "ETH" },
-    to: { network: "hedera" as NetworkOption, token: "HBAR" },
+    from: { network: "ethereum" as NetworkOption, token: "ETH", amount: 0 },
+    to: { network: "hedera" as NetworkOption, token: "HBAR", amount: 0 },
   })
 
   const setSelectedNetwork = (type: TransactionType, network: NetworkOption) => {
@@ -51,11 +52,13 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
       const firstTokenSymbol =
         (TOKENS[network] as Record<string, { symbol: string }>)[firstTokenKey]?.symbol ||
         firstTokenKey
+
       return {
         ...prev,
         [type]: {
           network,
           token: prev[type].network === network ? prev[type].token : firstTokenSymbol,
+          amount: prev[type].amount, // preserve amount
         },
       }
     })
@@ -64,17 +67,32 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
   const setSelectedToken = (type: TransactionType, token: string) => {
     setSelected((prev) => ({
       ...prev,
-      [type]: { ...prev[type], token },
+      [type]: {
+        ...prev[type],
+        token,
+        amount: prev[type].amount, // preserve amount
+      },
+    }))
+  }
+
+  const setAmount = (type: TransactionType, amount: number) => {
+    setSelected((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        amount,
+      },
     }))
   }
 
   const value = useMemo<BridgeContextValue>(() => {
     return {
       networks: NETWORKS_INFO,
-      tokensByNetwork: TOKENS as Record<NetworkOption, Record<string, TokenMetadata>>, // cast for context shape
+      tokensByNetwork: TOKENS as Record<NetworkOption, Record<string, TokenMetadata>>,
       selected,
       setSelectedNetwork,
       setSelectedToken,
+      setAmount,
     }
   }, [selected])
 
