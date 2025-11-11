@@ -42,7 +42,7 @@ export const TOKENS: Record<
     },
   },
 
-  bsc: {
+  binance: {
     BNB: {
       symbol: "BNB",
       address: "0x0000000000000000000000000000000000000000",

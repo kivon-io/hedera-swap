@@ -9,9 +9,10 @@ import BridgeAction from "./bridge-form/BridgeAction"
 import BridgeContainer from "./BridgeContainer"
 import { TRANSACTION_TYPE } from "@/config/bridge"
 import { fetchTokenPrices } from "@/helpers"
+import { calculateToAmount } from "./bridge-form/BridgeAsset"
 
 const BridgeContent = () => {
-  const { selected, setSelectedNetwork, setSelectedToken } = useBridge()
+  const { selected, setSelectedNetwork, setSelectedToken, setAmount } = useBridge()
 
   const [isSwapping, setIsSwapping] = useState(false)
   const [rotated, setRotated] = useState(false)
@@ -48,22 +49,7 @@ const BridgeContent = () => {
     loadPrices()
   }, [])
 
-  // 🔁 Swap handler
-  const handleSwap = () => {
-    setIsSwapping(true)
-    setRotated((prev) => !prev)
 
-    const fromCopy = { ...selected.from }
-    const toCopy = { ...selected.to }
-
-    setSelectedNetwork(TRANSACTION_TYPE.FROM, toCopy.network)
-    setSelectedToken(TRANSACTION_TYPE.FROM, toCopy.token)
-
-    setSelectedNetwork(TRANSACTION_TYPE.TO, fromCopy.network)
-    setSelectedToken(TRANSACTION_TYPE.TO, fromCopy.token)
-
-    setTimeout(() => setIsSwapping(false), 400)
-  }
 
   // 🎛️ Price info
   const fromSymbol = selected.from.token
@@ -72,12 +58,32 @@ const BridgeContent = () => {
   const toPrice = prices[toSymbol] ?? 0
 
 
-  useEffect(()=>{
-    console.log("fromSymbol:", fromSymbol, "toSymbol:", toSymbol)
-    console.log("From Price:", fromPrice, "To Price:", toPrice)
-    console.log("protocal fee ", protocolFee)
-  }, [prices, protocolFee])
+  const handleFlip = () => {
+    setIsSwapping(true)
+    setRotated((prev) => !prev)
 
+    const fromCopy = { ...selected.from }
+    const toCopy = { ...selected.to }
+
+    // Swap networks and tokens
+    setSelectedNetwork(TRANSACTION_TYPE.FROM, toCopy.network)
+    setSelectedToken(TRANSACTION_TYPE.FROM, toCopy.token)
+
+    setSelectedNetwork(TRANSACTION_TYPE.TO, fromCopy.network)
+    setSelectedToken(TRANSACTION_TYPE.TO, fromCopy.token)
+
+ 
+    // Recalculate TO amount using the current FROM amount
+    // const newToAmount = calculateToAmount(
+    //   fromCopy.amount,            // keep current FROM amount
+    //   fromPrice,                  // FROM token price
+    //   toPrice                     // TO token price (after swap)
+    // )
+
+    setAmount(TRANSACTION_TYPE.TO, 0)
+    setAmount(TRANSACTION_TYPE.FROM, 0)
+    setTimeout(() => setIsSwapping(false), 400)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -95,7 +101,7 @@ const BridgeContent = () => {
           {/* Switch direction Button */}
           <div className="flex justify-center">
             <button
-              onClick={handleSwap}
+              onClick={handleFlip}
               disabled={isSwapping}
               className="p-2 rounded-full bg-white border border-zinc-200 hover:bg-zinc-100 transition-all duration-200"
             >

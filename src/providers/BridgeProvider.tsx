@@ -65,15 +65,26 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
   }
 
   const setSelectedToken = (type: TransactionType, token: string) => {
-    setSelected((prev) => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
+    setSelected((prev) => {
+      const updated = {
+        ...prev,
+        from: {
+          ...prev.from,
+          amount: 0,
+        },
+        to: {
+          ...prev.to,
+          amount: 0, 
+        },
+      }
+      updated[type] = {
+        ...updated[type],
         token,
-        amount: prev[type].amount, // preserve amount
-      },
-    }))
+      }
+      return updated
+    })
   }
+
 
   const setAmount = (type: TransactionType, amount: number) => {
     setSelected((prev) => ({

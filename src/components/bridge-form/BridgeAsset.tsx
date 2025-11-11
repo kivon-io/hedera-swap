@@ -6,38 +6,39 @@ import { useState } from "react"
 import { Input } from "../ui/input"
 import SelectAsset from "./SelectAsset"
 
-const BridgeAsset = ({ type, fromPrice, toPrice }: { type: TransactionType, fromPrice: number, toPrice: number }) => {
+ // Utility function to compute conversion
+export const calculateToAmount = (fromAmount: number, fromPrice: number, toPrice: number): number => {
+  if (!fromAmount || !fromPrice || !toPrice) return 0
+  return parseFloat(((fromAmount * fromPrice) / toPrice).toFixed(6))
+}
+
+const BridgeAsset = ({
+  type,
+  fromPrice,
+  toPrice,
+}: {
+  type: TransactionType
+  fromPrice: number
+  toPrice: number
+}) => {
   const [open, setOpen] = useState(false)
-  const { selected, networks, tokensByNetwork, setAmount  } = useBridge()
+  const { selected, networks, tokensByNetwork, setAmount } = useBridge()
   const current = type === TRANSACTION_TYPE.FROM ? selected.from : selected.to
   const networkSymbolMap: Record<string, string> = { ethereum: "ETH", bsc: "BNB", hedera: "HBAR" }
   const networkMeta = networks.find((n) => n.symbol === networkSymbolMap[current.network])
   const tokenMeta = tokensByNetwork[current.network]?.[current.token]
+  const [fromInput, setFromInput] = useState("")
+  const handleOpenSelectAsset = () => setOpen(true)
 
-  const handleOpenSelectAsset = () => {
-    setOpen(true)
-  }
+ 
 
   const handleAmountChange = (value: string) => {
-    const num = parseFloat(value)
-    const num2 = calculateToAmount(selected.from.amount, fromPrice, toPrice); 
-    if (type === TRANSACTION_TYPE.FROM) {
-      setAmount(TRANSACTION_TYPE.TO, num2); 
-    }
-    setAmount(type, isNaN(num) ? 0 : num)
+    setFromInput(value) // keep what the user typed
+    const parsed = parseFloat(value)
+    setAmount(TRANSACTION_TYPE.FROM, isNaN(parsed) ? 0 : parsed)
+    setAmount(TRANSACTION_TYPE.TO, calculateToAmount(isNaN(parsed) ? 0 : parsed, fromPrice, toPrice))
   }
-
-  function calculateToAmount(
-    fromAmount: number,
-    fromPrice: number,
-    toPrice: number
-  ): number {
-    if (!fromAmount || !fromPrice || !toPrice) return 0
-    const value = ((fromAmount * fromPrice) / toPrice).toFixed(6) as unknown as number
-   
-    return value; 
-  }
-  const price = type === TRANSACTION_TYPE.FROM ? fromPrice : toPrice; 
+  const price = type === TRANSACTION_TYPE.FROM ? fromPrice : toPrice
 
   return (
     <>
@@ -46,15 +47,25 @@ const BridgeAsset = ({ type, fromPrice, toPrice }: { type: TransactionType, from
         <div className='flex gap-2'>
           <div className='w-full'>
             <Input
-              className=' border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
-              placeholder='0'
-              value={ type == TRANSACTION_TYPE.TO ? selected.to.amount  : current.amount}
+              className='border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
+              placeholder="0.00"
+              value={
+                type === TRANSACTION_TYPE.FROM
+                  ? fromInput || ""
+                  : selected.to.amount || ""
+              }
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault()
+                }
+              }}
+              step="any"
               onChange={(e) => handleAmountChange(e.target.value)}
               disabled={type === TRANSACTION_TYPE.TO}
             />
           </div>
           <div
-            className='rounded-full px-2 py-1.5 flex items-center gap-4 cursor-pointer border border-zinc-200  bg-zinc-100'
+            className='rounded-full px-2 py-1.5 flex items-center gap-4 cursor-pointer border border-zinc-200 bg-zinc-100'
             onClick={handleOpenSelectAsset}
           >
             <div className='flex items-center gap-2'>
@@ -90,22 +101,22 @@ const BridgeAsset = ({ type, fromPrice, toPrice }: { type: TransactionType, from
             <ChevronDown className='size-4' />
           </div>
         </div>
-        {/* TODO: Show the price of the asset */}
+
+        {/* Price display */}
         <p className='text-xs text-zinc-600'>
-            {price !== null ? `$${(price * current.amount).toFixed(6)}` : "$0.00"}
+          {price ? `$${(price * current.amount).toFixed(6)}` : "$0.00"}
         </p>
       </div>
-      {open && <SelectAsset open={open} onOpenChange={(open) => setOpen(open)} type={type} />}
+
+      {open && <SelectAsset open={open} onOpenChange={setOpen} type={type} />}
     </>
   )
 }
 
 export default BridgeAsset
 
-const TransactionType = ({ type }: { type: TransactionType }) => {
-  return (
-    <p className='text-sm text-zinc-600 capitalize'>
-      {type === TRANSACTION_TYPE.FROM ? TRANSACTION_TYPE.FROM : TRANSACTION_TYPE.TO}
-    </p>
-  )
-}
+const TransactionType = ({ type }: { type: TransactionType }) => (
+  <p className='text-sm text-zinc-600 capitalize'>
+    {type === TRANSACTION_TYPE.FROM ? TRANSACTION_TYPE.FROM : TRANSACTION_TYPE.TO}
+  </p>
+)

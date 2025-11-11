@@ -7,7 +7,7 @@ import { Hbar } from "@hashgraph/sdk";
 
 export const EXPLORER_URLS = {
   ethereum: "https://sepolia.etherscan.io/tx/",
-  bsc: "https://testnet.bscscan.com/tx/",
+  binance: "https://testnet.bscscan.com/tx/",
   hedera: "https://hashscan.io/testnet/transaction/",
 };
 

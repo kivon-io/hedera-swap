@@ -1,7 +1,8 @@
 "use client"
 
 import { TRANSACTION_TYPE, type TransactionType } from "@/config/bridge"
-import type { NetworkOption } from "@/config/networks"
+import { type NetworkOption, NETWORKS, NETWORKS_INFO } from "@/config/networks"
+import { TOKENS } from "@/config/tokens"
 import { useBridge } from "@/providers/BridgeProvider"
 import Image from "next/image"
 import { useMemo, useState } from "react"
@@ -16,30 +17,34 @@ const SelectAsset = ({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) => {
-  const { networks, tokensByNetwork, selected, setSelectedNetwork, setSelectedToken } = useBridge()
-
+  const { selected, setSelectedNetwork, setSelectedToken } = useBridge()
   const [tempNetwork, setTempNetwork] = useState<NetworkOption>(selected[type].network)
 
-  const networksInOrder: NetworkOption[] = ["ethereum", "bsc", "hedera"]
-
+ 
   const networkMetaByKey = useMemo(() => {
-    const bySymbol = (symbol: string) => networks.find((n) => n.symbol === symbol)
-    return {
-      ethereum: bySymbol("ETH"),
-      bsc: bySymbol("BNB"),
-      hedera: bySymbol("HBAR"),
-    } as Record<NetworkOption, (typeof networks)[number] | undefined>
-  }, [networks])
+    const map = {} as Record<NetworkOption, (typeof NETWORKS_INFO)[number]>
+    NETWORKS.forEach((netKey) => {
+      // Find network info by matching symbol from NETWORKS_INFO
+      const meta = NETWORKS_INFO.find(
+        (n) => n.name.toLowerCase() === netKey.toLowerCase() || n.symbol.toLowerCase() === netKey.toLowerCase()
+      )
+      if (meta) map[netKey] = meta
+    })
+    return map
+  }, [])
 
+  /**
+   * Filter networks dynamically — prevents selecting the same network
+   */
   const filteredNetworks = useMemo(() => {
-    return networksInOrder.filter((net) => {
+    return NETWORKS.filter((net) => {
       if (type === TRANSACTION_TYPE.FROM) return net !== selected.to.network
       if (type === TRANSACTION_TYPE.TO) return net !== selected.from.network
       return true
     })
-  }, [networksInOrder, selected, type])
+  }, [selected, type])
 
-  const tokensForSelected = tokensByNetwork[tempNetwork]
+  const tokensForSelected = TOKENS[tempNetwork]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,15 +57,16 @@ const SelectAsset = ({
             Select the asset you want to bridge from or to
           </DialogDescription>
         </DialogHeader>
+
         <div className="relative flex flex-col gap-4">
           {/* Network Filter */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2"> 
             <p className="text-xs font-medium text-zinc-500">Filter by Network</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {filteredNetworks.map((netKey) => {
                 const meta = networkMetaByKey[netKey]
-                const isActive = selected[type].network === netKey // highlight selected context network
-                const isSelectedFilter = tempNetwork === netKey // highlight filter
+                const isActive = selected[type].network === netKey
+                const isSelectedFilter = tempNetwork === netKey
                 return (
                   <div
                     key={netKey}
@@ -71,9 +77,14 @@ const SelectAsset = ({
                     } ${isActive ? "ring-2 ring-indigo-400" : ""}`}
                     onClick={() => setTempNetwork(netKey)}
                   >
-                    <div className="h-6 w-6 aspect-square rounded-full bg-zinc-300 overflow-hidden relative">
+                    <div className="h-6 w-6 aspect-square rounded-full overflow-hidden relative">
                       {meta?.metadata?.logoUrl && (
-                        <Image src={meta.metadata.logoUrl} alt={meta.name} className="h-full w-full object-cover" fill />
+                        <Image
+                          src={meta.metadata.logoUrl}
+                          alt={meta.name}
+                          fill
+                          className="object-cover"
+                        />
                       )}
                     </div>
                     <p className="text-sm font-medium mt-1">{meta?.name ?? netKey}</p>
@@ -88,11 +99,12 @@ const SelectAsset = ({
             <p className="text-xs font-medium text-zinc-500">Available tokens</p>
             <div className="flex flex-col gap-2 max-h-72 overflow-auto pr-1">
               {Object.keys(tokensForSelected).map((symbol) => {
-                const isSelectedToken = selected[type].token === symbol // highlight selected token
+                const token = tokensForSelected[symbol]
+                const isSelectedToken = selected[type].token === symbol
                 return (
-                  <Assetitem
+                  <AssetItem
                     key={symbol}
-                    asset={tokensForSelected[symbol]}
+                    asset={token}
                     isSelected={isSelectedToken}
                     onClick={() => {
                       setSelectedNetwork(type, tempNetwork)
@@ -119,7 +131,7 @@ type SimpleTokenMeta = {
   }
 }
 
-const Assetitem = ({
+const AssetItem = ({
   asset,
   onClick,
   isSelected = false,
