@@ -1,18 +1,17 @@
 "use client"
 
-import { useEvmWallet } from "@/hooks/useEvmWallet"
-import { formatAddress } from "@/lib/utils"
 import { useVault } from "@/providers/VaultProvider"
 import Image from "next/image"
+import ConnectedEVMWallet from "../ConnectedEVMWallet"
 import { Input } from "../ui/input"
 
 const Deposit = () => {
   const { vault } = useVault()
   return (
     <div className='relative w-full'>
-      <div className='flex justify-between items-center'>
+      <div className='flex justify-between items-center mb-2'>
         <p className='text-sm text-zinc-600 capitalize'>From wallet</p>
-        <ConnectedWallet />
+        <ConnectedEVMWallet />
       </div>
       <div className='flex gap-2 w-full'>
         <div className='w-full'>
@@ -61,9 +60,3 @@ const Deposit = () => {
 }
 
 export default Deposit
-
-// TODO: Show Connected Wallet
-const ConnectedWallet = () => {
-  const { address } = useEvmWallet()
-  return <div className='text-sm font-semibold'>{formatAddress(address ?? "")}</div>
-}

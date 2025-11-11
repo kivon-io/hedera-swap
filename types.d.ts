@@ -1,5 +1,7 @@
 type VaultContextValue = {
   vault: Vault
+  activeTab: keyof typeof TABS
+  handleTabChange: (tab: keyof typeof TABS) => void
 }
 
 type Vault = {
