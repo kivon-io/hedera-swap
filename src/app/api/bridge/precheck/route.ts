@@ -1,0 +1,62 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    // Validate required fields
+    const { fromNetwork, toNetwork, fromToken, toToken, amount, fromAddress } = body;
+    if (!fromNetwork || !toNetwork || !fromToken || !toToken || !amount || !fromAddress) {
+      return NextResponse.json(
+        { success: false, message: "Missing required payload fields" },
+        { status: 400 }
+      );
+    }
+
+    // Laravel API endpoint
+    const API_URL = "http://127.0.0.1:8000"; 
+    if (!API_URL) {
+      return NextResponse.json(
+        { success: false, message: "Laravel API URL not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Send request to Laravel precheck endpoint
+    const bridgeResponse = await fetch(`${API_URL}/api/precheck`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fromNetwork,
+        toNetwork,
+        fromToken,
+        toToken,
+        amount
+      }),
+    });
+
+    const data = await bridgeResponse.json();
+
+    if (!bridgeResponse.ok) {
+      return NextResponse.json(
+        { success: false, message: "Laravel API returned an error", details: data },
+        { status: bridgeResponse.status }
+      );
+    }
+
+    // Return Laravel API response to frontend
+    return NextResponse.json({
+      success: true,
+      message: "Precheck completed",
+      laravelData: data,
+    });
+  } catch (err: any) {
+    console.error("Next.js bridge route error:", err);
+    return NextResponse.json(
+      { success: false, message: "Server error", error: err.message },
+      { status: 500 }
+    );
+  }
+}

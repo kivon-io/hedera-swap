@@ -9,7 +9,7 @@ import BridgeAction from "./bridge-form/BridgeAction"
 import BridgeContainer from "./BridgeContainer"
 import { TRANSACTION_TYPE } from "@/config/bridge"
 import { fetchTokenPrices } from "@/helpers"
-import { calculateToAmount } from "./bridge-form/BridgeAsset"
+// import { calculateToAmount } from "./bridge-form/BridgeAsset"
 
 const BridgeContent = () => {
   const { selected, setSelectedNetwork, setSelectedToken, setAmount } = useBridge()
@@ -21,7 +21,7 @@ const BridgeContent = () => {
   const [protocolFee, setProtocolFee] = useState<number>(0)
 
 
-    async function fetchFees() {
+  async function fetchFees() {
     try {
       const res = await fetch("/api/fee")
       const data = await res.json()
@@ -61,25 +61,14 @@ const BridgeContent = () => {
   const handleFlip = () => {
     setIsSwapping(true)
     setRotated((prev) => !prev)
-
     const fromCopy = { ...selected.from }
     const toCopy = { ...selected.to }
-
     // Swap networks and tokens
     setSelectedNetwork(TRANSACTION_TYPE.FROM, toCopy.network)
     setSelectedToken(TRANSACTION_TYPE.FROM, toCopy.token)
 
     setSelectedNetwork(TRANSACTION_TYPE.TO, fromCopy.network)
     setSelectedToken(TRANSACTION_TYPE.TO, fromCopy.token)
-
- 
-    // Recalculate TO amount using the current FROM amount
-    // const newToAmount = calculateToAmount(
-    //   fromCopy.amount,            // keep current FROM amount
-    //   fromPrice,                  // FROM token price
-    //   toPrice                     // TO token price (after swap)
-    // )
-
     setAmount(TRANSACTION_TYPE.TO, 0)
     setAmount(TRANSACTION_TYPE.FROM, 0)
     setTimeout(() => setIsSwapping(false), 400)

@@ -69,7 +69,7 @@ const BridgeAction = () => {
     };
 
     console.log("Starting bridge with data:", bridgeData);
-    return; 
+
 
     try {
       // 1️⃣ Pre-checks
@@ -79,6 +79,7 @@ const BridgeAction = () => {
         body: JSON.stringify(bridgeData),
       });
       const preCheck = await preCheckRes.json();
+      console.log("Pre-check response:", preCheck);
       if (!preCheck.canBridge) {
         setStatusMessage(preCheck.message || "Cannot perform bridge");
         setIsBridging(false);
@@ -132,7 +133,7 @@ const BridgeAction = () => {
     <div className="space-y-3">
       {/* Status message */}
       {statusMessage && (
-        <div className="text-sm text-yellow-400 font-medium text-center">
+        <div className="text-sm text-red-400 font-medium text-center">
           {statusMessage}
         </div>
       )}

@@ -28,7 +28,7 @@ const RPC = 'https://testnet.hashio.io/api';
 const ROUTER = '0x0000000000000000000000000000000000004b40';
 const WHBAR_CONTRACT = '0x0000000000000000000000000000000000003ad1';
 const PRIVATE_KEY = process.env.POC_WITHDRAW_KEY; // EVM key for swap wallet
-const OPERATOR_ID = "0.0.6987678"; // Hedera ID for HBAR transfer
+const OPERATOR_ID = process.env.OPERATOR_ID; // Hedera ID for HBAR transfer
 
 
 
