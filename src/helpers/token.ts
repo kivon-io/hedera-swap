@@ -1,9 +1,10 @@
 
 import { useMemo } from "react";
-import { erc20Abi, formatUnits, type Address } from "viem";
+import { erc20Abi as ERC20_ABI, formatUnits, type Address } from "viem";
 import {type NetworkOption } from "@/config/networks";
 import { useReadContract, useBalance } from "wagmi"
 import { Hbar } from "@hashgraph/sdk";
+
 
 export const EXPLORER_URLS = {
   ethereum: "https://sepolia.etherscan.io/tx/",
@@ -30,14 +31,14 @@ export function useErc20TokenBalance(tokenAddress:Address, walletAddress:Address
   
   const { data: decimals } = useReadContract({
     address: tokenAddress,
-    abi: erc20Abi,
+    abi: ERC20_ABI,
     functionName: "decimals",
     query: { enabled: !!tokenAddress },
   });
 
   const { data: rawBalance } = useReadContract({
     address: tokenAddress,
-    abi: erc20Abi,
+    abi: ERC20_ABI,
     functionName: "balanceOf",
     args: walletAddress ? [walletAddress] : undefined,
     query: { enabled: !!tokenAddress && !!walletAddress },
@@ -132,3 +133,6 @@ export function safeHbar(amount:number | string) {
     }
   }
 }
+
+
+

@@ -52,10 +52,10 @@ export const TOKENS: Record<
         logoUrl: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850",
       },
     },
-    USDCt: {
-      symbol: "USDCt",
-      address: "0xabbd60313073EB1673940f0f212C7baC5333707e",
-      decimals: 6,
+    USDC: {
+      symbol: "USDC",
+      address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      decimals: 18,
       metadata: {
         logoUrl: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png?1696506694",
       },

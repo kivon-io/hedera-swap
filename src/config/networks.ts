@@ -11,6 +11,12 @@ export const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
   hedera: "0.0.7103690",
 }
 
+export const CHAIN_IDS: Record<NetworkOption, number> = {
+  ethereum: 11155111, // Sepolia Testnet
+  binance: 97,        // BNB Smart Chain Testnet
+  hedera: 296,       // Hedera Testnet
+}
+
 export const NETWORKS_INFO = [
   {
     id:11155111,
