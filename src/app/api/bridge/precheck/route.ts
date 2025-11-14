@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Validate required fields
-    const { fromNetwork, toNetwork, fromToken, toToken, amount, fromAddress } = body;
+    const { fromNetwork, toNetwork, fromToken, toToken, amount, fromAddress, toAddress } = body;
     if (!fromNetwork || !toNetwork || !fromToken || !toToken || !amount || !fromAddress) {
       return NextResponse.json(
         { success: false, message: "Missing required payload fields" },
@@ -13,44 +13,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Laravel API endpoint
+    // API endpoint
     const API_URL = "http://127.0.0.1:8000"; 
     if (!API_URL) {
       return NextResponse.json(
-        { success: false, message: "Laravel API URL not configured" },
+        { success: false, message: "API URL not configured" },
         { status: 500 }
       );
     }
 
-    // Send request to Laravel precheck endpoint
+    // Send request to precheck endpoint
     const bridgeResponse = await fetch(`${API_URL}/api/precheck`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        fromAddress, 
         fromNetwork,
         toNetwork,
         fromToken,
         toToken,
-        amount
+        amount, 
+        toAddress
       }),
     });
+
 
     const data = await bridgeResponse.json();
 
     if (!bridgeResponse.ok) {
       return NextResponse.json(
-        { success: false, message: "Laravel API returned an error", details: data },
+        { success: false, message: "API returned an error", details: data },
         { status: bridgeResponse.status }
       );
     }
 
-    // Return Laravel API response to frontend
+    // Return API response to frontend
     return NextResponse.json({
       success: true,
       message: "Precheck completed",
-      laravelData: data,
+      Data: data,
     });
   } catch (err: any) {
     console.error("Next.js bridge route error:", err);

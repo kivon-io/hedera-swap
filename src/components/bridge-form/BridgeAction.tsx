@@ -3,24 +3,27 @@
 import { useState, useCallback, useMemo } from "react";
 import { Button } from "../ui/button";
 import { useBridge } from "@/providers/BridgeProvider";
-import { useAccount, useReadContract, useWriteContract as UseWriteContract } from "wagmi";
+// 🛠️ FIX: Use useWriteContract directly to get both sync and async versions
+import { useAccount, useReadContract, useWriteContract, useChainId } from "wagmi";
 import { erc20Abi as ERC20_ABI, type Address, parseUnits } from "viem";
 import { ContractId, AccountId } from "@hashgraph/sdk";
-import { 
-  useWallet, 
-  useAccountId, 
-  useAssociateTokens, 
-  useWriteContract,
-  useApproveTokenAllowance 
+import {
+  useWallet,
+  useAccountId,
+  useAssociateTokens,
+  useWriteContract as UseHederaWriteContract, // Renamed to avoid collision
+  useApproveTokenAllowance
 } from "@buidlerlabs/hashgraph-react-wallets";
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 import { getExplorerLink } from "@/helpers/token";
 import { TOKENS } from "@/config/tokens";
 import { CONTRACT_ADDRESSES, CHAIN_IDS } from "@/config/networks";
 import { checkTokenAssociation } from "@/helpers/token";
-import { BRIDGE_VOLT_ABI } from "@/config/abi/BridgeVolt";
+import BRIDGE_ABI from "@/Abi/bridge.json";
+import {NetworkOption} from "@/config/networks";
+import {convertHederaIdToEVMAddress} from "@/helpers";
 
-const POLL_INTERVAL = 1000; // 1 second
+const POLL_INTERVAL = 1000;
 
 const BridgeAction = () => {
   const { selected } = useBridge();
@@ -28,8 +31,9 @@ const BridgeAction = () => {
   const { isConnected: hederaConnected } = useWallet(HashpackConnector);
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected });
 
-  const { writeContract: evmWriteContract } = UseWriteContract(); 
-  const { writeContract: hederaWriteContract } = useWriteContract();
+  // 🛠️ FIX: Destructure both sync and async functions from wagmi's useWriteContract
+  const { writeContract: evmWriteContract, writeContractAsync: evmWriteContractAsync } = useWriteContract();
+  const { writeContract: hederaWriteContract } = UseHederaWriteContract(); // from Hashgraph hook
 
   const fromAmount = Number(selected.from.amount);
   const [depositTx, setDepositTx] = useState<string | null>(null);
@@ -37,19 +41,21 @@ const BridgeAction = () => {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [step, setStep] = useState<number>(0);
   const [isBridging, setIsBridging] = useState(false);
-
-  const fromNetwork = selected.from.network;
-  const toNetwork = selected.to.network;
-  const fromToken = selected.from.token; 
-  const toToken = selected.to.token; 
-  const bridgeContractAddress = CONTRACT_ADDRESSES[fromNetwork] as Address | string;
-  
-  const isFromNetworkConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected;
-  const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected;
-  const isDisabled = !fromAmount || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
+  const [nonce, setNonce] = useState<string>("");
 
   const { associateTokens } = useAssociateTokens();
   const { approve } = useApproveTokenAllowance();
+  const chainId = useChainId();
+
+  const fromNetwork = selected.from.network;
+  const toNetwork = selected.to.network;
+  const fromToken = selected.from.token;
+  const toToken = selected.to.token;
+  const bridgeContractAddress = CONTRACT_ADDRESSES[fromNetwork] as Address | string;
+
+  const isFromNetworkConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[fromNetwork];
+  const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[toNetwork];
+  const isDisabled = !fromAmount || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
 
   const getButtonText = () => {
     if (!fromAmount) return "Enter amount";
@@ -59,7 +65,7 @@ const BridgeAction = () => {
     return `Bridge ${fromAmount} ${selected.from.token} → ${selected.to.token}`;
   };
 
-  const units = TOKENS[fromNetwork][fromToken].decimals; 
+  const units = TOKENS[fromNetwork][fromToken].decimals;
   const value = useMemo(() => parseUnits(fromAmount.toString() || "0", units), [fromAmount, units]);
 
   // Check allowance (EVM)
@@ -75,30 +81,121 @@ const BridgeAction = () => {
     },
   });
 
-  // ✅ Helper: EVM deposit handler
-  const evmDeposit = async (bridgeData) => {
-    const { fromNetwork, fromToken, toNetwork, toToken, amount } = bridgeData;
-    const tokenInfo = TOKENS[fromNetwork][fromToken];
-    const isNative = tokenInfo.native;
-    const args = [
-      CHAIN_IDS[toNetwork],
-      tokenInfo.address,
-      TOKENS[toNetwork][toToken].address,
-      parseUnits(amount.toString(), tokenInfo.decimals),
-    ];
-
-    const fn = isNative ? "depositNative" : "depositERC20";
-    const tx = await evmWriteContract({
-      address: bridgeContractAddress,
-      abi: BRIDGE_VOLT_ABI,
-      functionName: fn,
-      args,
-      ...(isNative ? { value: parseUnits(amount.toString(), tokenInfo.decimals) } : {}),
-    });
-    return tx;
+  type BridgeData = {
+    fromNetwork: NetworkOption;
+    toNetwork: NetworkOption;
+    fromToken: string;
+    toToken: string;
+    amount: number;
+    fromAddress: string | AccountId | Address;
+    toAddress: string | AccountId | Address;
   };
 
-  // ✅ Handle main bridge flow
+  const getRecipient = () => {
+    if (toNetwork === "hedera") {
+      return hederaAccount ? convertHederaIdToEVMAddress(hederaAccount as string) : evmAddress;
+    } else {
+      return evmAddress;
+    }
+  }
+
+  const evmDeposit = async (bridgeData: BridgeData) => {
+    const { fromNetwork, fromToken, toNetwork, toToken, amount } = bridgeData;
+    const tokenFromInfo = TOKENS[fromNetwork][fromToken];
+    const tokenToInfo = TOKENS[toNetwork][toToken];
+    const recipient = getRecipient();
+    const args = [
+      tokenFromInfo.address,
+      tokenToInfo.address,
+      recipient,
+      value,
+      nonce,
+      CHAIN_IDS[toNetwork]
+    ];
+    const isNative = TOKENS[fromNetwork][fromToken].native === true;
+
+    evmWriteContract({
+      address: bridgeContractAddress as Address,
+      abi: BRIDGE_ABI,
+      functionName: "bridgeDeposit",
+      args,
+      ...(isNative ? { value: value } : {}),
+    },
+    {
+      onSuccess: (hash) => {
+        setStatusMessage(`Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`)
+        setDepositTx(hash);
+      },
+      onError: (e: unknown) => {
+        setIsBridging(false);
+        let errMsg: string;
+        if (e instanceof Error) {
+          errMsg = e.message;
+        } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+          errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+        } else {
+          errMsg = "Unknown error";
+        }
+        setStatusMessage(`❌ Deposit failed/rejected. ${errMsg}`);
+      }
+    });
+  };
+
+  const hederaDeposit = async (bridgeData: BridgeData) => {
+    const tokenInfo = TOKENS[fromNetwork][fromToken];
+    const contractId = ContractId.fromString(CONTRACT_ADDRESSES[fromNetwork]);
+    const tokenFromInfo = TOKENS[fromNetwork][fromToken];
+    const tokenToInfo = TOKENS[toNetwork][toToken];
+    const recipient = getRecipient();
+
+    setStatusMessage(`Step 2/3: Confirming deposit in wallet...`);
+
+    try {
+    
+
+      console.log('hbar value', value)
+      console.log('hbar token from info', tokenFromInfo)
+      console.log('hbar token to info', tokenToInfo)
+      console.log('hbar nounc', nonce)
+      console.log('hbar to chain id info', CHAIN_IDS[toNetwork])
+      console.log('hbar recipient info', recipient)
+
+      const txHash = await hederaWriteContract({
+        contractId,
+        abi: BRIDGE_ABI,
+        functionName: 'bridgeDeposit',
+        args: [
+          tokenFromInfo.address,
+          tokenToInfo.address,
+          recipient,
+          value,
+          nonce,
+          CHAIN_IDS[toNetwork]
+        ],
+        metaArgs: {
+          gas: 220_000,
+          amount: tokenInfo.native ? Number(fromAmount) : 0,
+        },
+      });
+      console.log("Hedera deposit tx hash:", txHash);
+      setStatusMessage(`Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`)
+      setDepositTx(txHash as string );
+      return txHash;
+    } catch(e: unknown) {
+      setIsBridging(false);
+      let errMsg: string;
+      if (e instanceof Error) {
+        errMsg = e.message;
+      } else if (typeof e === "object" && e !== null && "shortMessage" in e) {
+        errMsg = (e as { shortMessage?: string }).shortMessage || "Unknown error";
+      } else {
+        errMsg = "Unknown error";
+      }
+      setStatusMessage(`❌ Deposit failed/rejected. ${errMsg}`);
+      throw new Error(errMsg);
+    }
+  }
+
   const handleBridge = useCallback(async () => {
     if (isDisabled) return;
     setIsBridging(true);
@@ -107,7 +204,7 @@ const BridgeAction = () => {
     setStep(0);
     setStatusMessage("Checking bridge preconditions...");
 
-    const bridgeData = {
+    const bridgeData: BridgeData = {
       fromNetwork,
       toNetwork,
       fromToken,
@@ -118,24 +215,25 @@ const BridgeAction = () => {
     };
 
     try {
-      // Step 0: Precheck
       const preCheckRes = await fetch("/api/bridge/precheck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bridgeData),
       });
       const preCheck = await preCheckRes.json();
-      if (!preCheck.canBridge) {
+
+      console.log("Precheck result:", preCheck);
+
+      if (!preCheck?.Data?.node_precheck?.canBridge) {
         setStatusMessage(preCheck.message || "Cannot perform bridge");
         setIsBridging(false);
         return;
       }
+      setNonce(preCheck?.Data?.nonce);
 
-      // Step 1: Preparation
       setStep(1);
       setStatusMessage("Step 1/3: Preparing wallet...");
 
-      // Hedera association
       if (toNetwork === "hedera" && !TOKENS[toNetwork][toToken].native) {
         const tokenAddr = TOKENS[toNetwork][toToken].address;
         const isAssociated = await checkTokenAssociation(hederaAccount, tokenAddr);
@@ -145,94 +243,64 @@ const BridgeAction = () => {
         }
       }
 
-      // Hedera approval
       if (fromNetwork === "hedera" && !TOKENS[fromNetwork][fromToken].native) {
         const tokenAddr = TOKENS[fromNetwork][fromToken].address;
         setStatusMessage(`Step 1/3: Approving ${fromToken}...`);
         await approve([{ tokenId: tokenAddr, amount: fromAmount }], bridgeContractAddress);
+        setStatusMessage(`Step 1/3: ${fromToken} approved.`);
       }
 
-      // EVM approval
       if (fromNetwork !== "hedera" && !TOKENS[fromNetwork][fromToken].native) {
         const tokenAddr = TOKENS[fromNetwork][fromToken].address;
         if (typeof allowance !== "bigint" || allowance < value) {
-          setStatusMessage(`Step 1/3: Approving ${fromToken}...`);
-          await evmWriteContract({
+          setStatusMessage(`Step 1/3: Confirming approval for ${fromToken} in wallet...`);
+          await evmWriteContractAsync({ 
             address: tokenAddr as Address,
             abi: ERC20_ABI,
             functionName: "approve",
             args: [bridgeContractAddress as Address, value],
           });
+          setStatusMessage(`Step 1/3: ${fromToken} approved. Waiting for transaction confirmation...`);
         }
       }
 
-      // Step 2: Deposit
       setStep(2);
-      setStatusMessage("Step 2/3: Depositing to bridge contract...");
-
-      let txHash: string;
+      setStatusMessage("Step 2/3: Initiating deposit to bridge contract...");
 
       if (fromNetwork === "hedera") {
-        const tokenInfo = TOKENS[fromNetwork][fromToken];
-        const contractId = ContractId.fromString(CONTRACT_ADDRESSES[fromNetwork]);
-        const fn = tokenInfo.native ? "depositNative" : "depositERC20";
-
-        txHash = await hederaWriteContract({
-          contractId,
-          abi: BRIDGE_VOLT_ABI,
-          functionName: fn,
-          args: [
-            CHAIN_IDS[toNetwork],
-            tokenInfo.address,
-            TOKENS[toNetwork][toToken].address,
-            parseUnits(fromAmount.toString(), tokenInfo.decimals),
-          ],
-          metaArgs: {
-            gas: 120_000,
-            amount: tokenInfo.native ? Number(parseUnits(fromAmount.toString(), tokenInfo.decimals)) : 0,
-          },
-        });
+        await hederaDeposit(bridgeData);
+        console.log("Hedera Deposit initiated.");
       } else {
-        txHash = await evmDeposit(bridgeData);
+        evmDeposit(bridgeData);
+        console.log("EVM Deposit initiated.");
       }
 
-      setDepositTx(txHash);
-
-      // Step 3: Notify backend
-      await fetch("/api/bridge/notify-deposit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...bridgeData, txHash }),
-      });
-
-      // Poll backend for withdrawal completion
       setStep(3);
-      setStatusMessage("Step 3/3: Waiting for bridge completion...");
-      const polling = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/bridge/status?fromTx=${txHash}`);
-          const status = await res.json();
-          if (status.destinationTx) setWithdrawTx(status.destinationTx);
-          if (status.completed) {
-            setStatusMessage("✅ Bridge completed!");
-            clearInterval(polling);
-            setIsBridging(false);
-          }
-        } catch (err) {
-          console.error("Polling error:", err);
-        }
-      }, POLL_INTERVAL);
-    } catch (err: any) {
-      console.error("Bridge error:", err);
-      setStatusMessage("❌ Bridge failed: " + (err.message || "Unknown error"));
+      setStatusMessage("Step 3/3: Monitoring bridge execution...");
+
+    } catch (error: unknown) {
       setIsBridging(false);
+      let errMsg: string;
+      if (error instanceof Error) {
+        errMsg = error.message;
+      } else if (typeof error === "object" && error !== null && "shortMessage" in error) {
+        errMsg = (error as { shortMessage?: string }).shortMessage || "Unknown error";
+      } else {
+        errMsg = "Unknown error";
+      }
+      if (!statusMessage?.startsWith("❌")) {
+        setStatusMessage(`❌ Bridge flow failed. ${errMsg}`);
+      }
     }
-  }, [selected, fromAmount, evmAddress, hederaAccount, fromNetwork, toNetwork, isDisabled]);
+
+  }, [selected, fromAmount, evmAddress, hederaAccount, fromNetwork, toNetwork, isDisabled, allowance, value, evmWriteContractAsync, associateTokens, approve, hederaWriteContract]);
 
   return (
     <div className="space-y-3">
       {statusMessage && (
-        <div className="text-sm text-red-400 font-medium text-center">{statusMessage}</div>
+        <div className={`text-sm font-medium text-center ${statusMessage.startsWith("❌") ? "text-red-400" : statusMessage.startsWith("✅") ? "text-green-400" : "text-blue-400"}`}>
+          {statusMessage}
+        </div>
       )}
 
       {depositTx && (
