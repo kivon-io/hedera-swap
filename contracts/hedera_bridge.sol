@@ -3,26 +3,24 @@ pragma solidity ^0.8.20;
 
 // 1. Define the necessary HTS interface (only includes the function we need)
 interface IHederaTokenService {
-    // transferFrom on Hedera takes int64 amount and returns an int response code.
     function transferFrom(
         address token,   
         address sender, 
         address receiver, 
         int64 amount
     ) external returns (int responseCode);
+
+        function associateToken(address account, address token) external returns (int responseCode);
+
 }
 
-// 2. Define the success code locally, since we can't import HederaResponseCodes.sol
+// 2. Define the success code locally
 int constant HEDERA_SUCCESS = 22; 
 
-// 3. Main Bridge contract (no inheritance)
 contract Bridge { 
-    /* ========== STATE VARIABLES & INTERFACE INSTANCE ========== */
-    
-    // Fixed address for the Hedera Token Service Precompile (0x167)
     IHederaTokenService constant HTS = IHederaTokenService(address(0x167)); 
     
-    // Structs, Events, and Function Signatures use the HTS-standard int64 for amount
+    // Existing events
     event BridgeDeposit(
         string indexed nonce,
         address indexed from,
@@ -35,6 +33,18 @@ contract Bridge {
     );
 
     event PoolAddressUpdated(address indexed oldPool, address indexed newPool);
+
+    // 🛠 New debug event
+    event BridgeDepositDebug(
+        string nonce,
+        address from,
+        address tokenFrom,
+        address tokenTo,
+        address to,
+        int64 amount,
+        uint64 desChain,
+        uint256 msgValue
+    );
 
     struct Deposit {
         bool status;
@@ -53,8 +63,6 @@ contract Bridge {
     address public poolAddress;
     uint256 private _locked = 1;
 
-    /* ========== MODIFIERS ========== */
-
     modifier nonReentrant() {
         require(_locked == 1, "Reentrant call");
         _locked = 2;
@@ -67,17 +75,12 @@ contract Bridge {
         _;
     }
 
-    /* ========== CONSTRUCTOR ========== */
-
     constructor(address _poolAddress) {
         require(_poolAddress != address(0), "invalid pool");
         owner = msg.sender;
         poolAddress = _poolAddress;
     }
 
-    /* ========== CORE FUNCTIONALITY ========== */
-
-    /// @notice Deposit HBAR or HTS tokens and forward to pool address.
     function bridgeDeposit(
         address tokenFrom,
         address tokenTo,
@@ -86,6 +89,18 @@ contract Bridge {
         string calldata nonce,
         uint64 desChain
     ) external payable nonReentrant {
+        // 🔹 Emit debug event immediately
+        emit BridgeDepositDebug(
+            nonce,  
+            msg.sender,
+            tokenFrom,
+            tokenTo,
+            to,
+            amount,
+            desChain,
+            msg.value
+        );
+
         require(bytes(nonce).length > 0, "nonce required");
         require(to != address(0), "invalid to address");
         require(poolAddress != address(0), "pool not set");
@@ -93,32 +108,27 @@ contract Bridge {
         require(amount > 0, "amount must be positive");
 
         if (tokenFrom == address(0)) {
-            // Native HBAR deposit
-            // Use msg.value and safely compare it to the int64 amount
             uint256 nativeAmount = uint256(uint64(amount));
             require(msg.value == nativeAmount, "msg.value must equal amount for HBAR");
 
             (bool sent, ) = payable(poolAddress).call{value: nativeAmount}("");
             require(sent, "HBAR transfer to pool failed");
         } else {
-            // HTS token deposit (Hedera version of ERC20)
             require(msg.value == 0, "Do not send HBAR when depositing HTS");
             
-            // Direct call using the HTS interface instance
             int response = HTS.transferFrom( 
                 tokenFrom,
                 msg.sender,
                 poolAddress,
-                amount // int64 amount
+                amount
             );
 
             require(
-                response == HEDERA_SUCCESS, // Check against HEDERA_SUCCESS (0)
+                response == HEDERA_SUCCESS,
                 "HTS transfer failed"
             );
         }
 
-        // Store deposit
         deposits[nonce] = Deposit({
             status: true,
             tokenFrom: tokenFrom,
@@ -144,7 +154,6 @@ contract Bridge {
     }
 
     /* ========== ADMIN UTILITIES ========== */
-
     function setOwner(address newOwner) external onlyOwner {
         require(newOwner != address(0), "zero owner");
         owner = newOwner;
@@ -159,6 +168,12 @@ contract Bridge {
 
     function isActive(string calldata nonce) external view returns (bool) {
         return deposits[nonce].status;
+    }
+
+    function associateSelf(address token) external returns (int) {
+        int response = HTS.associateToken(address(this), token);
+        require(response == 22, "Association failed");
+        return response;
     }
 
     receive() external payable { 
