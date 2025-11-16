@@ -9,7 +9,7 @@ export default async function VaultDetailsPage({
   params: Promise<{ address: string }>
 }) {
   const { address } = await params
-  const vault = VAULTS.find((vault) => vault.address === address)
+  const vault = VAULTS.find((vault) => vault.id === address)
 
   if (!vault) {
     return <div>Vault not found</div>

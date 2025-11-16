@@ -8,7 +8,7 @@ export const NETWORKS: NetworkOption[] = ["ethereum", "binance", "hedera"]
 export const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
   ethereum: "0xE3C9B2A7EfB6901db58B497E003B15f50c4E90D2",
   binance: "0x6C293F50Fd644ec898Cfd94AB977450E188e6078",
-  hedera: "0.0.7265617",
+  hedera: "0.0.7267759",
 }
 
 export const CHAIN_IDS: Record<NetworkOption, number> = {

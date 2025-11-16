@@ -10,8 +10,9 @@ const VaultList = () => {
   const router = useRouter()
 
   const handleRowClick = (row: Vault) => {
-    router.push(`/liquidity/${row.address}`)
+    router.push(`/liquidity/${row.id}`)
   }
+
   return (
     <div className='relative mt-10 flex flex-col gap-4 max-w-4xl mx-auto'>
       <h2 className='text-xl font-semibold'>Vaults</h2>

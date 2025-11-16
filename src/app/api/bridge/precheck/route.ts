@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { API_URL } from "@/config/bridge";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     // API endpoint
-    const API_URL = "http://127.0.0.1:8000"; 
+   
     if (!API_URL) {
       return NextResponse.json(
         { success: false, message: "API URL not configured" },

@@ -18,7 +18,7 @@ const VaultSidebar = () => {
         </div>
       </div>
       <VaultSidebarTab />
-      <ProjectedEarnings />
+      {/* <ProjectedEarnings /> */}
       <VaultAction />
     </div>
   )
