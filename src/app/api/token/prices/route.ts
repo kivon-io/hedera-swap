@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = `${process.env.API_URL}/api/token-prices`;
+const API_URL = `http://104.248.47.146/api/token-prices`;
 
 export async function GET() {
   try {

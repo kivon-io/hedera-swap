@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+const LARAVEL_API_URL = "http://104.248.47.146"
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const wallet = searchParams.get("wallet")
@@ -10,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const res = await fetch(`${process.env.LARAVEL_API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`)
+    const res = await fetch(`${LARAVEL_API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`)
 
     if (!res.ok) throw new Error("Failed to fetch")
 

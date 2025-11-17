@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+const LARAVEL_API_URL = "http://104.248.47.146"
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const network = searchParams.get("network") // e.g. "Ethereum"
@@ -9,7 +11,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const res = await fetch(`${process.env.LARAVEL_API_URL}/api/volt/${network}`, {
+    const res = await fetch(`${LARAVEL_API_URL}/api/volt/${network}`, {
       headers: { "Accept": "application/json" },
       cache: "no-cache",
     })
