@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Validate required fields
-    const { fromNetwork, toNetwork, fromToken, toToken, amount, fromAddress, toAddress, nonce } = body;
+    const { fromNetwork, toNetwork, fromToken, toToken, amount, fromAddress, toAddress } = body;
     if (!fromNetwork || !toNetwork || !fromToken || !toToken || !amount || !fromAddress) {
       return NextResponse.json(
         { success: false, message: "Missing required payload fields" },
@@ -22,13 +22,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Send request to precheck endpoint
-    const bridgeResponse = await fetch(`${API_URL}/api/bridge`, {
+    const bridgeResponse = await fetch(`${API_URL}/api/precheck`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        nonce,
         fromAddress,
         fromNetwork,
         toNetwork,
@@ -51,10 +50,11 @@ export async function POST(req: NextRequest) {
     // Return API response to frontend
     return NextResponse.json({
       success: true,
-      message: "bridge sent",
+      message: "Precheck completed",
       Data: data,
     });
   } catch (err) {
+    // Properly type the error
     const error = err instanceof Error ? err : new Error(String(err));
     console.error("Next.js bridge route error:", error);
     return NextResponse.json(
