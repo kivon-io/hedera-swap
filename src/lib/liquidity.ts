@@ -1,4 +1,4 @@
-import { Hbar, TransferTransaction } from "@hashgraph/sdk"
+import { Hbar, TransferTransaction, type Signer } from "@hashgraph/sdk"
 
 // ---------------------------
 // HEDERA HBAR Deposit
@@ -9,7 +9,7 @@ export async function hederaDeposit({
   amount,
   depositAddress,
 }: {
-  signer: any
+  signer: Signer
   accountId: string
   amount: number
   depositAddress: string
