@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; 
 import { API_URL } from "@/config/bridge";
 
 export async function POST(req: NextRequest) {
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Laravel endpoint expects: nouns
+    // Laravel endpoint expects: nonce
     const laravelResponse = await fetch(`${API_URL}/api/get-bridge-status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
       withdrawHash: data.withdrawHash,
     });
 
-  } catch (err: any) {
-    console.error("Bridge status route error:", err);
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error("Bridge status route error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error", error: err.message },
+      { success: false, message: "Server error", error: error.message },
       { status: 500 }
     );
   }

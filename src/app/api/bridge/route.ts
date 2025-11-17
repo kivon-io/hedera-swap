@@ -14,8 +14,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // API endpoint
-   
     if (!API_URL) {
       return NextResponse.json(
         { success: false, message: "API URL not configured" },
@@ -30,17 +28,16 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        nonce, 
-        fromAddress, 
+        nonce,
+        fromAddress,
         fromNetwork,
         toNetwork,
         fromToken,
         toToken,
-        amount, 
-        toAddress
+        amount,
+        toAddress,
       }),
     });
-
 
     const data = await bridgeResponse.json();
 
@@ -57,10 +54,11 @@ export async function POST(req: NextRequest) {
       message: "bridge sent",
       Data: data,
     });
-  } catch (err: any) {
-    console.error("Next.js bridge route error:", err);
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error("Next.js bridge route error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error", error: err.message },
+      { success: false, message: "Server error", error: error.message },
       { status: 500 }
     );
   }
