@@ -1,3 +1,4 @@
+import { API_URL } from "@/config/bridge"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
@@ -9,8 +10,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing wallet or vault" }, { status: 400 })
   }
 
+  if (!API_URL) {
+    return NextResponse.json({ error: "API URL not configured" }, { status: 500 })
+  }
+
   try {
-    const res = await fetch(`${process.env.LARAVEL_API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`)
+    const res = await fetch(
+      `${API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`
+    )
 
     if (!res.ok) throw new Error("Failed to fetch")
 
