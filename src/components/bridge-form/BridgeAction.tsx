@@ -136,7 +136,7 @@ const BridgeAction = () => {
 
   const insufficientBalance = fromAmount > (userBalance || 0);
   const isFromNetworkConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[fromNetwork];
-  const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[toNetwork];
+  const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected;
   const isDisabled = !fromAmount || insufficientBalance || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
 
   const getButtonText = () => {
