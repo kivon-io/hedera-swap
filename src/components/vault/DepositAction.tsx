@@ -8,22 +8,22 @@ import { useSendTransaction } from "wagmi"
 import { useEvmWallet } from "@/hooks/useEvmWallet"
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"
 import { Hbar, TransferTransaction, type Signer } from "@hashgraph/sdk"
-import { thetaTestnet } from "viem/chains"
+
 
 const DepositAction = () => {
   const { vault, depositAmount: amount } = useVault()
-  const [txStatus, setTxStatus] = useState("")
+  const [txStatus, setTxStatus] = useState<string>("")
 
-  // 🔥 EVM wallet
+  //  EVM wallet
   const { address: evmAddress, isConnected: evmConnected } = useEvmWallet()
 
-  // 🔥 Hedera wallet
+  //  Hedera wallet
   const { signer, isConnected: hederaConnected } = useWallet()
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
 
-  // 🔥 Wagmi EVM transaction
+  //  Wagmi EVM transaction
   const { sendTransaction, data: evmTx, isPending, error } = useSendTransaction()
- const  [ hederaPending, setPending ] = useState(false)
+  const [hederaPending, setPending] = useState<boolean>(false)
 
   const handleDeposit = async () => {
     if (!amount || Number(amount) <= 0) {
@@ -32,7 +32,7 @@ const DepositAction = () => {
     }
 
     // -----------------------------
-    // 🔹 CASE 1: EVM Deposit
+    //  CASE 1: EVM Deposit
     // -----------------------------
     if (vault.network.slug !== "hedera") {
       if (!evmConnected || !evmAddress) {
@@ -46,14 +46,16 @@ const DepositAction = () => {
           value: parseEther(amount.toString()),
         })
         setTxStatus("Sending EVM transaction...")
-      } catch (err: any) {
-        setTxStatus("EVM deposit failed: " + err.message)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        setTxStatus("EVM deposit failed: " + message)
       }
 
       return
     }
+
     // -----------------------------
-    // 🔹 CASE 2: Hedera Deposit
+    // CASE 2: Hedera Deposit
     // -----------------------------
     if (!hederaConnected || !signer || !hederaAccount) {
       setTxStatus("Connect a Hedera wallet")
@@ -67,8 +69,8 @@ const DepositAction = () => {
         .addHbarTransfer(hederaAccount, hbarAmount.negated())
         .addHbarTransfer(vault.network.address, hbarAmount)
 
-      const frozen = await tx.freezeWithSigner(signer as unknown as Signer)
-      const result = await frozen.executeWithSigner(signer as unknown as Signer)
+      const frozen = await tx.freezeWithSigner(signer as Signer)
+      const result = await frozen.executeWithSigner(signer as Signer)
       setTxStatus("Transaction sent! Saving...")
       // Notify backend
       await fetch("/api/liquidity/add", {
@@ -81,18 +83,19 @@ const DepositAction = () => {
           txId: result.transactionId.toString(),
           vault: vault.id,
         }),
-      }).then(()=>{
-            setTxStatus("Deposit successful!")
-            setPending(false)
+      }).then(() => {
+        setTxStatus("Deposit successful!")
+        setPending(false)
       })
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
       setPending(false)
-      setTxStatus("Hedera deposit failed: " + err.message)
+      setTxStatus("Hedera deposit failed: " + message)
     }
   }
 
   // ---------------------------
-  // 🔥 Detect successful EVM tx
+  //Detect successful EVM tx
   // ---------------------------
   useEffect(() => {
     if (!evmTx) return
@@ -113,15 +116,13 @@ const DepositAction = () => {
         txId: txHash,
         vault: vault.id,
       }),
-    }).then(()=>{
-        setTxStatus("Deposit successful!")
+    }).then(() => {
+      setTxStatus("Deposit successful!")
     })
     .catch((err) => {
       console.error("Failed to notify backend of EVM deposit", err)
     })
-
-    
-  }, [evmTx])
+  }, [evmTx, evmAddress, amount, vault.network.slug, vault.id])
 
   return (
     <div className="flex flex-col gap-3">
@@ -130,16 +131,16 @@ const DepositAction = () => {
         onClick={handleDeposit}
         disabled={isPending || hederaPending}
       >
-        {isPending || hederaPending? "Processing..." : "Deposit"}
+        {isPending || hederaPending ? "Processing..." : "Deposit"}
       </Button>
 
       {txStatus && <p className="text-xs text-center">{txStatus}</p>}
 
-       {error && (
-         <p className="text-xs text-center">
-           {(error as any)?.message ?? String(error)}
-         </p>
-       )}
+      {error && (
+        <p className="text-xs text-center">
+          {error instanceof Error ? error.message : String(error)}
+        </p>
+      )}
     </div>
   )
 }
