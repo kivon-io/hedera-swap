@@ -2,9 +2,16 @@
 
 import { useVault } from "@/providers/VaultProvider"
 import Image from "next/image"
+import { useEffect } from "react"
+
+
 
 const VaultDetailsHeader = () => {
   const { vault } = useVault()
+
+  useEffect(()=>{
+    console.log(vault)
+  }, [])
 
   return (
     <div className='relative bg-zinc-100 p-4 rounded-lg border border-zinc-200 flex flex-col gap-4'>
@@ -37,9 +44,9 @@ const VaultDetailsHeader = () => {
         </div>
       </div>
       <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-        <HeaderItem label='APY' value={vault.metrics.apy.toString() + "%"} />
-        <HeaderItem label='TVL' value={vault.metrics.totalDeposits.toString()} />
-        <HeaderItem label='Fees Generated' value={vault.metrics.feesGenerated.toString()} />
+        <HeaderItem label='APY' value={vault.metrics.apy.toString() + "%"} symbol='' />
+        <HeaderItem label='TVL' value={vault.metrics.tvl.toString()} symbol=""/>
+        <HeaderItem label='Fees Generated' value={vault.metrics.feesGenerated.toString()} symbol={vault.token.symbol} />
       </div>
     </div>
   )
@@ -47,11 +54,11 @@ const VaultDetailsHeader = () => {
 
 export default VaultDetailsHeader
 
-const HeaderItem = ({ label, value }: { label: string; value: string }) => {
+const HeaderItem = ({ label, value, symbol }: { label: string; value: string, symbol: string }) => {
   return (
     <div className='flex flex-col'>
       <p className='text-xs text-muted-foreground'>{label}</p>
-      <p className='text-xl font-semibold text-foreground'>{value}</p>
+      <p className='text-xl font-semibold text-foreground'>{value} {symbol}</p>
     </div>
   )
 }

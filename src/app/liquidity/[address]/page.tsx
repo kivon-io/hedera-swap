@@ -9,7 +9,9 @@ export default async function VaultDetailsPage({
   params: Promise<{ address: string }>
 }) {
   const { address } = await params
-  const vault = VAULTS.find((vault) => vault.id === address)
+  const vault = VAULTS.find((vault) => vault.id == address)
+
+  
 
   if (!vault) {
     return <div>Vault not found</div>
@@ -19,7 +21,7 @@ export default async function VaultDetailsPage({
       <main className='relative 2xl:max-w-7xl w-full mx-auto'>
         <div className='grid grid-cols-12 gap-4'>
           <div className='col-span-12 lg:col-span-7'>
-            <VaultOverview />
+            <VaultOverview/>
           </div>
           <div className='col-span-12 lg:col-span-5'>
             <VaultSidebar />

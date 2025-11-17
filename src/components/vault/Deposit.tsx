@@ -2,22 +2,25 @@
 
 import { useVault } from "@/providers/VaultProvider"
 import Image from "next/image"
-import ConnectedEVMWallet from "../ConnectedEVMWallet"
+import ConnectedWallet from "../ConnectedWallet"
+
 import { Input } from "../ui/input"
 
 const Deposit = () => {
-  const { vault } = useVault()
+  const { vault, depositAmount, setDepositAmount } = useVault()
   return (
     <div className='relative w-full'>
       <div className='flex justify-between items-center mb-2'>
         <p className='text-sm text-zinc-600 capitalize'>From wallet</p>
-        <ConnectedEVMWallet />
+        <ConnectedWallet network={vault.network.slug}/>
       </div>
       <div className='flex gap-2 w-full'>
         <div className='w-full'>
           <Input
             className=' border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
             placeholder='0'
+            value={depositAmount}
+            onChange={(e)=>setDepositAmount(e.target.value)}
           />
         </div>
         <div className='rounded-full px-2 py-1.5 flex items-center gap-4 cursor-pointer border border-zinc-200  bg-zinc-100'>

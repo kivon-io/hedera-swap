@@ -1,4 +1,5 @@
 export const TABS = {
-  DEPOSIT: "Deposit",
-  WITHDRAW: "Withdraw",
+  DEPOSIT: "DEPOSIT",
+  WITHDRAW: "WITHDRAW",
 }
+ 

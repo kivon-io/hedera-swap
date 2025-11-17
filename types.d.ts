@@ -7,11 +7,6 @@ type VaultContextValue = {
 type Vault = {
   id: string
   address: string
-  metrics: {
-    totalDeposits: number
-    feesGenerated: number
-    apy: number
-  }
   token: {
     name: string
     symbol: string
@@ -21,6 +16,7 @@ type Vault = {
     }
   }
   network: {
+    slug: string
     name: string
     symbol: string
     address: string
@@ -30,4 +26,13 @@ type Vault = {
   }
   createdAt: number
   updatedAt: number
+
+  // add metrics so TypeScript is happy
+  metrics: {
+    apy: number
+    tvl: number
+    feesGenerated: number
+  }
 }
+
+

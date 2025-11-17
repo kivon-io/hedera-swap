@@ -3,7 +3,7 @@ export const VAULTS: Vault[] = [
     id: "1",
     address: "0x1234567890123456789012345678901234567890",
     metrics: {
-      totalDeposits: 0,
+      tvl: 0,
       feesGenerated: 0,
       apy: 3.8,
     },
@@ -16,9 +16,10 @@ export const VAULTS: Vault[] = [
       },
     }, 
     network: {
+      slug: 'ethereum', 
       name: "Ethereum",
       symbol: "ETH",
-      address: "0x0000000000000000000000000000000000000000",
+      address: "0x740eea2d92360029d7ef0614c49a0b14da7e80c9",
       metadata: {
         logoUrl: "https://assets.coingecko.com/coins/images/279/standard/ethereum.png?1696501628",
       },
@@ -31,7 +32,7 @@ export const VAULTS: Vault[] = [
     id: "2",
     address: "0x1234567890123456789012345678901234567890",
     metrics: {
-      totalDeposits: 0,
+      tvl: 0,
       feesGenerated:0,
       apy: 3.8,
     },
@@ -44,9 +45,10 @@ export const VAULTS: Vault[] = [
       },
     }, 
     network: {
+      slug: 'binance', 
       name: "Binance",
       symbol: "BNB",
-      address: "0x0000000000000000000000000000000000000000",
+      address: "0x740eea2d92360029d7ef0614c49a0b14da7e80c9",
       metadata: {
         logoUrl: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1644979850",
       },
@@ -59,7 +61,7 @@ export const VAULTS: Vault[] = [
     id: "3",
     address: "0x1234567890123456789012345678901234567890",
     metrics: {
-      totalDeposits: 0,
+      tvl: 0,
       feesGenerated: 0,
       apy: 3.8,
     },
@@ -72,9 +74,10 @@ export const VAULTS: Vault[] = [
       },
     }, 
     network: {
+      slug: 'hedera', 
       name: "Hedera",
       symbol: "HBAR",
-      address: "0x0000000000000000000000000000000000000000",
+      address: "0.0.6987678",
       metadata: {
         logoUrl: "https://assets.coingecko.com/coins/images/3688/standard/hbar.png?1696504364",
       },

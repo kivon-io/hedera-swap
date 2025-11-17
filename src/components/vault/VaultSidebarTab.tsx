@@ -11,7 +11,7 @@ const VaultSidebarTab = () => {
   return (
     <Tabs
       value={activeTab as string}
-      onValueChange={handleTabChange}
+      onValueChange={(value: string) => handleTabChange(value as "DEPOSIT" | "WITHDRAW")}
       className='w-full bg-white p-2 rounded-lg border border-zinc-200'
     >
       <TabsList>

@@ -16,13 +16,9 @@ type ProvidersProps = {
 }
 
 const Providers = ({ children }: ProvidersProps) => {
+
   const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
   const [queryClient] = useState(() => new QueryClient()) 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const wagmiConfig = useMemo(() => {
     if (!projectId || typeof window === "undefined") {
@@ -35,6 +31,13 @@ const Providers = ({ children }: ProvidersProps) => {
       chains: [bscTestnet, sepolia],
     })
   }, [projectId])
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   const metadata = useMemo(
     () => ({

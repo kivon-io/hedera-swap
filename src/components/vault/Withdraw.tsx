@@ -1,6 +1,6 @@
 import { useVault } from "@/providers/VaultProvider"
 import Image from "next/image"
-import ConnectedEVMWallet from "../ConnectedEVMWallet"
+import ConnectedWallet from "../ConnectedWallet"
 import { Input } from "../ui/input"
 
 const Withdraw = () => {
@@ -52,7 +52,7 @@ const Withdraw = () => {
 
       <div className='flex justify-between items-center mt-2'>
         <p className='text-sm text-zinc-600 capitalize'>To wallet</p>
-        <ConnectedEVMWallet />
+        <ConnectedWallet network={vault.network.slug}/>
       </div>
     </div>
   )
