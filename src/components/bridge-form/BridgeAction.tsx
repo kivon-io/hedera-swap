@@ -412,7 +412,7 @@ const BridgeAction = () => {
       console.log("just got triggered")
       evmDeposit(bridgeData);
     }
-  }, [approvalIsConfirmed])
+  }, [approvalIsConfirmed, bridgeData])
 
 
 
