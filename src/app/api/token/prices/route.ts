@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
+import { API_URL } from "@/config/bridge";
 
-const API_URL = `http://104.248.47.146/api/token-prices`;
+const REMOTE = `${API_URL}/api/token-prices`;
 
 export async function GET() {
   try {
-    const response = await fetch(API_URL, { cache: 'no-store' });
+    const response = await fetch(REMOTE, { cache: 'no-store' });
 
     if (!response.ok) {
       throw new Error('Failed to fetch from  API.');
     }
-    
+     
     const prices = await response.json();
     return NextResponse.json(prices, { status: 200 });
 

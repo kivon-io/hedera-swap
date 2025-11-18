@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-const REMOTE = 'http://104.248.47.146/api'
+
+import { API_URL } from "@/config/bridge";
+
+const REMOTE = `${API_URL}/api`
 
 export async function POST(request: Request) {
   try {
