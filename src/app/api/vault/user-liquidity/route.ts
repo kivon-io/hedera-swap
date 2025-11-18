@@ -1,6 +1,6 @@
+import { API_URL } from "@/config/bridge"
 import { NextResponse } from "next/server"
 
-const LARAVEL_API_URL = "http://104.248.47.146"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -11,8 +11,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing wallet or vault" }, { status: 400 })
   }
 
+  if (!API_URL) {
+    return NextResponse.json({ error: "API URL not configured" }, { status: 500 })
+  }
+
   try {
-    const res = await fetch(`${LARAVEL_API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`)
+    const res = await fetch(
+      `${API_URL}/api/user-liquidity?wallet_address=${wallet}&network=${vault}`
+    )
 
     if (!res.ok) throw new Error("Failed to fetch")
 
@@ -23,4 +29,4 @@ export async function GET(request: Request) {
     console.error("Error fetching user liquidity:", err)
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }
-}
+} 

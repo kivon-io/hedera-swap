@@ -1,6 +1,6 @@
+import { API_URL } from "@/config/bridge"
 import { NextResponse } from "next/server"
 
-const LARAVEL_API_URL = "http://104.248.47.146"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,9 +10,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Network is required" }, { status: 400 })
   }
 
+  if (!API_URL) {
+    return NextResponse.json({ error: "API URL not configured" }, { status: 500 })
+  }
+
   try {
-    const res = await fetch(`${LARAVEL_API_URL}/api/volt/${network}`, {
-      headers: { "Accept": "application/json" },
+    const res = await fetch(`${API_URL}/api/volt/${network}`, {
+      headers: { Accept: "application/json" },
       cache: "no-cache",
     })
 
@@ -25,7 +29,7 @@ export async function GET(request: Request) {
     // Simply return Laravel result to your frontend
     return NextResponse.json({
       feesGenerated: data.feesGenerated,
-      tvl: data.totalDeposits, 
+      tvl: data.totalDeposits,
       apy: data.apy,
       total: data.total,
       profit: data.profit,
@@ -33,9 +37,12 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error)
-    return NextResponse.json({
-      error: "Failed to connect to backend",
-      detail,
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to connect to backend",
+        detail,
+      },
+      { status: 500 }
+    )
   }
 }
