@@ -55,7 +55,7 @@ export const TOKENS: Record<
     },
     USDC: {
       symbol: "USDC",
-      address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      address: "0xabbd60313073EB1673940f0f212C7baC5333707e",
       decimals: 18,
       native: false,
       metadata: {

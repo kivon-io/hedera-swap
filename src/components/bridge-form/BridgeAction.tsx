@@ -133,12 +133,15 @@ const BridgeAction = () => {
     hederaHTSTokenBalance,
     ethBalance,
     erc20TokenBalance
-  ]);
+  ]);  
 
-  const insufficientBalance = fromAmount > (userBalance || 0);
+  // const insufficientBalance = fromAmount > (userBalance || 0);
   const isFromNetworkConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[fromNetwork];
   const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected;
-  const isDisabled = !fromAmount || insufficientBalance || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
+  const isDisabled = !fromAmount  || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
+
+  // cosnt insufficientBalance = false; 
+  // insufficientBalance
 
   const getButtonText = () => {
     if (!fromAmount) return "Enter amount";
@@ -146,8 +149,8 @@ const BridgeAction = () => {
     if (!isFromNetworkConnected) return `Connect ${fromNetwork} wallet`;
     if (!isToNetworkConnected) return `Connect ${toNetwork} wallet`;
 
-      if (insufficientBalance)
-      return `Insufficient ${fromToken} for bridge`;
+      // if (insufficientBalance)
+      // return `Insufficient ${fromToken} for bridge`;
 
     if (isBridging) return `Bridging...`;
 
@@ -169,17 +172,17 @@ const BridgeAction = () => {
 
 
   // Check allowance (EVM)
-  const { data: allowance } = useReadContract({
-    abi: ERC20_ABI,
-    address: evmConnected && !TOKENS[fromNetwork][fromToken].native ? TOKENS[fromNetwork][fromToken].address as Address : undefined,
-    functionName: "allowance",
-    args: evmConnected && evmAddress ? [evmAddress as Address, bridgeContractAddress as Address] : undefined,
-    chainId: CHAIN_IDS[fromNetwork],
-    query: {
-      enabled: evmConnected && !TOKENS[fromNetwork][fromToken].native && !!evmAddress && fromNetwork !== "hedera",
-      refetchInterval: 10000,
-    },
-  });
+  // const { data: allowance } = useReadContract({
+  //   abi: ERC20_ABI,
+  //   address: evmConnected && !TOKENS[fromNetwork][fromToken].native ? TOKENS[fromNetwork][fromToken].address as Address : undefined,
+  //   functionName: "allowance",
+  //   args: evmConnected && evmAddress ? [evmAddress as Address, bridgeContractAddress as Address] : undefined,
+  //   chainId: CHAIN_IDS[fromNetwork],
+  //   query: {
+  //     enabled: evmConnected && !TOKENS[fromNetwork][fromToken].native && !!evmAddress && fromNetwork !== "hedera",
+  //     refetchInterval: 10000,
+  //   },
+  // });
 
 
   type BridgeData = {
@@ -204,30 +207,30 @@ const BridgeAction = () => {
 
 
     //1. Monitor the deposit transaction confirmation
-  const {
-    isLoading: isConfirming,
-    isSuccess: isConfirmed,
-    data: txReceipt,
-  } = useWaitForTransactionReceipt({
-    hash: depositTx as Address,
-    query: {
-      enabled: !!depositTx && fromNetwork != 'hedera',
-    },
-  })
+  // const {
+  //   isLoading: isConfirming,
+  //   isSuccess: isConfirmed,
+  //   data: txReceipt,
+  // } = useWaitForTransactionReceipt({
+  //   hash: depositTx as Address,
+  //   query: {
+  //     enabled: !!depositTx && fromNetwork != 'hedera',
+  //   },
+  // })
 
 
   
     //1. Monitor evm token transaction confirmation
-  const {
-    isLoading: approvalIsConfirming,
-    isSuccess: approvalIsConfirmed,
-    data: approvalTxReceipt,
-  } = useWaitForTransactionReceipt({
-    hash: evmAprovalTx as Address,
-    query: {
-      enabled: !!evmAprovalTx && fromNetwork != 'hedera',
-    },
-  })
+  // const {
+  //   isLoading: approvalIsConfirming,
+  //   isSuccess: approvalIsConfirmed,
+  //   data: approvalTxReceipt,
+  // } = useWaitForTransactionReceipt({
+  //   hash: evmAprovalTx as Address,
+  //   query: {
+  //     enabled: !!evmAprovalTx && fromNetwork != 'hedera',
+  //   },
+  // })
 
   const evmDeposit = async (bridgeData: BridgeData) => {
     const { fromNetwork, fromToken, toNetwork, toToken, nonce } = bridgeData;
@@ -257,6 +260,8 @@ const BridgeAction = () => {
       onSuccess: (hash) => {
         setStatusMessage(`Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`)
         setDepositTx(hash);
+        setUdepositTx(hash);
+        notifyRelayer();
       },
       onError: (e: unknown) => {
         setIsBridging(false);
@@ -317,7 +322,7 @@ const BridgeAction = () => {
       setStatusMessage(`Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`)
       console.log("Hedera deposit tx hash:", txHash);
 
-            watchHedera(txHash as string, {
+      watchHedera(txHash as string, {
 
         onSuccess: (transaction) => {
           console.log('succesfull')
@@ -326,6 +331,7 @@ const BridgeAction = () => {
           return transaction
         },
         onError: (transaction, error) => {
+          console.log(error)
           setStatusMessage(`❌ Deposit failed/rejected. ${error}`);
           setIsBridging(false); 
           return transaction
@@ -398,22 +404,23 @@ const BridgeAction = () => {
 
 
 
-const calledRef1 = useRef(false);
-useEffect(()=>{
-  if (isConfirmed && !calledRef1.current){
-    setUdepositTx(txReceipt?.transactionHash)
-    notifyRelayer();
-  }
-}, [isConfirmed, txReceipt?.transactionHash])
+// const calledRef1 = useRef(false);
+// useEffect(()=>{
+//   console.log('is deposit cofirmation is hit')
+//   if (isConfirmed && !calledRef1.current){
+//     setUdepositTx(txReceipt?.transactionHash)
+//     notifyRelayer();
+//   }
+// }, [isConfirmed])
 
 
-const calledRef = useRef(false);
-useEffect(() => {
-  if (approvalIsConfirmed && !calledRef.current) {
-    evmDeposit(bridgeData);
-    calledRef.current = true; 
-  }
-}, [approvalIsConfirmed, bridgeData]);
+// const calledRef = useRef(false);
+// useEffect(() => { 
+//   if (fromNetwork !== "hedera" && approvalIsConfirmed && !calledRef.current) {
+//     evmDeposit(bridgeData);
+//     calledRef.current = true;
+//   }
+// }, [approvalIsConfirmed]);
 
 
 
@@ -423,9 +430,10 @@ useEffect(() => {
     setDepositTx(null);
     setUdepositTx(null)
     setWithdrawTx(null);
+    // calledRef.current = false;
+    // calledRef1.current = false;
     setStep(0);
     setStatusMessage("Checking bridge preconditions...");
-
     try {
       const preCheckRes = await fetch("/api/bridge/precheck", {
         method: "POST",
@@ -441,6 +449,13 @@ useEffect(() => {
         setIsBridging(false);
         return;
       }
+
+      let requireAllowance = false; 
+
+      if(preCheck?.Data?.node_precheck?.requireAllowance){
+        requireAllowance = preCheck.Data.node_precheck.requireAllowance
+      }
+
       console.log("nonce from precheck",  preCheck?.Data?.nonce)
 
       const freshNonce = preCheck?.Data?.nonce;
@@ -473,14 +488,18 @@ useEffect(() => {
 
       if (fromNetwork === "hedera" && !fromTokenInfo.native) {
         const tokenAddr = fromTokenInfo.address;
-        setStatusMessage(`Step 1/3: Approving ${fromToken}...`);
-        await approve([{ tokenId: tokenAddr, amount: Number(value) }], bridgeContractAddress);
-        setStatusMessage(`Step 1/3: ${fromToken} approved.`);
+        if(requireAllowance){
+            setStatusMessage(`Step 1/3: Approving ${fromToken}...`);
+            await approve([{ tokenId: tokenAddr, amount: Number(value) }], bridgeContractAddress);
+            setStatusMessage(`Step 1/3: ${fromToken} approved.`);
+        }
       }
 
       if (fromNetwork !== "hedera" && !fromTokenInfo.native) {
         const tokenAddr = fromTokenInfo.address;
-        if (typeof allowance !== "bigint" || allowance < value) {
+
+        // if (typeof allowance !== "bigint" || allowance < value) {
+        if(requireAllowance){
           setStatusMessage(`Step 1/3: Confirming approval for ${fromToken} in wallet...`);
           const approvalTrx = await evmWriteContractAsync({ 
             address: tokenAddr as Address,
@@ -490,8 +509,10 @@ useEffect(() => {
           });
           setStatusMessage(`Step 1/3: ${fromToken} approved. Waiting for transaction confirmation...`);
           setEvmAprovalTx(approvalTrx); 
-          return; 
+          // evmDeposit(bridgeData);
+          // return; 
         }
+        // }
       }
 
 
@@ -529,7 +550,6 @@ useEffect(() => {
     fromNetwork, 
     toNetwork, 
     isDisabled, 
-    allowance, 
     value, 
     nonce, 
     evmWriteContractAsync, 
