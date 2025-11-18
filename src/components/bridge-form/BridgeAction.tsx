@@ -135,10 +135,10 @@ const BridgeAction = () => {
     erc20TokenBalance
   ]);  
 
-  // const insufficientBalance = fromAmount > (userBalance || 0);
+  const insufficientBalance = fromAmount > (userBalance || 0);
   const isFromNetworkConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[fromNetwork];
   const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected;
-  const isDisabled = !fromAmount  || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
+  const isDisabled = !fromAmount  || insufficientBalance || !isFromNetworkConnected || !isToNetworkConnected || isBridging;
 
   // cosnt insufficientBalance = false; 
   // insufficientBalance
@@ -149,8 +149,8 @@ const BridgeAction = () => {
     if (!isFromNetworkConnected) return `Connect ${fromNetwork} wallet`;
     if (!isToNetworkConnected) return `Connect ${toNetwork} wallet`;
 
-      // if (insufficientBalance)
-      // return `Insufficient ${fromToken} for bridge`;
+      if (insufficientBalance)
+      return `Insufficient ${fromToken} for bridge`;
 
     if (isBridging) return `Bridging...`;
 
