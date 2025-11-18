@@ -1,5 +1,6 @@
 "use client"
 
+import { useAutoConnect } from "@/hooks/useAutoConnect"
 import { useEvmWallet } from "@/hooks/useEvmWallet"
 import { formatAddress } from "@/lib/utils"
 import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
@@ -11,7 +12,6 @@ import { Button } from "./ui/button"
 import { ButtonGroup } from "./ui/button-group"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Separator } from "./ui/separator"
-import { useAutoConnect } from '@/hooks/useAutoConnect'; 
 
 const Header = () => {
   return (
@@ -34,10 +34,9 @@ const Header = () => {
 export default Header
 
 const EVMWallet = () => {
-  const { address, connect, disconnectWallet } = useEvmWallet()
+  const { address, connect } = useEvmWallet()
   const [mounted, setMounted] = useState(false)
-  const { isConnected, guardedDisconnect } = useAutoConnect();
-
+  const { isConnected, guardedDisconnect } = useAutoConnect()
 
   useEffect(() => {
     setMounted(true)
