@@ -5,6 +5,14 @@ const REMOTE = `${API_URL}/api/token-prices`;
 
 export async function GET() {
   try {
+
+        if (!API_URL) {
+      return NextResponse.json(
+        { success: false, message: "API URL not configured" },
+        { status: 500 }
+      );
+    }
+    
     const response = await fetch(REMOTE, { cache: 'no-store' });
 
     if (!response.ok) {
