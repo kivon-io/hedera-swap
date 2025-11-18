@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { API_URL } from "@/config/bridge";
 
-const REMOTE = 'http://104.248.47.146/api'
+const REMOTE = `${API_URL}/api`
 
 export async function GET() {
   const res = await fetch(REMOTE+"/get-fee");
