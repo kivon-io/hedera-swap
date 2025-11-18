@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef} from "react";
 import { Button } from "../ui/button";
 import { useBridge } from "@/providers/BridgeProvider";
 
 import { 
   useAccount, 
-  useReadContract, 
+  useReadContract,   
   useWriteContract, 
   useChainId, 
   useBalance as evmUseBalance, 
@@ -99,6 +99,7 @@ const BridgeAction = () => {
     address: evmAddress,
     token: fromTokenInfo.address as Address, 
   })
+  
 
   const {data: EthBalance}  = evmUseBalance({address: evmAddress})
 
@@ -397,22 +398,22 @@ const BridgeAction = () => {
 
 
 
-  
-  useEffect(()=>{
-      if (isConfirmed){
-        console.log("just got triggered")
-          setUdepositTx(txReceipt?.transactionHash)
-          notifyRelayer(); 
-      }
-  }, [isConfirmed])
+const calledRef1 = useRef(false);
+useEffect(()=>{
+  if (isConfirmed && !calledRef1.current){
+    setUdepositTx(txReceipt?.transactionHash)
+    notifyRelayer();
+  }
+}, [isConfirmed, txReceipt?.transactionHash])
 
 
-  useEffect(()=>{
-    if (approvalIsConfirmed){
-      console.log("just got triggered")
-      evmDeposit(bridgeData);
-    }
-  }, [approvalIsConfirmed, bridgeData])
+const calledRef = useRef(false);
+useEffect(() => {
+  if (approvalIsConfirmed && !calledRef.current) {
+    evmDeposit(bridgeData);
+    calledRef.current = true; 
+  }
+}, [approvalIsConfirmed, bridgeData]);
 
 
 
