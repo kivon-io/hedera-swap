@@ -2,12 +2,12 @@
 
 import { ReactNode, useMemo, useState,useEffect } from "react"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
-import { HederaTestnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
+import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
 import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { WagmiProvider } from "wagmi"
-import { bscTestnet, sepolia } from "wagmi/chains"
+import { arbitrum, base, bsc, mainnet, optimism} from "wagmi/chains"
 
 import DAppLogo from "./fake_logo.png"
 
@@ -28,7 +28,7 @@ const Providers = ({ children }: ProvidersProps) => {
     return getDefaultConfig({
       appName: "Kivon Hedera Bridge",
       projectId,
-      chains: [bscTestnet, sepolia],
+      chains: [mainnet, arbitrum, base, optimism, bsc],
     })
   }, [projectId])
 
@@ -58,7 +58,7 @@ const Providers = ({ children }: ProvidersProps) => {
       metadata={metadata}
       projectId={projectId}
       connectors={[HashpackConnector, KabilaConnector]}
-      chains={[HederaTestnet]}
+      chains={[HederaMainnet]}
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
