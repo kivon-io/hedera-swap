@@ -12,11 +12,15 @@ export const fetchTokenPrices = async (): Promise<TokenPrices> => {
   // Define a safe fallback object for errors
   const safeZeroPrices: TokenPrices = {
     ETH: 0,
+    WETH: 0,
     BNB: 0,
     HBAR: 0,
-    USDC: 0,
-    bUSDC: 0,
-    hUSDC: 0,
+    PACK: 0,
+    SAUCE: 0,
+    USDC: 0, 
+    USDT: 0,
+    WBTC: 0, 
+    BTCB: 0
   }
 
   try {

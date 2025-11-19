@@ -5,18 +5,20 @@ import {type NetworkOption } from "@/config/networks";
 import { useReadContract, useBalance } from "wagmi"
 import { Hbar } from "@hashgraph/sdk";
 
-
 export const EXPLORER_URLS = {
-  ethereum: "https://sepolia.etherscan.io/tx/",
-  binance: "https://testnet.bscscan.com/tx/",
-  hedera: "https://hashscan.io/testnet/transaction/",
+  ethereum: "https://etherscan.io/tx/",
+  binance: "https://bscscan.com/tx/",
+  hedera: "https://hashscan.io/mainnet/transaction/",
+  base: "https://basescan.org/tx/",
+  optimism: "https://optimistic.etherscan.io/tx/",
+  arbitrum: "https://arbiscan.io/tx/",
 };
-
-export const truncateHash = (hash: string  | null | undefined) =>
-  !hash ? "" : `${hash.slice(0, 6)}...${hash.slice(-4)}`;
 
 export const getExplorerLink = (txHash: string, network: NetworkOption) =>
   EXPLORER_URLS[network] + txHash;
+
+export const truncateHash = (hash: string  | null | undefined) =>
+  !hash ? "" : `${hash.slice(0, 6)}...${hash.slice(-4)}`;
 
 
 export function useEthBalance(address?: `0x${string}`) {
@@ -79,14 +81,14 @@ export function convertTokenByUSD(amountA:number | string, priceA:number, priceB
 // but is a standard part of a Hedera dApp.
 
 export const checkTokenAssociation = async (accountId: string, tokenId: string): Promise<boolean> => {
-    // 1. Construct the Mirror Node URL
-    const mirrorNodeUrl = `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/tokens`; // Use mainnet URL for mainnet
+    // 1. Construct the Mirror Node URL for mainnet
+    const mirrorNodeUrl = `https://mainnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/tokens`;
 
     try {
         const response = await fetch(mirrorNodeUrl);
         const data = await response.json();
 
-        // 2. Check the response for the specific token ID
+        // 2. Check if the account is associated with the specific token
         const isAssociated = data.tokens.some(
             (token: { token_id: string; }) => token.token_id === tokenId
         );
@@ -95,10 +97,11 @@ export const checkTokenAssociation = async (accountId: string, tokenId: string):
 
     } catch (error) {
         console.error("Error checking token association:", error);
-        // Best practice: Assume it's NOT associated or handle the error gracefully
+        // Safe fallback: assume not associated
         return false; 
     }
 };
+
 
 /**
  * Safely parse any numeric input into a valid Hbar instance.
