@@ -26,7 +26,7 @@ const DepositAction = () => {
   const { sendTransaction, data: evmTx, isPending, error } = useSendTransaction()
   const [hederaPending, setPending] = useState<boolean>(false)
 
-  const { data: hederaChain } = useChain(); 
+  const { data: hederaChain } = useChain({ autoFetch: hederaConnected }); 
   const  evmChain = useChainId(); 
 
   const evmPoolAddress = '0xf10ee4cf289d2f6b53a90229ce16b8646e724418'; 
@@ -144,13 +144,15 @@ const DepositAction = () => {
 
 
 
+
 const isButtonDisabled = useMemo(() => {
+
   if (vault.network_slug === 'hedera') {
-    return hederaChain.id !== CHAIN_IDS['hedera'];
+    return hederaChain?.chain?.id !== CHAIN_IDS['hedera'];
   } else {
     return evmChain !== CHAIN_IDS[vault.network_slug as NetworkOption];
   }
-}, [vault.network_slug, hederaChain?.id, evmChain]);
+}, [vault.network_slug, hederaChain?.chain?.id, evmChain, hederaAccount]);
 
 
   return (
