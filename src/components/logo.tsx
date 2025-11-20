@@ -17,7 +17,7 @@ const Logo = () => {
         />
       </div>
       <p className={cn("text-sm hidden md:block font-medium text-zinc-900 dark:text-white")}>
-        Kivon Hedera Bridge
+        Kivon | Hedera
       </p>
     </Link>
   )

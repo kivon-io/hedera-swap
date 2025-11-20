@@ -1,24 +1,21 @@
 "use client"
 
-import { ReactNode, useMemo, useState,useEffect } from "react"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
 import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactNode, useEffect, useMemo, useState } from "react"
 import { WagmiProvider } from "wagmi"
-import { arbitrum, base, bsc, mainnet, optimism} from "wagmi/chains"
-
-import DAppLogo from "./fake_logo.png"
+import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
 
 type ProvidersProps = {
   children: ReactNode
 }
 
 const Providers = ({ children }: ProvidersProps) => {
-
   const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
-  const [queryClient] = useState(() => new QueryClient()) 
+  const [queryClient] = useState(() => new QueryClient())
 
   const wagmiConfig = useMemo(() => {
     if (!projectId || typeof window === "undefined") {
@@ -32,27 +29,26 @@ const Providers = ({ children }: ProvidersProps) => {
     })
   }, [projectId])
 
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
+    setMounted(true)
+  }, [])
 
   const metadata = useMemo(
     () => ({
       name: "Kivon Hedera Bridge",
       description: "Kivon Hedera Bridge",
-      icons: [DAppLogo.src],
+      icons: ["https://trusty-dinosaur-aff6ef4f16.media.strapiapp.com/04_Coloured_c41a6772d1.png"],
       url: typeof window !== "undefined" ? window.location.origin : "",
     }),
     []
   )
 
   if (!mounted || !projectId || !wagmiConfig) {
-    return null;
+    return null
   }
- 
+
   return (
     <HWBridgeProvider
       metadata={metadata}
