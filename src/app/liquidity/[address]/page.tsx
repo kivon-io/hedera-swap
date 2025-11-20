@@ -1,5 +1,3 @@
-"use client"
-
 import VaultOverview from "@/components/vault/VaultOverview"
 import VaultSidebar from "@/components/vault/VaultSidebar"
 import { VaultProvider } from "@/providers/VaultProvider"
