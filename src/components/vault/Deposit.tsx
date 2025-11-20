@@ -57,7 +57,7 @@ const Deposit = () => {
         </div>
       </div>
       {/* TODO: Show the price of the asset */}
-      <p className='text-xs text-zinc-600'>$0.00</p>
+      <p className='text-xs text-zinc-600'>${Number(vault.native_token_price) * Number(depositAmount)}</p>
     </div>
   )
 }

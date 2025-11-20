@@ -7,6 +7,7 @@ type VaultContextValue = {
 type Vault = {
   tvl: string | number
   native_token_symbol:string
+  native_token_price: string | number
   apy: string | number
   tvl_usd: string | number
   network: string
