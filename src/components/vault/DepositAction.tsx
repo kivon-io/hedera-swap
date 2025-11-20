@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useVault } from "@/providers/VaultProvider"
 import { Button } from "../ui/button"
 import { parseEther } from "viem"
-import { useSendTransaction } from "wagmi"
+import { useSendTransaction, useChainId } from "wagmi"
 import { useEvmWallet } from "@/hooks/useEvmWallet"
-import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"
+import { useWallet, useAccountId, useChain } from "@buidlerlabs/hashgraph-react-wallets"
 import { Hbar, TransferTransaction, type Signer } from "@hashgraph/sdk"
+import { CHAIN_IDS, type NetworkOption } from "@/config/networks"
 
 
 const DepositAction = () => {
@@ -25,6 +26,12 @@ const DepositAction = () => {
   const { sendTransaction, data: evmTx, isPending, error } = useSendTransaction()
   const [hederaPending, setPending] = useState<boolean>(false)
 
+  const { data: hederaChain } = useChain(); 
+  const  evmChain = useChainId(); 
+
+  const evmPoolAddress = '0xf10ee4cf289d2f6b53a90229ce16b8646e724418'; 
+  const hederPoolAddress = '0.0.10115610'; 
+
   const handleDeposit = async () => {
     if (!amount || Number(amount) <= 0) {
       setTxStatus("Enter a valid amount")
@@ -34,7 +41,7 @@ const DepositAction = () => {
     // -----------------------------
     //  CASE 1: EVM Deposit
     // -----------------------------
-    if (vault.network.slug !== "hedera") {
+    if (vault.network_slug !== "hedera") {
       if (!evmConnected || !evmAddress) {
         setTxStatus("Connect an EVM wallet")
         return
@@ -42,7 +49,7 @@ const DepositAction = () => {
 
       try {
         sendTransaction({
-          to: vault.network.address as `0x${string}`,
+          to: evmPoolAddress as `0x${string}`,
           value: parseEther(amount.toString()),
         })
         setTxStatus("Sending EVM transaction...")
@@ -67,10 +74,12 @@ const DepositAction = () => {
       const hbarAmount = new Hbar(Number(amount))
       const tx = new TransferTransaction()
         .addHbarTransfer(hederaAccount, hbarAmount.negated())
-        .addHbarTransfer(vault.network.address, hbarAmount)
+        .addHbarTransfer(hederPoolAddress, hbarAmount)
 
       const frozen = await tx.freezeWithSigner(signer as Signer)
       const result = await frozen.executeWithSigner(signer as Signer)
+
+
       setTxStatus("Transaction sent! Saving...")
       // Notify backend
       await fetch("/api/liquidity/add", {
@@ -80,12 +89,16 @@ const DepositAction = () => {
           network: "hedera",
           wallet_address: hederaAccount.toString(),
           amount: Number(amount),
-          txId: result.transactionId.toString(),
-          vault: vault.id,
-        }),
+          txId: result.transactionId.toString()
+        }), 
       }).then(() => {
         setTxStatus("Deposit successful!")
         setPending(false)
+
+        setTimeout(()=>{
+          window.location.reload();
+        }, 2000)
+       
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -110,28 +123,44 @@ const DepositAction = () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        network: vault.network.slug,
+        network: vault.network_slug,
         wallet_address: evmAddress,
         amount: Number(amount),
         txId: txHash,
-        vault: vault.id,
       }),
     }).then(() => {
+
       setTxStatus("Deposit successful!")
+
+        setTimeout(()=>{
+          window.location.reload();
+        }, 2000)
     })
     .catch((err) => {
       console.error("Failed to notify backend of EVM deposit", err)
     })
-  }, [evmTx, evmAddress, amount, vault.network.slug, vault.id])
+  }, [evmTx, evmAddress, amount, vault.network_slug])
+
+
+
+
+const isButtonDisabled = useMemo(() => {
+  if (vault.network_slug === 'hedera') {
+    return hederaChain.id !== CHAIN_IDS['hedera'];
+  } else {
+    return evmChain !== CHAIN_IDS[vault.network_slug as NetworkOption];
+  }
+}, [vault.network_slug, hederaChain?.id, evmChain]);
+
 
   return (
     <div className="flex flex-col gap-3">
       <Button
         className="w-full rounded-xl h-12"
         onClick={handleDeposit}
-        disabled={isPending || hederaPending}
+        disabled={isPending || hederaPending || isButtonDisabled}
       >
-        {isPending || hederaPending ? "Processing..." : "Deposit"}
+        { isButtonDisabled ? `connect to ${vault.network_slug} network` : isPending || hederaPending ? "Processing..." : "Deposit"}
       </Button>
 
       {txStatus && <p className="text-xs text-center">{txStatus}</p>}

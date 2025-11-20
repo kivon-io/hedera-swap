@@ -18,20 +18,20 @@ const Withdraw = () => {
           <div className='flex items-center gap-2'>
             <div className='relative'>
               <div className='h-7 w-7 aspect-square rounded-full bg-zinc-300 overflow-hidden relative'>
-                {vault.token.metadata?.logoUrl ? (
+                {vault.token_logo ? (
                   <Image
-                    src={vault.token.metadata.logoUrl}
-                    alt={vault.token.name}
+                    src={vault.token_logo}
+                    alt={vault.token_symbol}
                     fill
                     className='object-cover'
                   />
                 ) : null}
               </div>
               <div className='absolute bottom-0 right-0 w-3 h-3 rounded-full border border-white overflow-hidden'>
-                {vault.network.metadata?.logoUrl ? (
+                {vault.logo ? (
                   <Image
-                    src={vault.network.metadata.logoUrl}
-                    alt={vault.network.name}
+                    src={vault.logo}
+                    alt={vault.network}
                     fill
                     className='object-cover'
                   />
@@ -41,8 +41,8 @@ const Withdraw = () => {
               </div>
             </div>
             <div className='flex flex-col -space-y-0.5'>
-              <p className='text-sm font-medium'>{vault.token.name}</p>
-              <span className='text-[10px] text-zinc-500 uppercase'>{vault.network.name}</span>
+              <p className='text-sm font-medium'>{vault.token_symbol}</p>
+              <span className='text-[10px] text-zinc-500 uppercase'>{vault.network}</span>
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@ const Withdraw = () => {
 
       <div className='flex justify-between items-center mt-2'>
         <p className='text-sm text-zinc-600 capitalize'>To wallet</p>
-        <ConnectedWallet network={vault.network.slug}/>
+        <ConnectedWallet network={vault.network_slug}/>
       </div>
     </div>
   )

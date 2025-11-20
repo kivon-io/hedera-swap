@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/volt/${network}`, {
+    const res = await fetch(`${API_URL}/api/valt/${network}`, {
       headers: { Accept: "application/json" },
       cache: "no-cache",
     })
@@ -34,6 +34,12 @@ export async function GET(request: Request) {
       total: data.total,
       profit: data.profit,
       totalWithdrawn: data.totalWithdrawn,
+      logo: data.logo,
+      token_logo: data.token_logo,
+      token_symbol: data.token_symbol, 
+      network_slug: network,
+      native_token_symbol: data.native_token_symbol,
+      native_token_price: data.native_token_price
     })
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error)
