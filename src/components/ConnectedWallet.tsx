@@ -1,3 +1,5 @@
+"use client"
+
 import { useEvmWallet } from "@/hooks/useEvmWallet"
 import { formatAddress } from "@/lib/utils"
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"

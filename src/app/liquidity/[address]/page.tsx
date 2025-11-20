@@ -1,7 +1,9 @@
+"use client"
+
 import VaultOverview from "@/components/vault/VaultOverview"
 import VaultSidebar from "@/components/vault/VaultSidebar"
 import { VaultProvider } from "@/providers/VaultProvider"
-import { useEffect, useState } from "react"
+
 
 export default async function VaultDetailsPage({params,}: {
   params: Promise<{ address: string }>

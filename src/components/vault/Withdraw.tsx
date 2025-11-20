@@ -1,3 +1,5 @@
+"use client"
+
 import { useVault } from "@/providers/VaultProvider"
 import Image from "next/image"
 import ConnectedWallet from "../ConnectedWallet"

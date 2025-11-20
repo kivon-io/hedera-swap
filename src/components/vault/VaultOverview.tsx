@@ -1,3 +1,5 @@
+"use client"
+
 import VaultDetailsHeader from "./VaultDetailsHeader"
 
 const VaultOverview = () => {
