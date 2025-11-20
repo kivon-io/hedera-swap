@@ -2,40 +2,27 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { VAULTS } from "@/lib/data/vault"
 import { DataTable } from "../ui/data-table"
 import columns from "./Columns"
 
 const VaultList = () => {
   const router = useRouter()
 
-  const [vaults, setVaults] = useState(VAULTS)     // <-- holds updated vaults
+  const [vaults, setVaults] = useState([])     // <-- holds updated vaults
   const [loading, setLoading] = useState(true)
 
   const handleRowClick = (row: Vault) => {
-    router.push(`/liquidity/${row.id}`)
+    router.push(`/liquidity/${row.network}`)
   }
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const updated = await Promise.all(
-          VAULTS.map(async (vault) => {
-            const response = await fetch(`/api/vault?network=${vault.network.name}`)
-            const data = await response.json()
-
-            return {
-              ...vault,
-              metrics: {
-                tvl: data.tvl,
-                feesGenerated: data.feesGenerated,
-                apy: data.apy,
-              },
-            }
-          })
-        )
-
-        setVaults(updated)
+        const response = await fetch(`/api/vault/all`)
+        const data = await response.json()
+        console.log("all volts")
+        console.log(data?.data); 
+        setVaults(data?.data)
       } catch (error) {
         console.error("Error fetching vault metrics:", error)
       } finally {

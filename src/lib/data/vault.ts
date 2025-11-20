@@ -1,4 +1,5 @@
 export const VAULTS: Vault[] = [
+  
   {
     id: "1",
     address: "0x1234567890123456789012345678901234567890",
@@ -6,8 +7,8 @@ export const VAULTS: Vault[] = [
       tvl: 0,
       feesGenerated: 0,
       apy: 3.8,
-    },
-    token: {
+    },    
+    token: { 
       name: "ethereum",
       symbol: "ETH",
       address: "0x0000000000000000000000000000000000000000",
@@ -59,7 +60,7 @@ export const VAULTS: Vault[] = [
 
   {
     id: "3",
-    address: "0x1234567890123456789012345678901234567890",
+    address: "0xf10ee4cf289d2f6b53a90229ce16b8646e724418",
     metrics: {
       tvl: 0,
       feesGenerated: 0,
@@ -77,7 +78,7 @@ export const VAULTS: Vault[] = [
       slug: 'hedera', 
       name: "Hedera",
       symbol: "HBAR",
-      address: "0.0.6987678",
+      address: "0.0.10061110",
       metadata: {
         logoUrl: "https://assets.coingecko.com/coins/images/3688/standard/hbar.png?1696504364",
       },
@@ -85,6 +86,8 @@ export const VAULTS: Vault[] = [
     createdAt: 1715769600,
     updatedAt: 1715769600,
   }
+
+
 ]
 
 

@@ -13,17 +13,21 @@ type VaultContextValue = {
 
 const VaultContext = createContext<VaultContextValue | undefined>(undefined)
 
-const VaultProvider = ({ children, vault: initialVault }: { children: React.ReactNode; vault: Vault }) => {
+const VaultProvider = ({ children, network }: { children: React.ReactNode; network: string }) => {
   const [activeTab, setActiveTab] = useState<keyof typeof TABS>("DEPOSIT")
   const [depositAmount, setDepositAmount] = useState<number | string>(0); 
 
   const [vault, setVault] = useState<Vault>({
-    ...initialVault,
-    metrics: {
-      apy: 0,
-      tvl: 0,
-      feesGenerated: 0,
-    },
+    tvl: 0,
+    native_token_symbol:'',
+    apy: 0,
+    tvl_usd: 0,
+    network: network,
+    logo: "",
+    token_logo: '',
+    token_symbol: '', 
+    feesGenerated: 0,
+    network_slug: network 
   })
 
   const handleTabChange = (tab: keyof typeof TABS) => {
@@ -31,20 +35,25 @@ const VaultProvider = ({ children, vault: initialVault }: { children: React.Reac
   }
 
   useEffect(() => {
-    if (!vault?.network?.slug) return
+    if (!vault?.network_slug) return
 
     const getMetrics = async () => {
       try {
-        const res = await fetch(`/api/vault?network=${vault.network.slug}`)
+        const res = await fetch(`/api/vault?network=${vault.network_slug}`)
         const data = await res.json()
 
         setVault((prev) => ({
           ...prev,
-          metrics: {
             apy: data.apy,
             tvl: data.tvl,
             feesGenerated: data.feesGenerated,
-          },
+            logo: data.logo,
+            token_logo: data.token_logo,
+            token_symbol: data.token_symbol, 
+            network_slug: network,
+            native_token_symbol: data.native_token_symbol,
+            native_token_price: data.native_token_price
+
         }))
       } catch (err) {
         console.error("Failed to load vault metrics", err)
@@ -52,7 +61,7 @@ const VaultProvider = ({ children, vault: initialVault }: { children: React.Reac
     }
 
     getMetrics()
-  }, [vault.network.slug])
+  }, [vault.network_slug])
 
   const values = useMemo(() => ({ vault, activeTab, handleTabChange, depositAmount, setDepositAmount }), [vault, activeTab, depositAmount])
 
