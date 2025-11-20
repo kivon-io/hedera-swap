@@ -1,4 +1,5 @@
 import { TRANSACTION_TYPE, type TransactionType } from "@/config/bridge"
+import { cn } from "@/lib/utils"
 import { useBridge } from "@/providers/BridgeProvider"
 import { ChevronDown } from "lucide-react"
 import Image from "next/image"
@@ -6,8 +7,12 @@ import { useState } from "react"
 import { Input } from "../ui/input"
 import SelectAsset from "./SelectAsset"
 
- // Utility function to compute conversion
-export const calculateToAmount = (fromAmount: number, fromPrice: number, toPrice: number): number => {
+// Utility function to compute conversion
+export const calculateToAmount = (
+  fromAmount: number,
+  fromPrice: number,
+  toPrice: number
+): number => {
   if (!fromAmount || !fromPrice || !toPrice) return 0
   return parseFloat(((fromAmount * fromPrice) / toPrice).toFixed(6))
 }
@@ -16,10 +21,12 @@ const BridgeAsset = ({
   type,
   fromPrice,
   toPrice,
+  className,
 }: {
   type: TransactionType
   fromPrice: number
   toPrice: number
+  className?: string
 }) => {
   const [open, setOpen] = useState(false)
   const { selected, networks, tokensByNetwork, setAmount } = useBridge()
@@ -30,36 +37,38 @@ const BridgeAsset = ({
   const [fromInput, setFromInput] = useState("")
   const handleOpenSelectAsset = () => setOpen(true)
 
- 
-
   const handleAmountChange = (value: string) => {
     setFromInput(value) // keep what the user typed
     const parsed = parseFloat(value)
     setAmount(TRANSACTION_TYPE.FROM, isNaN(parsed) ? 0 : parsed)
-    setAmount(TRANSACTION_TYPE.TO, calculateToAmount(isNaN(parsed) ? 0 : parsed, fromPrice, toPrice))
+    setAmount(
+      TRANSACTION_TYPE.TO,
+      calculateToAmount(isNaN(parsed) ? 0 : parsed, fromPrice, toPrice)
+    )
   }
   const price = type === TRANSACTION_TYPE.FROM ? fromPrice : toPrice
 
   return (
     <>
-      <div className='relative border border-zinc-200 rounded-2xl px-4 py-6 bg-white flex flex-col gap-2'>
+      <div
+        className={cn(
+          "relative border border-zinc-200 rounded-2xl px-4 py-6 bg-white flex flex-col gap-2",
+          className
+        )}
+      >
         <TransactionType type={type} />
         <div className='flex gap-2'>
           <div className='w-full'>
             <Input
               className='border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
-              placeholder="0.00"
-              value={
-                type === TRANSACTION_TYPE.FROM
-                  ? fromInput || ""
-                  : selected.to.amount || ""
-              }
+              placeholder='0.00'
+              value={type === TRANSACTION_TYPE.FROM ? fromInput || "" : selected.to.amount || ""}
               onKeyDown={(e) => {
                 if (["e", "E", "+", "-"].includes(e.key)) {
                   e.preventDefault()
                 }
               }}
-              step="any"
+              step='any'
               onChange={(e) => handleAmountChange(e.target.value)}
               disabled={type === TRANSACTION_TYPE.TO}
             />

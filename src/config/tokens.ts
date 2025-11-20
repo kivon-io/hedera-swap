@@ -7,7 +7,10 @@ import type { Address } from "viem"
  * One unified object that stores token metadata (symbol, address, decimals)
  * for each network. You can easily add new networks or tokens here.
  */
-export const TOKENS: Record<NetworkOption, Record<string,
+export const TOKENS: Record<
+  NetworkOption,
+  Record<
+    string,
     {
       symbol: string
       address: Address | string
@@ -61,8 +64,6 @@ export const TOKENS: Record<NetworkOption, Record<string,
     },
   },
 
-
-
   arbitrum: {
     ETH: {
       symbol: "ETH",
@@ -105,94 +106,89 @@ export const TOKENS: Record<NetworkOption, Record<string,
     },
   },
 
-
-    optimism: {
-      ETH: {
-        symbol: "ETH",
-        address: "0x0000000000000000000000000000000000000000",
-        decimals: 18,
-        native: true,
-        metadata: {
-          logoUrl: "https://token-icons.s3.amazonaws.com/eth.png",
-        },
-      },
-
-      WBTC: {
-        symbol: "WBTC",
-        address: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
-        decimals: 8,
-        native: false,
-        metadata: {
-          logoUrl: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400",
-        },
-      },
-
-      USDC: {
-        symbol: "USDC",
-        address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-        decimals: 6,
-        native: false,
-        metadata: {
-          logoUrl: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png?1696506694",
-        },
-      },
-
-      USDT: {
-        symbol: "USDT",
-        address: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
-        decimals: 6,
-        native: false,
-        metadata: {
-          logoUrl: "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
-        },
+  optimism: {
+    ETH: {
+      symbol: "ETH",
+      address: "0x0000000000000000000000000000000000000000",
+      decimals: 18,
+      native: true,
+      metadata: {
+        logoUrl: "https://token-icons.s3.amazonaws.com/eth.png",
       },
     },
 
-
-
-    base: {
-      ETH: {
-        symbol: "ETH",
-        address: "0x0000000000000000000000000000000000000000",
-        decimals: 18,
-        native: true,
-        metadata: {
-          logoUrl: "https://token-icons.s3.amazonaws.com/eth.png",
-        },
+    WBTC: {
+      symbol: "WBTC",
+      address: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+      decimals: 8,
+      native: false,
+      metadata: {
+        logoUrl: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400",
       },
+    },
 
-      WBTC: {
-        symbol: "WBTC",
-        address: "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-        decimals: 8,
-        native: false,
-        metadata: {
-          logoUrl: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400",
-        },
+    USDC: {
+      symbol: "USDC",
+      address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      decimals: 6,
+      native: false,
+      metadata: {
+        logoUrl: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png?1696506694",
       },
+    },
 
-      USDC: {
-        symbol: "USDC",
-        address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-        decimals: 6,
-        native: false,
-        metadata: {
-          logoUrl: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png?1696506694",
-        },
+    USDT: {
+      symbol: "USDT",
+      address: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+      decimals: 6,
+      native: false,
+      metadata: {
+        logoUrl: "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
       },
-
-      USDT: {
-        symbol: "USDT",
-        address: "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
-        decimals: 6,
-        native: false,
-        metadata: {
-          logoUrl: "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
-        },
-      },
+    },
   },
 
+  base: {
+    ETH: {
+      symbol: "ETH",
+      address: "0x0000000000000000000000000000000000000000",
+      decimals: 18,
+      native: true,
+      metadata: {
+        logoUrl: "https://token-icons.s3.amazonaws.com/eth.png",
+      },
+    },
 
+    WBTC: {
+      symbol: "WBTC",
+      address: "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+      decimals: 8,
+      native: false,
+      metadata: {
+        logoUrl: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400",
+      },
+    },
+
+    USDC: {
+      symbol: "USDC",
+      address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      decimals: 6,
+      native: false,
+      metadata: {
+        logoUrl: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png?1696506694",
+      },
+    },
+
+    USDT: {
+      symbol: "USDT",
+      address: "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+      decimals: 6,
+      native: false,
+      metadata: {
+        logoUrl: "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
+      },
+    },
+  },
 
   binance: {
     BNB: {
@@ -246,7 +242,6 @@ export const TOKENS: Record<NetworkOption, Record<string,
     },
   },
 
-
   hedera: {
     HBAR: {
       symbol: "HBAR",
@@ -273,8 +268,7 @@ export const TOKENS: Record<NetworkOption, Record<string,
       decimals: 6,
       native: false,
       metadata: {
-        logoUrl:
-          "https://coin-images.coingecko.com/coins/images/38078/large/token.png?1718152817",
+        logoUrl: "https://coin-images.coingecko.com/coins/images/38078/large/token.png?1718152817",
       },
     },
     WBTC: {
@@ -315,6 +309,3 @@ export const TOKENS: Record<NetworkOption, Record<string,
     },
   },
 }
-
-
-
