@@ -27,7 +27,8 @@ const VaultProvider = ({ children, network }: { children: React.ReactNode; netwo
     token_logo: '',
     token_symbol: '', 
     feesGenerated: 0,
-    network_slug: network 
+    network_slug: network, 
+    native_token_price: 0
   })
 
   const handleTabChange = (tab: keyof typeof TABS) => {
