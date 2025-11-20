@@ -1,6 +1,7 @@
+"use client"
 import React from "react"
 import { CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "./ui/badge"
+
 
 const BridgeContainer = ({ children }: { children: React.ReactNode }) => {
   return (
