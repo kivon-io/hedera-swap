@@ -81,7 +81,7 @@ const MintButton: React.FC<MintButtonProps> = ({ hederaAccount, nonce, minted, s
         <button
             className="w-full rounded-xl h-12 bg-black hover:bg-black text-white font-semibold transition-all duration-300"
             onClick={handleReceipt}
-            disabled={isMinting || minted}
+            disabled={isMinting}
         >
             {isMinting ? "Processing..." : "Mint Invoice"}
         </button>
