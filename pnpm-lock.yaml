@@ -53,6 +53,9 @@ importers:
       '@walletconnect/modal':
         specifier: ^2.7.0
         version: 2.7.0(@types/react@19.2.2)(react@19.1.0)
+      axios:
+        specifier: ^1.13.2
+        version: 1.13.2(debug@4.4.1)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
