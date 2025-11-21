@@ -3,6 +3,7 @@
 import { useBridge } from "@/providers/BridgeProvider"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "../ui/button"
+import MintButton from './MintInvoice'
 
 import BRIDGE_ABI from "@/Abi/bridge.json"
 import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
@@ -47,6 +48,8 @@ const BridgeAction = () => {
   const [step, setStep] = useState<number>(0)
   const [isBridging, setIsBridging] = useState(false)
   const [nonce, setNonce] = useState<string>("")
+
+  const [minted, setMinted] = useState<boolean>(false); 
 
   const { associateTokens } = useAssociateTokens()
   const { approve } = useApproveTokenAllowance()
@@ -380,6 +383,9 @@ const BridgeAction = () => {
         setWithdrawTx(status.withdrawHash)
         setStatusMessage("Bridge Completed ✅")
         setIsBridging(false)
+        if(fromNetwork == 'hedera' || toNetwork == 'hedera'){
+          setMinted(true)
+        }
       } catch (err) {
         console.error("Polling error:", err)
       }
@@ -409,6 +415,7 @@ const BridgeAction = () => {
     setDepositTx(null)
     setUdepositTx(null)
     setWithdrawTx(null)
+    setMinted(false)
     // calledRef.current = false;
     // calledRef1.current = false;
     setStep(0)
@@ -630,6 +637,11 @@ const BridgeAction = () => {
       >
         {getButtonText()}
       </Button>
+
+      { minted && 
+          <MintButton hederaAccount={hederaAccount} nonce={nonce}  minted={minted} setMinted={setMinted}/>
+      }
+
     </div>
   )
 }
