@@ -121,8 +121,8 @@ export default FeeAndRate
 const FeeItem = ({ label, value }: { label: string; value: string }) => {
   return (
     <div className='flex justify-between items-center'>
-      <p className='text-sm text-zinc-600'>{label}</p>
-      <p className='text-sm font-semibold text-zinc-900'>{value}</p>
+      <p className='text-xs text-zinc-600'>{label}</p>
+      <p className='text-xs text-zinc-800'>{value}</p>
     </div>
   )
 }
