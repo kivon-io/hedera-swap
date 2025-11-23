@@ -5,7 +5,7 @@ export const TRANSACTION_TYPE = {
 
 export type TransactionType = (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE]
 
-export const API_URL = "http://104.248.47.146"
+export const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export const TX_STATUS = {
   PENDING: "pending",

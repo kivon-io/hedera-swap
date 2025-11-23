@@ -4,10 +4,23 @@ import { WalletDialogProvider } from "@/providers/WalletDialogProvider"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
 import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit"
+import { connectorsForWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit"
+import {
+  bitgetWallet,
+  braveWallet,
+  injectedWallet,
+  ledgerWallet,
+  metaMaskWallet,
+  phantomWallet,
+  rabbyWallet,
+  rainbowWallet,
+  safeWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactNode, useEffect, useMemo, useState } from "react"
-import { WagmiProvider } from "wagmi"
+import { fallback } from "viem"
+import { createConfig, http, WagmiProvider } from "wagmi"
 import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
 
 type ProvidersProps = {
@@ -17,18 +30,52 @@ type ProvidersProps = {
 const Providers = ({ children }: ProvidersProps) => {
   const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
   const [queryClient] = useState(() => new QueryClient())
-
-  const wagmiConfig = useMemo(() => {
-    if (!projectId || typeof window === "undefined") {
-      return undefined
-    }
-
-    return getDefaultConfig({
+  const connectors = connectorsForWallets(
+    [
+      {
+        groupName: "Recommended",
+        wallets: [
+          injectedWallet,
+          metaMaskWallet,
+          walletConnectWallet,
+          phantomWallet,
+          braveWallet,
+          bitgetWallet,
+          rabbyWallet,
+          safeWallet,
+          ledgerWallet,
+          rainbowWallet,
+        ],
+      },
+    ],
+    {
       appName: "Kivon Hedera Bridge",
-      projectId,
-      chains: [mainnet, arbitrum, base, optimism, bsc],
-    })
-  }, [projectId])
+      projectId: projectId!,
+      appUrl: typeof window !== "undefined" ? window.location.origin : "",
+    }
+  )
+
+  const wagmiConfig = createConfig({
+    chains: [mainnet, arbitrum, base, optimism, bsc],
+    connectors,
+    transports: {
+      [mainnet.id]: fallback([
+        http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+      ]),
+      [arbitrum.id]: fallback([
+        http(`https://arb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+      ]),
+      [base.id]: fallback([
+        http(`https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+      ]),
+      [optimism.id]: fallback([
+        http(`https://opt-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+      ]),
+      [bsc.id]: fallback([
+        http(`https://bnb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+      ]),
+    },
+  })
 
   const [mounted, setMounted] = useState(false)
 
