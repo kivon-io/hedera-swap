@@ -2,6 +2,7 @@
 
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useAccount, useDisconnect } from "wagmi"
+import { LAST_CONNECTOR_ID_KEY } from "./useAutoConnect"
 
 export function useEvmWallet() {
   const { address, isConnected: wagmiConnected } = useAccount()
@@ -15,6 +16,9 @@ export function useEvmWallet() {
   }
 
   const disconnectWallet = async () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(LAST_CONNECTOR_ID_KEY)
+    }
     disconnect()
   }
 
