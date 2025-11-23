@@ -72,20 +72,20 @@ const MintButton: React.FC<MintButtonProps> = ({ hederaAccount, nonce, minted, s
       }
     } finally {
       setIsMinting(false)
+      toast.dismiss()
     }
   }
 
   return (
     <div className='flex flex-col gap-2 w-full items-center'>
       {image && minted ? (
-        <div className='flex justify-center relative'>
+        <div className='flex justify-center relative h-[250px] w-full'>
           {image && (
             <Image
               src={ipfsToHttp(image)}
               alt='Minted NFT'
-              className='max-w-full h-auto rounded-lg'
-              width={500}
-              height={500}
+              className='max-w-full h-auto rounded-lg object-contain object-center'
+              fill
             />
           )}
         </div>

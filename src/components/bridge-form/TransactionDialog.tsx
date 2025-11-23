@@ -62,18 +62,24 @@ const TransactionDialog = ({
         </DialogHeader>
         <div className='flex flex-col gap-8'>
           <TransactionHeader status={txStatus.status} />
-          <div className='rounded-xl p-2 bg-zinc-100 flex flex-col gap-4 border border-zinc-200'>
-            {depositTx && (
-              <TransactionHash text='Deposit Transaction' hash={depositTx} network={fromNetwork} />
-            )}
-            {withdrawTx && (
-              <TransactionHash
-                text='Withdraw Transaction'
-                hash={withdrawTx as string}
-                network={toNetwork}
-              />
-            )}
-          </div>
+          {(depositTx || withdrawTx) && (
+            <div className='rounded-xl p-2 bg-zinc-100 flex flex-col gap-4 border border-zinc-200'>
+              {depositTx && (
+                <TransactionHash
+                  text='Deposit Transaction'
+                  hash={depositTx}
+                  network={fromNetwork}
+                />
+              )}
+              {withdrawTx && (
+                <TransactionHash
+                  text='Withdraw Transaction'
+                  hash={withdrawTx as string}
+                  network={toNetwork}
+                />
+              )}
+            </div>
+          )}
         </div>
         <DialogFooter>
           <div className='flex flex-col gap-2 w-full'>
