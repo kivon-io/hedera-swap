@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { Input } from "../ui/input"
+import ConnectedAddress from "./ConnectedAddress"
 import SelectAsset from "./SelectAsset"
 
 // Utility function to compute conversion
@@ -38,7 +39,7 @@ const BridgeAsset = ({
   const handleOpenSelectAsset = () => setOpen(true)
 
   const handleAmountChange = (value: string) => {
-    setFromInput(value) // keep what the user typed
+    setFromInput(value)
     const parsed = parseFloat(value)
     setAmount(TRANSACTION_TYPE.FROM, isNaN(parsed) ? 0 : parsed)
     setAmount(
@@ -125,7 +126,10 @@ const BridgeAsset = ({
 export default BridgeAsset
 
 const TransactionType = ({ type }: { type: TransactionType }) => (
-  <p className='text-sm text-zinc-600 capitalize'>
-    {type === TRANSACTION_TYPE.FROM ? TRANSACTION_TYPE.FROM : TRANSACTION_TYPE.TO}
-  </p>
+  <div className='flex items-center justify-between'>
+    <p className='text-sm text-zinc-600 capitalize'>
+      {type === TRANSACTION_TYPE.FROM ? TRANSACTION_TYPE.FROM : TRANSACTION_TYPE.TO}
+    </p>
+    <ConnectedAddress type={type} />
+  </div>
 )

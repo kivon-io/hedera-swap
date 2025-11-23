@@ -1,5 +1,6 @@
 "use client"
 
+import { WalletDialogProvider } from "@/providers/WalletDialogProvider"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
 import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
@@ -58,7 +59,9 @@ const Providers = ({ children }: ProvidersProps) => {
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
-          <RainbowKitProvider>{children}</RainbowKitProvider>
+          <RainbowKitProvider>
+            <WalletDialogProvider>{children}</WalletDialogProvider>
+          </RainbowKitProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </HWBridgeProvider>

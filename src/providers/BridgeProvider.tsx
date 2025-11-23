@@ -1,9 +1,9 @@
 "use client"
 
-import { TRANSACTION_TYPE, type TransactionType } from "@/config/bridge"
+import { type TransactionType, type TxStatus } from "@/config/bridge"
 import { NETWORKS_INFO, type NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
-import React, { createContext, useContext, useMemo, useState } from "react"
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react"
 
 type TokenMetadata = {
   symbol: string
@@ -27,6 +27,10 @@ type NetworkMetadata = {
 }
 
 type BridgeContextValue = {
+  txStatus: {
+    status: TxStatus | null
+    message: string | null
+  }
   networks: NetworkMetadata[]
   tokensByNetwork: Record<NetworkOption, Record<string, TokenMetadata>>
   selected: {
@@ -36,6 +40,7 @@ type BridgeContextValue = {
   setSelectedNetwork: (type: TransactionType, network: NetworkOption) => void
   setSelectedToken: (type: TransactionType, token: string) => void
   setAmount: (type: TransactionType, amount: number) => void
+  setTxStatus: (status: TxStatus | null, message: string | null) => void
 }
 
 const BridgeContext = createContext<BridgeContextValue | undefined>(undefined)
@@ -45,6 +50,16 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
     from: { network: "ethereum" as NetworkOption, token: "ETH", amount: 0 },
     to: { network: "hedera" as NetworkOption, token: "HBAR", amount: 0 },
   })
+  const [txStatus, setTxStatusState] = useState<{
+    status: TxStatus | null
+    message: string | null
+  }>({
+    status: null,
+    message: null,
+  })
+  const setTxStatus = useCallback((status: TxStatus | null, message: string | null) => {
+    setTxStatusState({ status, message })
+  }, [])
 
   const setSelectedNetwork = (type: TransactionType, network: NetworkOption) => {
     setSelected((prev) => {
@@ -74,7 +89,7 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
         },
         to: {
           ...prev.to,
-          amount: 0, 
+          amount: 0,
         },
       }
       updated[type] = {
@@ -84,7 +99,6 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
       return updated
     })
   }
-
 
   const setAmount = (type: TransactionType, amount: number) => {
     setSelected((prev) => ({
@@ -101,11 +115,13 @@ export function BridgeProvider({ children }: { children: React.ReactNode }) {
       networks: NETWORKS_INFO,
       tokensByNetwork: TOKENS as Record<NetworkOption, Record<string, TokenMetadata>>,
       selected,
+      txStatus,
       setSelectedNetwork,
       setSelectedToken,
       setAmount,
+      setTxStatus,
     }
-  }, [selected])
+  }, [selected, txStatus, setTxStatus])
 
   return <BridgeContext.Provider value={value}>{children}</BridgeContext.Provider>
 }
