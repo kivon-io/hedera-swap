@@ -3,15 +3,16 @@
 import { useBridge } from "@/providers/BridgeProvider"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "../ui/button"
-import MintButton from './MintInvoice'
 
 import BRIDGE_ABI from "@/Abi/bridge.json"
 import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
+import { TX_MESSAGES, TX_STATUS } from "@/config/bridge"
 import { CHAIN_IDS, CONTRACT_ADDRESSES, NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
 import { convertHederaIdToEVMAddress } from "@/helpers"
-import { checkTokenAssociation, getExplorerLink } from "@/helpers/token"
-import { formatAddress, formatTrxHash } from "@/lib/utils"
+import { checkTokenAssociation } from "@/helpers/token"
+import { useSwitchNetwork } from "@/hooks/useSwitchNetwork"
+import { useWalletDialog } from "@/providers/WalletDialogProvider"
 import {
   useAccountId,
   useAccountInfo,
@@ -26,11 +27,12 @@ import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connecto
 import { AccountId, ContractId } from "@hashgraph/sdk"
 import { erc20Abi as ERC20_ABI, formatUnits, parseUnits, type Address } from "viem"
 import { useBalance as evmUseBalance, useAccount, useChainId, useWriteContract } from "wagmi"
+import TransactionDialog from "./TransactionDialog"
 
 const POLL_INTERVAL = 1000
 
 const BridgeAction = () => {
-  const { selected } = useBridge()
+  const { selected, setTxStatus } = useBridge()
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
   const { isConnected: hederaConnected } = useWallet(HashpackConnector)
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
@@ -49,11 +51,12 @@ const BridgeAction = () => {
   const [isBridging, setIsBridging] = useState(false)
   const [nonce, setNonce] = useState<string>("")
 
-  const [minted, setMinted] = useState<boolean>(false); 
+  const [minted, setMinted] = useState<boolean>(false)
 
   const { associateTokens } = useAssociateTokens()
   const { approve } = useApproveTokenAllowance()
   const chainId = useChainId()
+  const { openWalletDialog } = useWalletDialog()
 
   const fromNetwork = selected.from.network
   const toNetwork = selected.to.network
@@ -126,25 +129,28 @@ const BridgeAction = () => {
     ethBalance,
     erc20TokenBalance,
   ])
+  const switchToFromChain = useSwitchNetwork(CHAIN_IDS[fromNetwork])
 
   const insufficientBalance = fromAmount > (userBalance || 0)
-  const isFromNetworkConnected =
-    fromNetwork === "hedera" ? hederaConnected : evmConnected && chainId === CHAIN_IDS[fromNetwork]
+  const isFromWalletConnected = fromNetwork === "hedera" ? hederaConnected : evmConnected
+  const isFromChainCorrect = fromNetwork === "hedera" ? true : chainId === CHAIN_IDS[fromNetwork]
   const isToNetworkConnected = toNetwork === "hedera" ? hederaConnected : evmConnected
+
+  const needsChainSwitch =
+    fromNetwork !== "hedera" && isFromWalletConnected && !!fromAmount && !isFromChainCorrect
+  const shouldBlockForBalance = insufficientBalance && !needsChainSwitch
+
   const isDisabled =
     !fromAmount ||
-    insufficientBalance ||
-    !isFromNetworkConnected ||
-    !isToNetworkConnected ||
-    isBridging
-
-  // cosnt insufficientBalance = false;
-  // insufficientBalance
+    shouldBlockForBalance ||
+    isBridging ||
+    (!needsChainSwitch && !isToNetworkConnected)
 
   const getButtonText = () => {
     if (!fromAmount) return "Enter amount"
 
-    if (!isFromNetworkConnected) return `Connect ${fromNetwork} wallet`
+    if (!isFromWalletConnected) return `Connect ${fromNetwork} wallet`
+    if (fromNetwork !== "hedera" && !isFromChainCorrect) return `Switch to ${fromNetwork}`
     if (!isToNetworkConnected) return `Connect ${toNetwork} wallet`
 
     if (insufficientBalance) return `Insufficient ${fromToken} for bridge`
@@ -252,6 +258,7 @@ const BridgeAction = () => {
           setStatusMessage(
             `Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`
           )
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.DEPOSIT_SUCCESS)
           setDepositTx(hash)
           setUdepositTx(hash)
           notifyRelayer()
@@ -266,7 +273,9 @@ const BridgeAction = () => {
           } else {
             errMsg = "Unknown error"
           }
+
           setStatusMessage(`❌ Deposit failed/rejected. ${errMsg}`)
+          setTxStatus(TX_STATUS.FAILED, TX_MESSAGES.DEPOSIT_FAILED)
         },
       }
     )
@@ -281,6 +290,7 @@ const BridgeAction = () => {
     const recipient = getRecipient()
     const { nonce } = bridgeData
     setStatusMessage(`Step 2/3: Confirming deposit in wallet...`)
+    setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.DEPOSIT_PENDING)
     try {
       console.log("hbar value", value)
       console.log("hbar token from info", tokenFromInfo)
@@ -311,6 +321,7 @@ const BridgeAction = () => {
 
       console.log("hedera", txHash)
       setStatusMessage(`Step 2/3: Deposit TX sent! Waiting for confirmation on ${fromNetwork}...`)
+      setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.DEPOSIT_SUCCESS)
       console.log("Hedera deposit tx hash:", txHash)
 
       watchHedera(txHash as string, {
@@ -324,6 +335,7 @@ const BridgeAction = () => {
           console.log(error)
           setStatusMessage(`❌ Deposit failed/rejected. ${error}`)
           setIsBridging(false)
+          setTxStatus(TX_STATUS.FAILED, TX_MESSAGES.DEPOSIT_FAILED)
           return transaction
         },
       })
@@ -338,6 +350,7 @@ const BridgeAction = () => {
         errMsg = "Unknown error"
       }
       setStatusMessage(`❌ Deposit failed/rejected.`)
+      setTxStatus(TX_STATUS.FAILED, TX_MESSAGES.DEPOSIT_FAILED)
       throw new Error(errMsg)
     }
   }
@@ -365,6 +378,7 @@ const BridgeAction = () => {
 
     if (result?.success) {
       setStatusMessage("Relayer Processing Withdrawal...")
+      setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
     }
     // --- Start Polling for Withdrawal Hash ---
     const poller = setInterval(async () => {
@@ -382,8 +396,9 @@ const BridgeAction = () => {
         clearInterval(poller)
         setWithdrawTx(status.withdrawHash)
         setStatusMessage("Bridge Completed ✅")
+        setTxStatus(TX_STATUS.SUCCESS, TX_MESSAGES.TRANSACTION_SUCCESS)
         setIsBridging(false)
-        if(fromNetwork == 'hedera' || toNetwork == 'hedera'){
+        if (fromNetwork == "hedera" || toNetwork == "hedera") {
           setMinted(true)
         }
       } catch (err) {
@@ -410,6 +425,16 @@ const BridgeAction = () => {
   // }, [approvalIsConfirmed]);
 
   const handleBridge = useCallback(async () => {
+    // Ensure from wallet is connected; if not, prompt connect
+    if (!isFromWalletConnected) {
+      openWalletDialog()
+      return
+    }
+    // If EVM chain mismatch, switch and return so bridge flow doesn't proceed
+    if (fromNetwork !== "hedera" && !isFromChainCorrect) {
+      switchToFromChain()
+      return
+    }
     if (isDisabled) return
     setIsBridging(true)
     setDepositTx(null)
@@ -420,6 +445,8 @@ const BridgeAction = () => {
     // calledRef1.current = false;
     setStep(0)
     setStatusMessage("Checking bridge preconditions...")
+    setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
+
     try {
       const preCheckRes = await fetch("/api/bridge/precheck", {
         method: "POST",
@@ -433,6 +460,7 @@ const BridgeAction = () => {
       if (!preCheck?.Data?.node_precheck?.canBridge) {
         setStatusMessage(preCheck.Data.node_precheck.message || "Cannot perform bridge")
         setIsBridging(false)
+        setTxStatus(TX_STATUS.FAILED, TX_MESSAGES.TRANSACTION_FAILED)
         return
       }
 
@@ -450,6 +478,7 @@ const BridgeAction = () => {
 
       setStep(1)
       setStatusMessage("Step 1/3: Preparing wallet...")
+      setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
 
       if (fromNetwork === "hedera" && !fromTokenInfo.native) {
         const tokenAddr = fromTokenInfo.address
@@ -458,6 +487,7 @@ const BridgeAction = () => {
           setStatusMessage(`${fromToken} is not associated to your account`)
           setStep(0)
           setIsBridging(false)
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TOKEN_NOT_ASSOCIATED)
           return
         }
       }
@@ -467,6 +497,7 @@ const BridgeAction = () => {
         const isAssociated = await checkTokenAssociation(hederaAccount, tokenAddr)
         if (!isAssociated) {
           setStatusMessage(`Step 1/3: Associating ${toToken} token...`)
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TOKEN_ASSOCIATING)
           await associateTokens([tokenAddr])
         }
       }
@@ -475,8 +506,10 @@ const BridgeAction = () => {
         const tokenAddr = fromTokenInfo.address
         if (requireAllowance) {
           setStatusMessage(`Step 1/3: Approving ${fromToken}...`)
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.APPROVAL_PENDING)
           await approve([{ tokenId: tokenAddr, amount: Number(value) }], bridgeContractAddress)
           setStatusMessage(`Step 1/3: ${fromToken} approved.`)
+          setTxStatus(TX_STATUS.SUCCESS, TX_MESSAGES.APPROVAL_SUCCESS)
         }
       }
 
@@ -486,6 +519,7 @@ const BridgeAction = () => {
         // if (typeof allowance !== "bigint" || allowance < value) {
         if (requireAllowance) {
           setStatusMessage(`Step 1/3: Confirming approval for ${fromToken} in wallet...`)
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.APPROVAL_PENDING)
           const approvalTrx = await evmWriteContractAsync({
             address: tokenAddr as Address,
             abi: ERC20_ABI,
@@ -495,6 +529,7 @@ const BridgeAction = () => {
           setStatusMessage(
             `Step 1/3: ${fromToken} approved. Waiting for transaction confirmation...`
           )
+          setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.APPROVAL_SUCCESS)
           setEvmAprovalTx(approvalTrx)
           // evmDeposit(bridgeData);
           // return;
@@ -513,6 +548,7 @@ const BridgeAction = () => {
       }
       setStep(3)
       setStatusMessage("Step 3/3: Monitoring bridge execution...")
+      setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
     } catch (error: unknown) {
       setIsBridging(false)
       let errMsg: string
@@ -525,6 +561,7 @@ const BridgeAction = () => {
       }
       if (!statusMessage?.startsWith("❌")) {
         setStatusMessage(`❌ Bridge flow failed`)
+        setTxStatus(TX_STATUS.FAILED, TX_MESSAGES.TRANSACTION_FAILED)
       }
     }
   }, [
@@ -535,6 +572,10 @@ const BridgeAction = () => {
     fromNetwork,
     toNetwork,
     isDisabled,
+    isFromWalletConnected,
+    isFromChainCorrect,
+    switchToFromChain,
+    openWalletDialog,
     value,
     nonce,
     evmWriteContractAsync,
@@ -544,105 +585,25 @@ const BridgeAction = () => {
   ])
 
   return (
-    <div className='space-y-4'>
-      {/* STATUS MESSAGE */}
-      {statusMessage && (
-        <div
-          className={`text-sm font-semibold text-center px-3 py-2 rounded-lg border 
-        ${
-          statusMessage.startsWith("❌")
-            ? "bg-red-50 text-red-600 border-red-200"
-            : statusMessage.startsWith("✅")
-            ? "bg-green-50 text-green-600 border-green-200"
-            : "bg-blue-50 text-blue-600 border-blue-200"
-        }`}
+    <>
+      <div className='space-y-4'>
+        <Button
+          className='w-full rounded-xl h-12 bg-kivon-pink hover:bg-kivon-pink/90 text-white font-semibold transition-all duration-300'
+          size='lg'
+          onClick={handleBridge}
+          disabled={isDisabled}
         >
-          {statusMessage}
-        </div>
-      )}
-
-      {/* ADDRESS PANEL */}
-      {isFromNetworkConnected && isToNetworkConnected && (
-        <div className='bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm'>
-          <h3 className='text-sm font-bold text-gray-700'>Bridge Details</h3>
-
-          {/* Deposit Address */}
-          <div className='flex flex-col text-xs'>
-            <span className='text-gray-500 font-medium'>
-              Deposit Address ({fromNetwork}):{" "}
-              {fromNetwork === "hedera"
-                ? formatAddress(hederaAccount)
-                : formatAddress(evmAddress as string)}
-            </span>
-            {/* <span className="text-gray-800 font-mono break-all">
-         
-        </span> */}
-          </div>
-
-          {/* Receiving Address */}
-          <div className='flex flex-col text-xs'>
-            <span className='text-gray-500 font-medium'>
-              Receiving Address ({toNetwork}):{" "}
-              {toNetwork === "hedera"
-                ? formatAddress(hederaAccount)
-                : formatAddress(evmAddress as string)}
-            </span>
-            {/* <span className="text-gray-800 font-mono break-all">
-          
-        </span> */}
-          </div>
-        </div>
-      )}
-
-      {/* DEPOSIT TX CARD */}
-      {uDepositTx && (
-        <div className='bg-white border border-blue-200 rounded-xl p-3 text-center shadow-sm text-xs'>
-          <div className='text-xs tracking-wide text-blue-600 font-semibold mb-1'>
-            Deposit Transaction
-          </div>
-          <a
-            href={getExplorerLink(uDepositTx as string, fromNetwork)}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='text-blue-600 underline font-mono text-xs'
-          >
-            {formatTrxHash(uDepositTx as string)}
-          </a>
-        </div>
-      )}
-
-      {/* WITHDRAW TX CARD */}
-      {withdrawTx && (
-        <div className='bg-white border border-green-200 rounded-xl p-3 text-center shadow-sm text-xs'>
-          <div className='text-xs tracking-wide text-green-600 font-semibold mb-1'>
-            Withdrawal Transaction
-          </div>
-          <a
-            href={getExplorerLink(withdrawTx, toNetwork)}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='text-green-600 underline font-mono text-xs'
-          >
-            {formatTrxHash(withdrawTx)}
-          </a>
-        </div>
-      )}
-
-      {/* BUTTON (UNTOUCHED) */}
-      <Button
-        className='w-full rounded-xl h-12 bg-kivon-pink hover:bg-kivon-pink/90 text-white font-semibold transition-all duration-300'
-        size='lg'
-        onClick={handleBridge}
-        disabled={isDisabled}
-      >
-        {getButtonText()}
-      </Button>
-
-      { minted && 
-          <MintButton hederaAccount={hederaAccount} nonce={nonce}  minted={minted} setMinted={setMinted}/>
-      }
-
-    </div>
+          {getButtonText()}
+        </Button>
+      </div>
+      <TransactionDialog
+        depositTx={uDepositTx}
+        withdrawTx={withdrawTx}
+        minted={minted}
+        nonce={nonce}
+        setMinted={setMinted}
+      />
+    </>
   )
 }
 
