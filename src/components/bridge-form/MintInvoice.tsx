@@ -14,11 +14,13 @@ interface MintButtonProps {
   setMinted: (value: boolean) => void
 }
 
-function ipfsToHttp(ipfsUri: string, gateway: string = "https://ipfs.io/ipfs"): string {
+function ipfsToHttp(
+  ipfsUri: string,
+  gateway: string = process.env.NEXT_PUBLIC_PINATA_GATEWAY_URL!
+): string {
   if (!ipfsUri.startsWith("ipfs://")) return ipfsUri
   const cid = ipfsUri.replace("ipfs://", "")
 
-  console.log(`${gateway}/${cid}`, `${gateway}/${cid}`)
   return `${gateway}/${cid}`
 }
 
