@@ -45,7 +45,7 @@ const columns: ColumnDef<Vault>[] = [
     accessorKey: "apy",
     cell: ({ row }) => {
       // Use optional chaining + fallback
-      const apy = row.original.apy?? 0
+      const apy = row.original.apy ?? 0
       return <div className='text-sm font-medium'>{apy}%</div>
     },
   },
@@ -55,8 +55,16 @@ const columns: ColumnDef<Vault>[] = [
     cell: ({ row }) => {
       const totalDeposits = Number(row.original?.tvl ?? 0).toFixed(3)
       return (
-        <div className='text-sm font-medium'>
-          {totalDeposits} {row.original.native_token_symbol} <sub>${Number(row.original?.tvl_usd ?? 0).toFixed(3).toLocaleString()}</sub>
+        <div className='text-sm font-medium flex items-center gap-2'>
+          <span>
+            $
+            {Number(row.original?.tvl_usd ?? 0)
+              .toFixed(3)
+              .toLocaleString()}
+          </span>
+          <span className='text-xs text-zinc-500'>
+            {totalDeposits} {row.original.native_token_symbol}
+          </span>
         </div>
       )
     },

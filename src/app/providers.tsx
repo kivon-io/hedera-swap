@@ -20,7 +20,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactNode, useEffect, useMemo, useState } from "react"
 import { fallback } from "viem"
-import { createConfig, http, WagmiProvider } from "wagmi"
+import { cookieToInitialState, createConfig, createStorage, http, WagmiProvider } from "wagmi"
 import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
 
 type ProvidersProps = {
@@ -30,13 +30,18 @@ type ProvidersProps = {
 const Providers = ({ children }: ProvidersProps) => {
   const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
   const [queryClient] = useState(() => new QueryClient())
+
   const connectors = connectorsForWallets(
     [
       {
         groupName: "Recommended",
         wallets: [
           injectedWallet,
-          metaMaskWallet,
+          (walletOptions) =>
+            metaMaskWallet({
+              ...walletOptions,
+              projectId: projectId!,
+            }),
           walletConnectWallet,
           phantomWallet,
           braveWallet,
@@ -55,27 +60,45 @@ const Providers = ({ children }: ProvidersProps) => {
     }
   )
 
-  const wagmiConfig = createConfig({
-    chains: [mainnet, arbitrum, base, optimism, bsc],
-    connectors,
-    transports: {
-      [mainnet.id]: fallback([
-        http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
-      ]),
-      [arbitrum.id]: fallback([
-        http(`https://arb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
-      ]),
-      [base.id]: fallback([
-        http(`https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
-      ]),
-      [optimism.id]: fallback([
-        http(`https://opt-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
-      ]),
-      [bsc.id]: fallback([
-        http(`https://bnb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
-      ]),
-    },
-  })
+  const wagmiConfig = useMemo(
+    () =>
+      createConfig({
+        ssr: false,
+        chains: [mainnet, arbitrum, base, optimism, bsc],
+        connectors,
+        transports: {
+          [mainnet.id]: fallback([
+            http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+          ]),
+          [arbitrum.id]: fallback([
+            http(`https://arb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+          ]),
+          [base.id]: fallback([
+            http(
+              `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+            ),
+          ]),
+          [optimism.id]: fallback([
+            http(`https://opt-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+          ]),
+          [bsc.id]: fallback([
+            http(`https://bnb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+          ]),
+        },
+        storage:
+          typeof window !== "undefined"
+            ? createStorage({ storage: window.localStorage })
+            : undefined,
+      }),
+    [connectors]
+  )
+
+  const cookieString = typeof document === "undefined" ? undefined : document.cookie
+
+  const wagmiInitialState = useMemo(() => {
+    if (!cookieString || !wagmiConfig) return undefined
+    return cookieToInitialState(wagmiConfig, cookieString)
+  }, [cookieString, wagmiConfig])
 
   const [mounted, setMounted] = useState(false)
 
@@ -104,13 +127,13 @@ const Providers = ({ children }: ProvidersProps) => {
       connectors={[HashpackConnector, KabilaConnector]}
       chains={[HederaMainnet]}
     >
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={wagmiConfig}>
+      <WagmiProvider config={wagmiConfig} initialState={wagmiInitialState}>
+        <QueryClientProvider client={queryClient}>
           <RainbowKitProvider>
             <WalletDialogProvider>{children}</WalletDialogProvider>
           </RainbowKitProvider>
-        </WagmiProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </HWBridgeProvider>
   )
 }
