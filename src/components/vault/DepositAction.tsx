@@ -29,8 +29,8 @@ const DepositAction = () => {
   const { data: hederaChain } = useChain({ autoFetch: hederaConnected }); 
   const  evmChain = useChainId(); 
 
-  const evmPoolAddress = '0xf10ee4cf289d2f6b53a90229ce16b8646e724418'; 
-  const hederPoolAddress = '0.0.10115610'; 
+  const evmPoolAddress = '0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e'; 
+  const hederPoolAddress = '0.0.10145769'; 
 
   const handleDeposit = async () => {
     if (!amount || Number(amount) <= 0) {
