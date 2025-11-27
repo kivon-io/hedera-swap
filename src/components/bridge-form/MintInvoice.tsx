@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "../ui/button"
 
-const NFT_TOKEN_ID = "0.0.10119645" // DON'T CHANGE 🔥
+const NFT_TOKEN_ID = "0.0.10146137" // DON'T CHANGE 🔥
 
 interface MintButtonProps {
   hederaAccount: string
