@@ -56,7 +56,7 @@ const ConnectWalletDialog = ({ open, onOpenChange }: ConnectWalletDialogProps) =
               <div className='rounded-full h-8 w-8 relative overflow-hidden bg-zinc-200'>
                 {evm && <Image src={evm} alt='EVM' width={32} height={32} />}
               </div>
-              EVM
+              Connect EVM
             </Button>
           )}
           {isHederaConnected ? (
@@ -75,7 +75,7 @@ const ConnectWalletDialog = ({ open, onOpenChange }: ConnectWalletDialogProps) =
               <div className='rounded-full h-8 w-8 relative overflow-hidden bg-zinc-200'>
                 {hedera && <Image src={hedera} alt='Hedera' width={32} height={32} />}
               </div>
-              Hedera
+              Connect Hedera
             </Button>
           )}
         </div>

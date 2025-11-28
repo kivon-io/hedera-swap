@@ -1,10 +1,16 @@
 "use client"
 
+import authenticationAdapter from "@/lib/wallet/authenticationAdapter"
 import { WalletDialogProvider } from "@/providers/WalletDialogProvider"
+import WalletRegistrationWatcher from "@/providers/WalletRegistrationWatcher"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
 import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
-import { connectorsForWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit"
+import {
+  connectorsForWallets,
+  RainbowKitAuthenticationProvider,
+  RainbowKitProvider,
+} from "@rainbow-me/rainbowkit"
 import {
   bitgetWallet,
   braveWallet,
@@ -26,10 +32,16 @@ import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
 type ProvidersProps = {
   children: ReactNode
 }
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
 
 const Providers = ({ children }: ProvidersProps) => {
-  const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
+  const cookieString = typeof document === "undefined" ? undefined : document.cookie
+
   const [queryClient] = useState(() => new QueryClient())
+  const [mounted, setMounted] = useState(false)
+  const [authenticationStatus, setAuthenticationStatus] = useState<
+    "loading" | "authenticated" | "unauthenticated"
+  >("loading")
 
   const connectors = connectorsForWallets(
     [
@@ -93,28 +105,39 @@ const Providers = ({ children }: ProvidersProps) => {
     [connectors]
   )
 
-  const cookieString = typeof document === "undefined" ? undefined : document.cookie
-
-  const wagmiInitialState = useMemo(() => {
-    if (!cookieString || !wagmiConfig) return undefined
-    return cookieToInitialState(wagmiConfig, cookieString)
-  }, [cookieString, wagmiConfig])
-
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   const metadata = useMemo(
     () => ({
-      name: "Kivon Hedera Bridge",
+      name: process.env.NEXT_PUBLIC_APP_NAME!,
       description: "Kivon Hedera Bridge",
       icons: ["https://trusty-dinosaur-aff6ef4f16.media.strapiapp.com/04_Coloured_c41a6772d1.png"],
       url: typeof window !== "undefined" ? window.location.origin : "",
     }),
     []
   )
+
+  const enhancedAuthenticationAdapter = useMemo(() => {
+    return {
+      ...authenticationAdapter,
+      verify: async (args: Parameters<typeof authenticationAdapter.verify>[0]) => {
+        const verified = await authenticationAdapter.verify(args)
+        setAuthenticationStatus(verified ? "authenticated" : "unauthenticated")
+        return verified
+      },
+      signOut: async () => {
+        await authenticationAdapter.signOut()
+        setAuthenticationStatus("unauthenticated")
+      },
+    }
+  }, [])
+  const wagmiInitialState = useMemo(() => {
+    if (!cookieString || !wagmiConfig) return undefined
+    return cookieToInitialState(wagmiConfig, cookieString)
+  }, [cookieString, wagmiConfig])
+
+  useEffect(() => {
+    setMounted(true)
+    setAuthenticationStatus("unauthenticated")
+  }, [])
 
   if (!mounted || !projectId || !wagmiConfig) {
     return null
@@ -129,9 +152,17 @@ const Providers = ({ children }: ProvidersProps) => {
     >
       <WagmiProvider config={wagmiConfig} initialState={wagmiInitialState}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
-            <WalletDialogProvider>{children}</WalletDialogProvider>
-          </RainbowKitProvider>
+          <RainbowKitAuthenticationProvider
+            adapter={enhancedAuthenticationAdapter}
+            status={authenticationStatus}
+          >
+            <RainbowKitProvider>
+              <WalletDialogProvider>
+                <WalletRegistrationWatcher />
+                {children}
+              </WalletDialogProvider>
+            </RainbowKitProvider>
+          </RainbowKitAuthenticationProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </HWBridgeProvider>
