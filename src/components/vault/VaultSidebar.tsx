@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect, useMemo, useState } from "react"
 import { useVault } from "@/providers/VaultProvider"
@@ -8,6 +8,10 @@ import VaultAction from "./VaultAction"
 import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"
 
 const VaultSidebar = () => {
+
+
+
+
   const { vault } = useVault()
 
   // EVM wallet

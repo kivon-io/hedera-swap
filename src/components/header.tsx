@@ -30,7 +30,8 @@ const Header = () => {
             {(isEvmConnected || isHederaConnected) && (
               <div className='size-2 rounded-full bg-emerald-500' />
             )}
-            {isEvmConnected || isHederaConnected ? "Connected" : "Connect Wallet"}
+
+            { isEvmConnected || isHederaConnected ? "Connected" : "Connect Wallet" }
           </Button>
         </div>
       </div>

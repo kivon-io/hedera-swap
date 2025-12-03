@@ -29,28 +29,28 @@ export default function AdminPage() {
   const isHederaWalletReady = isHederaConnected && signer && accountId;
 
   // ✅ Fetch balance
-  async function fetchBalances() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/getBalance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chainId: "hedera",
-          address: POOL_ADDRESS,
-        }),
-      });
+  // async function fetchBalances() {
+  //   setLoading(true);
+  //   try {
+  //     const res = await fetch("/api/getBalance", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         chainId: "hedera",
+  //         address: POOL_ADDRESS,
+  //       }),
+  //     });
 
-      const data = await res.json();
-      setBalances({
-        hedera: data.nativeBalance ?? 0,
-      });
-    } catch (err) {
-      console.error("Error fetching balances:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  //     const data = await res.json();
+  //     setBalances({
+  //       hedera: data.nativeBalance ?? 0,
+  //     });
+  //   } catch (err) {
+  //     console.error("Error fetching balances:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   // ✅ Fetch fees
   async function fetchFees() {
@@ -96,7 +96,7 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    fetchBalances();
+    // fetchBalances();
     fetchFees();
   }, []);
 
@@ -130,7 +130,7 @@ export default function AdminPage() {
       await signTx.executeWithSigner(hederaSigner);
 
       setTxStatus(`✅ Hedera Transaction Successful`);
-      await fetchBalances();
+      // await fetchBalances();
     } catch (error: unknown) {
         let message = "An unknown error occurred during the transaction.";
 
@@ -201,7 +201,7 @@ export default function AdminPage() {
 
       {/* ===================== HEDERA LIQUIDITY ===================== */}
       <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-        <Card className="p-6 bg-white shadow-md rounded-2xl">
+       {/*  <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className="text-lg font-semibold mb-4 text-purple-700">
             Add Hedera Liquidity
           </h2>
@@ -230,15 +230,13 @@ export default function AdminPage() {
           )}
 
           <div className="mt-4 text-sm text-gray-600">
-            {/* <p>
-              <strong>Account:</strong> {accountId || "N/A"}
-            </p> */}
+       
             <p>
               <strong>POOL Balance:</strong>{" "}
               {loading ? "Loading..." : `${balances.hedera.toFixed(4)} HBAR`}
             </p>
           </div>
-        </Card>
+        </Card> */}
 
         {/* ===================== FEE SETTINGS ===================== */}
         <Card className="p-6 bg-white shadow-md rounded-2xl">
@@ -333,7 +331,7 @@ export default function AdminPage() {
         <Button
           variant="outline"
           onClick={() => {
-            fetchBalances();
+            // fetchBalances();
             fetchFees();
           }}
           disabled={loading || isProcessing}

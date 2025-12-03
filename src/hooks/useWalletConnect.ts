@@ -5,7 +5,7 @@ import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connecto
 import { useMemo } from "react"
 import { useEvmWallet } from "./useEvmWallet"
 
-type WalletType = "ethereum" | "hedera"
+type WalletType = "ethereum" | "hedera" 
 
 export function useWalletConnect() {
   // EVM (via wagmi + RainbowKit in useEvmWallet)
@@ -67,16 +67,16 @@ export function useWalletConnect() {
     }),
     /* eslint-disable react-hooks/exhaustive-deps */
     [
-      connectEvm,
-      disconnectEvm,
       isEvmConnected,
       evmAddress,
-      connectHederaRaw,
-      disconnectHederaRaw,
       isHederaConnected,
       hederaAccountId,
+      connectHederaRaw,
+      disconnectHederaRaw,
     ]
   )
+
+
 }
 
 export type { WalletType }

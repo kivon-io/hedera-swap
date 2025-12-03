@@ -1,29 +1,42 @@
 "use client"
-
+import { useState, useEffect, useCallback } from "react"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useAccount, useDisconnect } from "wagmi"
-import { LAST_CONNECTOR_ID_KEY } from "./useAutoConnect"
 
 export function useEvmWallet() {
-  const { address, isConnected: wagmiConnected } = useAccount()
-  const { disconnect } = useDisconnect()
-  const { openConnectModal } = useConnectModal()
+  const [mounted, setMounted] = useState(false)
 
-  const isConnected = wagmiConnected && !!address
+  // Only mark as mounted on the client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  const connect = async () => {
-    if (openConnectModal) openConnectModal()
-  }
+  const account = useAccount()
+  const disconnectHook = useDisconnect()
+  const connectModal = useConnectModal()
 
-  const disconnectWallet = async () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(LAST_CONNECTOR_ID_KEY)
+  // Before mounted, return safe defaults so hooks aren't called
+  if (!mounted) {
+    return {
+      address: null,
+      isConnected: false,
+      connect: async () => {},
+      disconnectWallet: async () => {},
     }
-    disconnect()
   }
+
+  const isConnected = account.isConnected && !!account.address
+
+  const connect = useCallback(async () => {
+    if (connectModal.openConnectModal) connectModal.openConnectModal()
+  }, [connectModal])
+
+  const disconnectWallet = useCallback(async () => {
+    disconnectHook.disconnect()
+  }, [disconnectHook])
 
   return {
-    address,
+    address: account.address,
     isConnected,
     connect,
     disconnectWallet,
