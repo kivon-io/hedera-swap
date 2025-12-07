@@ -1,7 +1,7 @@
 "use client"
 
 import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
-import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
+import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { useMemo } from "react"
 import { useEvmWallet } from "./useEvmWallet"
 
@@ -21,7 +21,7 @@ export function useWalletConnect() {
     isConnected: isHederaConnected,
     connect: connectHederaRaw,
     disconnect: disconnectHederaRaw,
-  } = useWallet(HashpackConnector)
+  } = useWallet(HWCConnector)
   const { data: hederaAccountId } = useAccountId({ autoFetch: isHederaConnected })
 
   const connect = async (type: WalletType) => {

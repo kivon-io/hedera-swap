@@ -3,7 +3,7 @@
 import { WalletDialogProvider } from "@/providers/WalletDialogProvider"
 import { HWBridgeProvider } from "@buidlerlabs/hashgraph-react-wallets"
 import { HederaMainnet } from "@buidlerlabs/hashgraph-react-wallets/chains"
-import { HashpackConnector, KabilaConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
+import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { connectorsForWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit"
 import {
   bitgetWallet,
@@ -27,9 +27,14 @@ type ProvidersProps = {
   children: ReactNode
 }
 
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
+const projectId2 = process.env.NEXT_PUBLIC_WC_PROJECT_ID2
+const alchemy_key = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+
 const Providers = ({ children }: ProvidersProps) => {
-  const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
+
   const [queryClient] = useState(() => new QueryClient())
+  if(!projectId2){ return; }
 
   const connectors = connectorsForWallets(
     [
@@ -40,7 +45,7 @@ const Providers = ({ children }: ProvidersProps) => {
           (walletOptions) =>
             metaMaskWallet({
               ...walletOptions,
-              projectId: projectId!,
+              projectId: projectId2!,
             }),
           walletConnectWallet,
           phantomWallet,
@@ -55,7 +60,7 @@ const Providers = ({ children }: ProvidersProps) => {
     ],
     {
       appName: "Kivon Hedera Bridge",
-      projectId: projectId!,
+      projectId: projectId2!,
       appUrl: typeof window !== "undefined" ? window.location.origin : "",
     }
   )
@@ -68,37 +73,30 @@ const Providers = ({ children }: ProvidersProps) => {
         connectors,
         transports: {
           [mainnet.id]: fallback([
-            http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+            http(`https://eth-mainnet.g.alchemy.com/v2/${alchemy_key}`),
           ]),
           [arbitrum.id]: fallback([
-            http(`https://arb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+            http(`https://arb-mainnet.g.alchemy.com/v2/${alchemy_key}`),
           ]),
           [base.id]: fallback([
             http(
-              `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+              `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`
             ),
           ]),
           [optimism.id]: fallback([
-            http(`https://opt-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+            http(`https://opt-mainnet.g.alchemy.com/v2/${alchemy_key}`),
           ]),
           [bsc.id]: fallback([
-            http(`https://bnb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`),
+            http(`https://bnb-mainnet.g.alchemy.com/v2/${alchemy_key}`),
           ]),
         },
         storage:
           typeof window !== "undefined"
-            ? createStorage({ storage: window.localStorage })
+            ? createStorage({ storage: window.localStorage, key: 'wagmi-evm' })
             : undefined,
       }),
     [connectors]
   )
-
-  const cookieString = typeof document === "undefined" ? undefined : document.cookie
-
-  const wagmiInitialState = useMemo(() => {
-    if (!cookieString || !wagmiConfig) return undefined
-    return cookieToInitialState(wagmiConfig, cookieString)
-  }, [cookieString, wagmiConfig])
 
   const [mounted, setMounted] = useState(false)
 
@@ -124,10 +122,10 @@ const Providers = ({ children }: ProvidersProps) => {
     <HWBridgeProvider
       metadata={metadata}
       projectId={projectId}
-      connectors={[HashpackConnector, KabilaConnector]}
+      connectors={[HWCConnector]}
       chains={[HederaMainnet]}
     >
-      <WagmiProvider config={wagmiConfig} initialState={wagmiInitialState}>
+      <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider>
             <WalletDialogProvider>{children}</WalletDialogProvider>

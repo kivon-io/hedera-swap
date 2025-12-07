@@ -23,7 +23,7 @@ import {
   useWallet,
   useWatchTransactionReceipt as useWatchHederaTransaction,
 } from "@buidlerlabs/hashgraph-react-wallets"
-import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
+import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
 import { AccountId, ContractId } from "@hashgraph/sdk"
 import { erc20Abi as ERC20_ABI, formatUnits, parseUnits, type Address } from "viem"
 import { useBalance as evmUseBalance, useAccount, useChainId, useWriteContract } from "wagmi"
@@ -34,7 +34,7 @@ const POLL_INTERVAL = 1000
 const BridgeAction = () => {
   const { selected, setTxStatus } = useBridge()
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
-  const { isConnected: hederaConnected } = useWallet(HashpackConnector)
+  const { isConnected: hederaConnected } = useWallet(HWCConnector)
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
 
   const { writeContract: evmWriteContract, writeContractAsync: evmWriteContractAsync } =

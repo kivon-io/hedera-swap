@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, } from "react";
-import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
+import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 import { useWallet, useAccountId } from '@buidlerlabs/hashgraph-react-wallets'
  
 
 
 export default function ConnectHederaWallet() {
-  const { isConnected, connect, disconnect } = useWallet(HashpackConnector);
+  const { isConnected, connect, disconnect } = useWallet(HWCConnector);
   const { data: accountId } = useAccountId({ autoFetch: isConnected }) 
   const [mounted, setMounted] = useState(false);
 
