@@ -20,7 +20,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactNode, useEffect, useMemo, useState } from "react"
 import { fallback } from "viem"
-import { cookieToInitialState, createConfig, createStorage, http, WagmiProvider } from "wagmi"
+import { createConfig, createStorage, http, WagmiProvider } from "wagmi"
 import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
 
 type ProvidersProps = {
@@ -32,10 +32,8 @@ const projectId2 = process.env.NEXT_PUBLIC_WC_PROJECT_ID2
 const alchemy_key = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
 const Providers = ({ children }: ProvidersProps) => {
-
+  
   const [queryClient] = useState(() => new QueryClient())
-  if(!projectId2){ return; }
-
   const connectors = connectorsForWallets(
     [
       {

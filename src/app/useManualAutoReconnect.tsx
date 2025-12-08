@@ -33,7 +33,7 @@ export function useManualAutoReconnect() {
 
       // reconnect immediately
       connect({ connector })
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Auto reconnect failed:", e)
     }
   }, [connect, connectors])
