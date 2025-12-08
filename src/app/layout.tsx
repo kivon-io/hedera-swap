@@ -7,16 +7,13 @@ import Header from "@/components/header"
 import type { ReactNode } from "react"
 import { Toaster } from "sonner"
 import Providers from "./providers"
-import { useManualAutoReconnect } from './useManualAutoReconnect'
+
 
 type RootLayoutProps = {
   children: ReactNode
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
-
-  useManualAutoReconnect()
-
   return (
     <html lang='en'>
       <body>
