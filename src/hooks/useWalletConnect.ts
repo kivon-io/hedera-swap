@@ -55,7 +55,6 @@ export function useWalletConnect() {
       disconnect,
       isConnected,
       address,
-      // granular access
       connectEvm,
       disconnectEvm,
       isEvmConnected,
