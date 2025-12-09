@@ -6,7 +6,8 @@ import ConnectedWallet from "../ConnectedWallet"
 import { Input } from "../ui/input"
 
 const Withdraw = () => {
-  const { vault } = useVault()
+  const { vault, withdrawalAmount, setWithdrawalAmount } = useVault()
+
   return (
     <div className='relative w-full'>
       <div className='flex gap-2 w-full'>
@@ -14,6 +15,8 @@ const Withdraw = () => {
           <Input
             className=' border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
             placeholder='0'
+            value={withdrawalAmount}
+            onChange={(e)=>setWithdrawalAmount(e.target.value)}
           />
         </div>
         <div className='rounded-full px-2 py-1.5 flex items-center gap-4 cursor-pointer border border-zinc-200  bg-zinc-100'>
@@ -23,7 +26,7 @@ const Withdraw = () => {
                 {vault.token_logo ? (
                   <Image
                     src={vault.token_logo}
-                    alt={vault.token_symbol}
+                    alt={vault.token_symbol} 
                     fill
                     className='object-cover'
                   />
@@ -50,7 +53,7 @@ const Withdraw = () => {
         </div>
       </div>
       {/* TODO: Show the price of the asset */}
-      <p className='text-xs text-zinc-600'>$0.00</p>
+      <p className='text-xs text-zinc-600'>${Number(vault.native_token_price) * Number(withdrawalAmount)}</p>
 
       <div className='flex justify-between items-center mt-2'>
         <p className='text-sm text-zinc-600 capitalize'>To wallet</p>

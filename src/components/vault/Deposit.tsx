@@ -16,7 +16,7 @@ const Deposit = () => {
       </div>
       <div className='flex gap-2 w-full'>
         <div className='w-full'>
-          <Input
+          <Input 
             className=' border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-0 text-lg md:text-2xl h-11 font-medium'
             placeholder='0'
             value={depositAmount}

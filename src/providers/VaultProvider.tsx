@@ -3,12 +3,15 @@
 import { TABS } from "@/config/vault"
 import { createContext, use, useMemo, useState, useEffect } from "react"
 
+
 type VaultContextValue = {
   vault: Vault
   activeTab: keyof typeof TABS
   handleTabChange: (tab: keyof typeof TABS) => void, 
   depositAmount: number | string,
-  setDepositAmount: (amount: number | string)=> void
+  withdrawalAmount: number | string,
+  setDepositAmount: (amount: number | string)=> void, 
+  setWithdrawalAmount: (amount: number | string)=> void,
 }
 
 const VaultContext = createContext<VaultContextValue | undefined>(undefined)
@@ -16,6 +19,7 @@ const VaultContext = createContext<VaultContextValue | undefined>(undefined)
 const VaultProvider = ({ children, network }: { children: React.ReactNode; network: string }) => {
   const [activeTab, setActiveTab] = useState<keyof typeof TABS>("DEPOSIT")
   const [depositAmount, setDepositAmount] = useState<number | string>(0); 
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number | string>(0);
 
   const [vault, setVault] = useState<Vault>({
     tvl: 0,
@@ -64,7 +68,21 @@ const VaultProvider = ({ children, network }: { children: React.ReactNode; netwo
     getMetrics()
   }, [vault.network_slug])
 
-  const values = useMemo(() => ({ vault, activeTab, handleTabChange, depositAmount, setDepositAmount }), [vault, activeTab, depositAmount])
+  const values = useMemo(() => ({
+    vault, 
+    activeTab, 
+    handleTabChange, 
+    depositAmount, 
+    setDepositAmount,
+    withdrawalAmount, 
+    setWithdrawalAmount 
+  }),
+  [
+    vault,
+    activeTab,
+    depositAmount,
+    withdrawalAmount
+  ])
 
   return <VaultContext.Provider value={values}>{children}</VaultContext.Provider>
 }
