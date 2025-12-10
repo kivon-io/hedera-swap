@@ -1,24 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect } from "react"
 import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi"
 
 export const LAST_CONNECTOR_ID_KEY = "wagmi.lastConnectedConnectorId"
 
 export function useAutoConnect() {
-  const [mounted, setMounted] = useState(false)
+  const isClient = typeof window !== "undefined"
   const { connect } = useConnect()
   const { isConnected, connector: activeConnector } = useAccount()
   const { disconnect } = useDisconnect()
   const config = useConfig()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   // --- Save / Clear connector ID ---
   const saveConnectorId = useCallback((connectorId: string | undefined) => {
-    if (connectorId && typeof window !== "undefined") {
+    if (connectorId) {
       window.localStorage.setItem(LAST_CONNECTOR_ID_KEY, connectorId)
     }
   }, [])
@@ -31,10 +27,8 @@ export function useAutoConnect() {
 
   // --- Auto connect on mount ---
   useEffect(() => {
-    if (!mounted) return
     if (isConnected) return
     if (!connect) return
-    if (typeof window === "undefined") return
 
     const lastUsedConnectorId = window.localStorage.getItem(LAST_CONNECTOR_ID_KEY)
 
@@ -49,7 +43,7 @@ export function useAutoConnect() {
         clearConnectorId()
       }
     }
-  }, [isConnected, mounted, connect, config, clearConnectorId])
+  }, [isConnected, connect, config, clearConnectorId])
 
   // --- Track successful connections ---
   useEffect(() => {
