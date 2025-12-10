@@ -367,19 +367,19 @@ const BridgeAction = () => {
   }
 
   const notifyRelayer = async () => {
-    const data = await fetch("/api/bridge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bridgeData),
-    })
+    // const data = await fetch("/api/bridge", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(bridgeData),
+    // })
 
-    const result = await data.json()
-    console.log("Bridge result:", result)
+    // const result = await data.json()
+    // console.log("Bridge result:", result)
 
-    if (result?.success) {
-      setStatusMessage("Relayer Processing Withdrawal...")
-      setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
-    }
+    // if (result?.success) {
+    //   setStatusMessage("Relayer Processing Withdrawal...")
+    //   setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.TRANSACTION_PENDING)
+    // }
     // --- Start Polling for Withdrawal Hash ---
     const poller = setInterval(async () => {
       try {
