@@ -31,6 +31,9 @@ const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID
 const projectId2 = process.env.NEXT_PUBLIC_WC_PROJECT_ID2
 const alchemy_key = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
+
+
+
 const Providers = ({ children }: ProvidersProps) => {
   
   const [queryClient] = useState(() => new QueryClient())
@@ -102,15 +105,13 @@ const Providers = ({ children }: ProvidersProps) => {
     setMounted(true)
   }, [])
 
-  const metadata = useMemo(
-    () => ({
+  const metadata = {
       name: "Kivon Hedera Bridge",
       description: "Kivon Hedera Bridge",
       icons: ["https://trusty-dinosaur-aff6ef4f16.media.strapiapp.com/04_Coloured_c41a6772d1.png"],
       url: typeof window !== "undefined" ? window.location.origin : "",
-    }),
-    []
-  )
+  }
+
 
   if (!mounted || !projectId || !wagmiConfig) {
     return null
