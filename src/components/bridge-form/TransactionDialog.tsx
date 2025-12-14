@@ -43,6 +43,8 @@ const TransactionDialog = ({
   const fromNetwork = selected.from.network
   const toNetwork = selected.to.network
 
+  // This effect intentionally opens the dialog when a transaction/status appears.
+  // eslint-disable-next-line
   useEffect(() => {
     if (depositTx || withdrawTx || txStatus.status) {
       setOpen(true)

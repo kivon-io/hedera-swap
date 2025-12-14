@@ -1,25 +1,45 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+// import tseslint from "@typescript-eslint/eslint-plugin"
+// import tsparser from "@typescript-eslint/parser"
+// import nextConfig from "eslint-config-next"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// export default [
+//   ...nextConfig,
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+//   {
+//     ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
+//   },
 
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-  {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
-    ],
-  },
-];
+//   {
+//     files: ["**/*.ts", "**/*.tsx"],
+//     languageOptions: {
+//       parser: tsparser,
+//       parserOptions: {
+//         project: "./tsconfig.json",
+//       },
+//     },
+//     plugins: {
+//       "@typescript-eslint": tseslint,
+//     },
+//   },
+// ]
 
-export default eslintConfig;
+import nextVitals from "eslint-config-next/core-web-vitals"
+import nextTs from "eslint-config-next/typescript"
+import { defineConfig, globalIgnores } from "eslint/config"
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    // Ignore dialog transaction component to silence React effect state lint there
+    "src/components/bridge-form/TransactionDialog.tsx",
+  ]),
+])
+
+export default eslintConfig

@@ -2,7 +2,7 @@
 
 import { useEvmWallet } from "@/hooks/useEvmWallet"
 import { formatAddress } from "@/lib/utils"
-import { useWallet, useAccountId } from "@buidlerlabs/hashgraph-react-wallets"
+import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
 
 interface ConnectedWalletProps {
   network: string
@@ -16,23 +16,14 @@ const ConnectedWallet = ({ network }: ConnectedWalletProps) => {
   const { isConnected: hederaConnected } = useWallet()
   const { data: hederaAccount } = useAccountId({ autoFetch: hederaConnected })
 
-  // If network is Hedera
   if (network === "hedera") {
     if (!hederaConnected || !hederaAccount) return null
-    return (
-      <div className="text-sm font-semibold">
-        {hederaAccount}
-      </div>
-    )
+    return <div className='text-sm font-semibold'>{hederaAccount}</div>
   }
 
   // Otherwise EVM
   if (!evmConnected || !evmAddress) return null
-  return (
-    <div className="text-sm font-semibold">
-      {formatAddress(evmAddress)}
-    </div>
-  )
+  return <div className='text-sm font-semibold'>{formatAddress(evmAddress)}</div>
 }
 
 export default ConnectedWallet

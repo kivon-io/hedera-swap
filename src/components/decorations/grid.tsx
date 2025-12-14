@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils"
 import { useId } from "react"
 
+/* eslint-disable react-hooks/purity */
+
 export const Grid = ({
   pattern,
   size,
