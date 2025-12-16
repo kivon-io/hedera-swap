@@ -1,6 +1,5 @@
 "use client"
 
-import { TRANSACTION_API_URL } from "@/config/transactions"
 import { useWalletConnect } from "@/hooks/useWalletConnect"
 import { useCallback, useEffect, useRef } from "react"
 
@@ -17,8 +16,6 @@ const registerAddresses = async (addresses: string[]) => {
 }
 
 const WalletRegistrationWatcher = () => {
-  console.log("transaction api config: ", TRANSACTION_API_URL)
-  console.log("transaction api env: ", process.env.NEXT_PUBLIC_TRANSACTION_API_BASE_URL)
   const { isEvmConnected, evmAddress, isHederaConnected, hederaAccountId } = useWalletConnect()
   const lastRegisteredKey = useRef<string | null>(null)
 
