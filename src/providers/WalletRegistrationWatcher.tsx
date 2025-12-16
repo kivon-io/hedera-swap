@@ -39,7 +39,7 @@ const WalletRegistrationWatcher = () => {
       await registerAddresses(addresses)
       lastRegisteredKey.current = key
     } catch (error) {
-      console.error("Failed to register wallet address", error)
+      console.warn("Failed to register wallet address", error)
     }
   }, [evmAddress, hederaAccountId, isEvmConnected, isHederaConnected])
 
