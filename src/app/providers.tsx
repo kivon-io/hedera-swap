@@ -24,7 +24,7 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useMemo, useState } from "react"
 import { fallback } from "viem"
 import { cookieToInitialState, createConfig, createStorage, http, WagmiProvider } from "wagmi"
 import { arbitrum, base, bsc, mainnet, optimism } from "wagmi/chains"
@@ -42,7 +42,7 @@ const Providers = ({ children }: ProvidersProps) => {
 
   const [authenticationStatus, setAuthenticationStatus] = useState<
     "loading" | "authenticated" | "unauthenticated"
-  >("loading")
+  >("unauthenticated")
   const queryClient = new QueryClient()
   const isClient = typeof window !== "undefined"
   const connectors = connectorsForWallets(
@@ -120,10 +120,6 @@ const Providers = ({ children }: ProvidersProps) => {
     if (!cookieString || !wagmiConfig) return undefined
     return cookieToInitialState(wagmiConfig, cookieString)
   }, [cookieString, wagmiConfig])
-
-  useEffect(() => {
-    setAuthenticationStatus("unauthenticated")
-  }, [])
 
   if (!isClient || !projectId || !wagmiConfig) {
     return null
