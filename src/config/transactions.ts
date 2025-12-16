@@ -1,5 +1,3 @@
-// src/config/transactions.ts
-
 import { CHAIN_IDS, NETWORKS_INFO, type NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
 import { getExplorerLink } from "@/helpers/token"
