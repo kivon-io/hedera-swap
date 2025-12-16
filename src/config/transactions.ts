@@ -3,7 +3,7 @@ import { TOKENS } from "@/config/tokens"
 import { getExplorerLink } from "@/helpers/token"
 import { randomDurationSeconds } from "@/lib/utils"
 
-export const TRANSACTION_API_URL = process.env.TRANSACTION_API_BASE_URL
+export const TRANSACTION_API_URL = process.env.NEXT_PUBLIC_TRANSACTION_API_BASE_URL!
 
 type CurrencyRole = "from" | "to"
 
