@@ -1,7 +1,7 @@
 "use client"
 
 import { useBridge } from "@/providers/BridgeProvider"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "../ui/button"
 
 import BRIDGE_ABI from "@/Abi/bridge.json"
@@ -9,9 +9,11 @@ import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
 import { TX_MESSAGES, TX_STATUS } from "@/config/bridge"
 import { CHAIN_IDS, CONTRACT_ADDRESSES, NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
+import { BridgeTransactionBuildArgs, buildTransactionPayload } from "@/config/transactions"
 import { convertHederaIdToEVMAddress } from "@/helpers"
 import { checkTokenAssociation } from "@/helpers/token"
 import { useSwitchNetwork } from "@/hooks/useSwitchNetwork"
+import { normalizeAddress } from "@/lib/utils"
 import { useWalletDialog } from "@/providers/WalletDialogProvider"
 import {
   useAccountId,
@@ -52,6 +54,8 @@ const BridgeAction = () => {
   const [nonce, setNonce] = useState<string>("")
 
   const [minted, setMinted] = useState<boolean>(false)
+
+  const transactionSnapshotRef = useRef<BridgeTransactionBuildArgs | null>(null)
 
   const { associateTokens } = useAssociateTokens()
   const { approve } = useApproveTokenAllowance()
@@ -261,6 +265,12 @@ const BridgeAction = () => {
           setTxStatus(TX_STATUS.PENDING, TX_MESSAGES.DEPOSIT_SUCCESS)
           setDepositTx(hash)
           setUdepositTx(hash)
+          if (transactionSnapshotRef.current) {
+            transactionSnapshotRef.current = {
+              ...transactionSnapshotRef.current,
+              depositTxHash: hash as string,
+            }
+          }
           notifyRelayer()
         },
         onError: (e: unknown) => {
@@ -329,6 +339,13 @@ const BridgeAction = () => {
           console.log("succesfull")
           setUdepositTx(txHash as string)
           notifyRelayer()
+
+          if (transactionSnapshotRef.current) {
+            transactionSnapshotRef.current = {
+              ...transactionSnapshotRef.current,
+              depositTxHash: txHash as string,
+            }
+          }
           return transaction
         },
         onError: (transaction, error) => {
@@ -397,6 +414,36 @@ const BridgeAction = () => {
         setWithdrawTx(status.withdrawHash)
         setStatusMessage("Bridge Completed ✅")
         setTxStatus(TX_STATUS.SUCCESS, TX_MESSAGES.TRANSACTION_SUCCESS)
+        if (transactionSnapshotRef.current) {
+          transactionSnapshotRef.current = {
+            ...transactionSnapshotRef.current,
+            withdrawTxHash: status.withdrawHash,
+          }
+
+          const payload = buildTransactionPayload({
+            ...transactionSnapshotRef.current,
+            depositTxHash:
+              transactionSnapshotRef.current.depositTxHash ?? depositTx ?? uDepositTx ?? null,
+            withdrawTxHash: status.withdrawHash,
+            nonce: transactionSnapshotRef.current.nonce ?? bridgeData.nonce,
+          })
+
+          if (payload) {
+            try {
+              await fetch("/api/transactions/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              })
+            } catch (error) {
+              console.error("Failed to record bridge transaction", error)
+            } finally {
+              transactionSnapshotRef.current = null
+            }
+          } else {
+            transactionSnapshotRef.current = null
+          }
+        }
         setIsBridging(false)
         if (fromNetwork == "hedera" || toNetwork == "hedera") {
           setMinted(true)
@@ -475,6 +522,22 @@ const BridgeAction = () => {
       const freshNonce = preCheck?.Data?.nonce
       setNonce(freshNonce)
       bridgeData.nonce = freshNonce
+
+      transactionSnapshotRef.current = {
+        fromNetwork,
+        toNetwork,
+        fromToken,
+        toToken,
+        fromAmount,
+        toAmount: selected.to.amount,
+        userAddress:
+          fromNetwork === "hedera"
+            ? normalizeAddress(hederaAccount) ?? undefined
+            : normalizeAddress(evmAddress) ?? undefined,
+        senderAddress: normalizeAddress(bridgeData.fromAddress) ?? undefined,
+        recipientAddress: normalizeAddress(bridgeData.toAddress) ?? undefined,
+        nonce: freshNonce ?? nonce,
+      }
 
       setStep(1)
       setStatusMessage("Step 1/3: Preparing wallet...")
