@@ -33,7 +33,7 @@ import TransactionDialog from "./TransactionDialog"
 
 const POLL_INTERVAL = 1000
 
-const BridgeAction = () => {
+const BridgeAction = ({ fromPrice, toPrice }: { fromPrice: number; toPrice: number }) => {
   const { selected, setTxStatus } = useBridge()
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
   const { isConnected: hederaConnected } = useWallet(HWCConnector)
@@ -502,8 +502,6 @@ const BridgeAction = () => {
       })
       const preCheck = await preCheckRes.json()
 
-      console.log("Precheck result:", preCheck)
-
       if (!preCheck?.Data?.node_precheck?.canBridge) {
         setStatusMessage(preCheck.Data.node_precheck.message || "Cannot perform bridge")
         setIsBridging(false)
@@ -517,11 +515,13 @@ const BridgeAction = () => {
         requireAllowance = preCheck.Data.node_precheck.requireAllowance
       }
 
-      console.log("nonce from precheck", preCheck?.Data?.nonce)
-
       const freshNonce = preCheck?.Data?.nonce
       setNonce(freshNonce)
       bridgeData.nonce = freshNonce
+
+      // from amount usd
+      const fromAmountUsd = fromAmount * fromPrice
+      const toAmountUsd = selected.to.amount * toPrice
 
       transactionSnapshotRef.current = {
         fromNetwork,
@@ -530,6 +530,8 @@ const BridgeAction = () => {
         toToken,
         fromAmount,
         toAmount: selected.to.amount,
+        fromAmountUsd: fromAmountUsd ?? undefined,
+        toAmountUsd: toAmountUsd ?? undefined,
         userAddress:
           fromNetwork === "hedera"
             ? normalizeAddress(hederaAccount) ?? undefined

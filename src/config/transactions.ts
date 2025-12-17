@@ -68,6 +68,8 @@ export type BridgeTransactionBuildArgs = {
   toToken: string
   fromAmount: number
   toAmount: number
+  fromAmountUsd?: number
+  toAmountUsd?: number
   fromPrice?: number
   toPrice?: number
   userAddress?: string | null
@@ -150,9 +152,9 @@ const buildFeeEntry = (
   }
 }
 
-export const buildTransactionPayload = (
+export function buildTransactionPayload(
   args: BridgeTransactionBuildArgs
-): BridgeTransactionPayload | null => {
+): BridgeTransactionPayload | null {
   const {
     userAddress,
     fromNetwork,
@@ -160,6 +162,8 @@ export const buildTransactionPayload = (
     fromToken,
     toToken,
     fromAmount,
+    fromAmountUsd,
+    toAmountUsd,
     toAmount,
     fromPrice,
     toPrice,
@@ -173,8 +177,6 @@ export const buildTransactionPayload = (
 
   if (!userAddress) return null
 
-  const fromAmountUsd = fromPrice ? Number((fromAmount * fromPrice).toFixed(6)) : undefined
-  const toAmountUsd = toPrice ? Number((toAmount * toPrice).toFixed(6)) : undefined
   const feeAmount = feePercent ? fromAmount * feePercent : undefined
   const feeAmountUsd = feeAmount && fromPrice ? feeAmount * fromPrice : undefined
 
