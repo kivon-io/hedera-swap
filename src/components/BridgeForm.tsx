@@ -101,7 +101,7 @@ const BridgeContent = () => {
 
           <FeeAndRate fromPrice={fromPrice} toPrice={toPrice} fee={protocolFee} />
 
-          <BridgeAction />
+          <BridgeAction fromPrice={fromPrice} toPrice={toPrice} />
         </>
       )}
     </div>
