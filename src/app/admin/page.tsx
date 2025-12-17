@@ -4,14 +4,16 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"
 import { AccountId, ContractId } from "@hashgraph/sdk"
 import {
   useWallet, 
   useAccountId, 
   useWriteContract as UseHederaWriteContract,
+  useReadContract
 } from "@buidlerlabs/hashgraph-react-wallets";
-import { useAccount, useChainId, useWriteContract } from "wagmi"
-
+import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
+import { useAccount, useChainId, useWriteContract, useSignMessage, useReadContract as UseReadContract } from "wagmi"
 import BRIDGE_ABI from "@/Abi/bridge.json"
 import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
 import { CHAIN_IDS, CONTRACT_ADDRESSES, NetworkOption, getChainNameById } from "@/config/networks"
@@ -19,14 +21,16 @@ import { type Address } from "viem"
 import { API_URL } from "@/config/bridge"
 
 
-
 export default function AdminPage() {
+
+  const { readContract } = useReadContract({ connector: HWCConnector });
 
   const [poolAddressEvm, setPoolAddressEvm] = useState("");
   const [adminAddressEvm, setAdminAddressEvm] = useState("");
 
   const [poolAddressHedera, setPoolAddressHedera] = useState("");
   const [adminAddressHedera, setAdminAddressHedera] = useState("");
+  const [PKSet, setPKSet] = useState(false);
 
   const [pk, setPK] = useState(""); 
 
@@ -34,7 +38,7 @@ export default function AdminPage() {
   const [profit, setProfit] = useState(0);
 
   const [loading, setLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [feeIsProcessing, setFeeIsProcessing] = useState(false);
   const [txStatus, setTxStatus] = useState<string | null>(null);
 
   const { signer, isConnected: isHederaConnected } = useWallet();
@@ -50,7 +54,45 @@ export default function AdminPage() {
   const evmBridgeContractAddress = evmChainName ? CONTRACT_ADDRESSES[evmChainName] : '';  
   const hederaBridgeContractAddress =  CONTRACT_ADDRESSES['hedera'];  
 
-  
+  const { address: evmAddress, isConnected: evmConnected } = useAccount()
+  const { signMessage } = useSignMessage()
+
+
+
+    const { data: evmPoolAddress } = UseReadContract({
+      abi: BRIDGE_ABI,
+      address: evmBridgeContractAddress as `0x${string}`,
+      functionName: 'poolAddress',
+    });
+
+    const { data: evmAdminAddress } = UseReadContract({
+      abi: BRIDGE_ABI,
+      address: evmBridgeContractAddress as `0x${string}`,
+      functionName: 'owner',
+    });
+
+
+    const fetchStats = async () => {
+      try {
+        const [PoolAddressHedera, AdminAddressHedera] = await Promise.all([
+          readContract({
+            address: `0x${ContractId.fromString(hederaBridgeContractAddress).toEvmAddress()}`,
+            abi: HEDERA_BRIDGE_ABI,
+            functionName: 'poolAddress'
+          }),
+          readContract({
+            address: `0x${ContractId.fromString(hederaBridgeContractAddress).toEvmAddress()}`,
+            abi: HEDERA_BRIDGE_ABI,
+            functionName: 'owner'
+          })
+        ]);
+        setPoolAddressHedera(PoolAddressHedera as string); 
+        setAdminAddressHedera(AdminAddressHedera as string); 
+      } catch (e) {
+        console.error(e);
+      }
+  };
+
 
 
   // ✅ Fetch fees
@@ -68,11 +110,38 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchPk() {
+      try {
+        const res = await fetch("/api/pk");
+        const data = await res.json();
+        if(data.has_pk){
+          setPKSet(true)
+        }
+      } catch (err) {
+        console.error("Error fetching fees:", err);
+      }
+  }
+
 
 
   useEffect(() => {
-    fetchFees();
+    fetchStats();
   }, []);
+
+  useEffect(() => {
+    fetchFees();
+    fetchPk(); 
+  }, []);
+
+  useEffect(() => {
+  if (evmPoolAddress) {
+    setPoolAddressEvm(evmPoolAddress as string);
+  }
+  if (evmAdminAddress) {
+    setAdminAddressEvm(evmAdminAddress as string);
+  }
+}, [evmPoolAddress, evmAdminAddress]);
+
 
 
   const handleAddPoolAddressEvm = ()=>{
@@ -86,7 +155,7 @@ export default function AdminPage() {
       },
       {
         onSuccess: (hash) => {
-        
+           alert("done")
         },
         onError: (e: unknown) => {
           console.log(e)
@@ -107,7 +176,7 @@ export default function AdminPage() {
       },
       {
         onSuccess: (hash) => {
-        
+            alert("done")
         },
         onError: (e: unknown) => {
            console.log(e)
@@ -149,19 +218,107 @@ export default function AdminPage() {
 
 
   const addPk = async () => {
-    const res = await fetch(`${API_URL}/api/pk`, {
+    if(!evmAddress) {
+        alert('connect evm address'); 
+        return;
+    }
+    // 1. Get nonce
+    const nonceRes = await fetch(`${API_URL}/api/getpknonce`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ pk }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address:evmAddress }),
     });
 
-    const data = await res.json();
-    if(data?.success){
-      alert("PK added")
-    }
+    const { nonce } = await nonceRes.json();
+    // 2. Build message
+    const message = `Authorize pool PK storage\naddress: ${evmAddress.toLowerCase()}\nnonce: ${nonce}`;
+
+    // 3. Sign message with wallet
+    signMessage({ message },  {
+      async onSuccess(signature, vars) {
+        // 4. Send PK
+        const res = await fetch(`${API_URL}/api/pk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address:evmAddress,
+            pk,
+            nonce,
+            message,
+            signature,
+          }),
+        });
+        const data = await res.json();
+        if (data?.success) alert("PK added");
+        if (data?.error) alert(data.error)
+      },
+      onError(err : unknown) {
+          console.error("sign failed", err)
+      }
+    })
   };
+
+
+  async function updateFees() {
+  if (!evmAddress) {
+    alert("Connect your wallet first");
+    return;
+  }
+
+  setFeeIsProcessing(true);
+
+  try {
+    // 1. Get nonce from server
+    const nonceRes = await fetch(`${API_URL}/api/getfeenonce`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address: evmAddress }),
+    });
+
+    const { nonce } = await nonceRes.json();
+
+    // 2. Build message
+    const message = `Authorize fee update\naddress: ${evmAddress.toLowerCase()}\nnonce: ${nonce}`;
+
+    // 3. Sign message
+    signMessage({ message }, {
+      async onSuccess(signature) {
+        // 4. Send fees with signature
+        const res = await fetch(`${API_URL}/api/fee`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address: evmAddress,
+            fees,
+            nonce,
+            message,
+            signature,
+          }),
+        });
+
+        const data = await res.json();
+        if (data?.success) {
+          setTxStatus("✅ Fees updated successfully!");
+        } else if (data?.error) {
+          setTxStatus(`❌ ${data.error}`);
+        }
+      },
+      onError(err: unknown) {
+        console.error("Signing failed", err);
+        setTxStatus("❌ Signature failed");
+      },
+    });
+  } catch (err: unknown) {
+    let errorMessage = "An unexpected error occurred";
+    if (err instanceof Error) errorMessage = err.message;
+    console.error("Fee update error:", errorMessage);
+    setTxStatus(`❌ ${errorMessage}`);
+  } finally {
+    setFeeIsProcessing(false);
+    setTimeout(() => setTxStatus(null), 6000);
+  }
+}
+
 
 
   return (
@@ -175,9 +332,10 @@ export default function AdminPage() {
       <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
         <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className="font-semibold">Evm {evmChainName?.toUpperCase()}</h2>
-          <h5 className="font-semibold mb-4">
+          <br />
+          <Label className="block text-sm mb-1">
             Pool address
-          </h5>
+          </Label>
           <Input
             type="text"
             placeholder="Pool Address"
@@ -193,9 +351,9 @@ export default function AdminPage() {
           </Button>
 
             <br /> <br />
-          <h5 className="font-semibold mb-4">
+          <Label className="block text-sm mb-1">
             Admin address
-          </h5>
+          </Label>
 
           <Input
             type="text"
@@ -218,9 +376,11 @@ export default function AdminPage() {
 
         <Card className="p-6 bg-white shadow-md rounded-2xl">
            <h2 className="font-semibold">Hedera</h2>
-            <h5 className=" font-semibold mb-4">
+           <br />
+            <Label className="block text-sm mb-1">
               Pool address
-            </h5>
+            </Label>
+            
             <Input
               type="text"
               placeholder="Pool Address in Evm format"
@@ -237,10 +397,10 @@ export default function AdminPage() {
             </Button>
 
               <br /> <br />
-            <h5 className=" font-semibold mb-4">
+            <Label className="block text-sm mb-1">
               Admin address
-            </h5>
-
+            </Label>
+          
             <Input
               type="text"
               placeholder="Admin address in Evm format"
@@ -255,12 +415,6 @@ export default function AdminPage() {
             >
               Add admin address
             </Button>
-{/* 
-            {!isHederaConnected && (
-              <p className="mt-2 text-sm text-red-500">
-                ⚠️ Please connect your Hedera wallet.
-              </p>
-            )} */}
           </Card>
 
 
@@ -276,26 +430,14 @@ export default function AdminPage() {
 
           <Button
             onClick={addPk}
-            className="w-full bg-black hover:bg-black"
-          >
+            className="w-full bg-black hover:bg-black">
             Add PK
           </Button>
+          { PKSet ? "Aready set ✅" : "Not set ❌"}
         </Card>
 
-      </div>
 
-
-
-
-
-
-
-
-
-
-
-
-        {/* <Card className="p-6 bg-white shadow-md rounded-2xl">
+        <Card className="p-6 bg-white shadow-md rounded-2xl">
           <h2 className=" font-semibold mb-4 text-blue-700">
             Pool Fee Configuration
           </h2>
@@ -328,10 +470,10 @@ export default function AdminPage() {
 
           <Button
             onClick={updateFees}
-            disabled={isProcessing}
+            disabled={feeIsProcessing}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            {isProcessing ? "Updating..." : "Update Fees"}
+            {feeIsProcessing ? "Updating..." : "Update Fees"}
           </Button>
 
           <div className="mt-4 text-sm text-gray-600">
@@ -342,52 +484,12 @@ export default function AdminPage() {
               <strong>Current LP Fee:</strong> {fees.lp_fee_pct}%
             </p>
           </div>
-        </Card> */}
-
-      {/* <div className="max-w-4xl mx-auto mt-10">
-        <Card className="p-6 bg-white shadow-md rounded-2xl">
-          <h2 className=" font-semibold mb-4 text-green-700">
-            Pool Profit
-          </h2>
-
-          <div className="mt-3  font-semibold text-green-700">
-            💵 Total Pool Profit: {profit.toFixed(4)} HBAR
-          </div>
-
-          <Button
-            onClick={withdrawProfit}
-            variant="outline"
-            className="mt-4"
-            disabled={isProcessing || profit <= 0}
-          >
-            Withdraw Profit
-          </Button>
         </Card>
-      </div> */}
 
-      {/* <div className="text-center mt-10">
-        {txStatus && (
-          <p
-            className={`text-sm mb-4 p-2 rounded ${
-              txStatus.includes("Error") || txStatus.includes("❌")
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
-          >
-            {txStatus}
-          </p>
-        )}
-        <Button
-          variant="outline"
-          onClick={() => {
-            fetchBalances();
-            fetchFees();
-          }}
-          disabled={loading || isProcessing}
-        >
-          {loading ? "Refreshing..." : "Refresh All Data"}
-        </Button>
-      </div> */}
+      </div>
+   
+
+    
 
     </main>
   );
