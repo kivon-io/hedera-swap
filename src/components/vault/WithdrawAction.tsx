@@ -8,13 +8,19 @@ import { useVault } from "@/providers/VaultProvider"
 import axios from "axios"
 import { SignableMessage, toHex } from 'viem' // wagmi/viem type
 import { useEvmWallet } from "@/hooks/useEvmWallet"
-import { API_URL } from "@/config/bridge"
 
 interface WithdrawRequest {
-  amount: number | string
-  signature: string
-  address: string
+    amount: number | string
+    signature: string
+    address: string
+    nonce: string
+    message: string
+    type: 'evm' | 'hedera'
+    publicKey?: string
 }
+
+
+const API_URL = "http://localhost:8000"
 
 const WithdrawAction = () => {
     const { vault, withdrawalAmount } = useVault()
@@ -28,6 +34,21 @@ const WithdrawAction = () => {
 
     const [errMsg, setErrMsg] = useState<string>("") 
     const [successMsg, setSuccessMsg] = useState<string>("") 
+
+    const getNonce = async (address: string) => {
+        const res = await axios.post(`${API_URL}/api/getnonce`, {
+            address,
+        })
+
+        if (!res.data?.nonce) {
+            throw new Error('Failed to get nonce')
+        }
+
+        return res.data.nonce as string
+    }
+
+
+    const buildMessageStr = (nonce: string): string => `withdrawal request\nnonce:${nonce}`
   
     const sendRequest = async (request: WithdrawRequest) => {
         try {
@@ -45,64 +66,96 @@ const WithdrawAction = () => {
             }
         }
     }
-    const message: SignableMessage = 'withdrawal request'
+
+
+
 
     const handleWithdrawal = async () => {
         setErrMsg("")
         setSuccessMsg("")
-        if(!withdrawalAmount){
+
+        if (!withdrawalAmount) {
             setErrMsg("Enter withdrawal amount first")
             return
         }
 
         try {
-            let signature: string
-
-            if(vault.network_slug === "hedera"){
-
-            if(!hederaAccount || !hederaConnected){
-                setErrMsg("Wallet not connected")
-                return
-            }
-                const sig = await signAuth(message)
-                console.log(sig)
-                signature =  toHex(sig.signature); 
-                console.log("Hedera Auth Signature:", signature)
-                sendRequest({
-                    amount: withdrawalAmount,
-                    signature,
-                    address: hederaAccount.toString()
-                })
-            } else {
-                if(!evmConnected || !evmAddress){
-                    setErrMsg("EVM Wallet not connected")
+            // ======================
+            // HEDERA
+            // ======================
+            if (vault.network_slug === "hedera") {
+                if (!hederaConnected || !hederaAccount) {
+                    setErrMsg("Hedera wallet not connected")
                     return
                 }
-                // Wagmi EVM signing
-                signMessage({ message },  {
-                    onSuccess(signature, vars) {
-                        console.log("signature:", signature)
-                        sendRequest({
-                            amount: withdrawalAmount,
-                            signature,
-                            address: evmAddress
-                        })
-                    },
-                    onError(err : unknown) {
-                        console.error("sign failed", err)
-                    }
-                });
+
+                const address = hederaAccount.toString()
+                const nonce = await getNonce(address)
+                const message = buildMessageStr(nonce)
+                const sig = await signAuth(message)
+                const messageBase64 = btoa(message)
+
+                console.log("sig")
+                console.log(sig)
+
+                const payload: WithdrawRequest = {
+                    amount: withdrawalAmount,
+                    type: "hedera",
+                    address,
+                    message,
+                    nonce,
+                    signature: Buffer.from(sig.signature).toString("hex"),
+                    publicKey: sig.publicKey.toString(), // DER encoded
+                }
+
+                console.log(payload)
+                
+                await sendRequest(payload)
+                // setSuccessMsg("Withdrawal request sent!")
+                return
+            }
+            // ======================
+            // EVM
+            // ======================
+            if (!evmConnected || !evmAddress) {
+                setErrMsg("EVM wallet not connected")
+                return
             }
 
-        } catch (error: unknown) {
-            if (error instanceof UserRefusedToSignAuthError){
-                setErrMsg("User refused to sign the authentication message.")
-            } else if (error instanceof Error) {
-                setErrMsg(error.message)
-            } else {
-                setErrMsg("Failed to sign message")
-            }
-            console.error(error)
+            const nonce = await getNonce(evmAddress)
+            const message = buildMessageStr(nonce)
+      
+
+            signMessage({ message },  {
+
+                async onSuccess(signature, vars) {
+                    console.log("evm signature")
+                    console.log(signature)
+                    await sendRequest({
+                        amount: withdrawalAmount,
+                        address: evmAddress,
+                        signature,
+                        nonce,
+                        message,
+                        type: "evm",
+                    })
+                },
+                onError(err : unknown) {
+                    console.error("sign failed", err)
+                }
+            })
+
+            // setSuccessMsg("Withdrawal request sent!")
+
+        } catch (err) {
+        if (err instanceof UserRefusedToSignAuthError) {
+            setErrMsg("User refused to sign the message")
+        } else if (err instanceof Error) {
+            setErrMsg(err.message)
+        } else {
+            setErrMsg("Signing failed")
+        }
+        console.error(err)
         }
     }
 

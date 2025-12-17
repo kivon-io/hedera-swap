@@ -7,11 +7,11 @@ import { useEffect } from "react"
 
 
 const VaultDetailsHeader = () => {
-  const { vault } = useVault()
+  const { vault } = useVault() 
 
-  useEffect(()=>{
-    console.log(vault)
-  }, [vault])
+  // useEffect(()=>{
+  //   console.log(vault)
+  // }, [vault])
 
   return (
     <div className='relative bg-zinc-100 p-4 rounded-lg border border-zinc-200 flex flex-col gap-4'>
@@ -44,9 +44,9 @@ const VaultDetailsHeader = () => {
         </div>
       </div>
       <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-        <HeaderItem label='APY' value={Number(vault.apy).toString() + "%"} symbol='' />
-        <HeaderItem label='TVL' value={Number(vault.tvl).toString()} symbol=""/>
-        <HeaderItem label='Fees Generated' value={Number(vault.feesGenerated).toString()} symbol={vault.native_token_symbol} />
+        <HeaderItem label='APY' value={Number(vault.apy).toFixed(2).toString() + "%"} symbol='' />
+        <HeaderItem label='TVL' value={Number(vault.tvl).toFixed(2).toString()} symbol=""/>
+        <HeaderItem label='Fees Generated' value={Number(vault.feesGenerated).toFixed(5).toString()} symbol={vault.native_token_symbol} />
       </div>
     </div>
   )

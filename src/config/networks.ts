@@ -5,6 +5,14 @@ export type NetworkOption = "ethereum" | "binance" | "hedera" | "arbitrum" | 'ba
 
 export const NETWORKS: NetworkOption[] = ["ethereum", "binance", "hedera", 'arbitrum', 'base', 'optimism']
 
+export function getChainNameById(chainId: number | null): NetworkOption | null {
+  return (
+    (Object.entries(CHAIN_IDS).find(
+      ([, id]) => id === chainId
+    )?.[0] as NetworkOption) ?? null
+  );
+}
+
 export const CONTRACT_ADDRESSES: Record<NetworkOption, Address | string> = {
   ethereum: "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
   arbitrum: "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
