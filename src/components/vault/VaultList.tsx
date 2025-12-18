@@ -20,8 +20,8 @@ const VaultList = () => {
       try {
         const response = await fetch(`/api/vault/all`)
         const data = await response.json()
-        console.log("all volts")
-        console.log(data?.data); 
+        // console.log("all volts")
+        // console.log(data?.data); 
         setVaults(data?.data)
       } catch (error) {
         console.error("Error fetching vault metrics:", error)

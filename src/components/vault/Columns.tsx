@@ -45,7 +45,7 @@ const columns: ColumnDef<Vault>[] = [
     accessorKey: "apy",
     cell: ({ row }) => {
       // Use optional chaining + fallback
-      const apy = row.original.apy ?? 0
+      const apy = Number(row.original?.apy ?? 0).toFixed(3) ?? 0
       return <div className='text-sm font-medium'>{apy}%</div>
     },
   },

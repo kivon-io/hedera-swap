@@ -55,7 +55,7 @@ const DepositAction = () => {
         setTxStatus("Sending EVM transaction...")
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        setTxStatus("EVM deposit failed: " + message)
+        setTxStatus("EVM deposit failed")
       }
 
       return
@@ -81,29 +81,19 @@ const DepositAction = () => {
 
 
       setTxStatus("Transaction sent! Saving...")
-      // Notify backend
-      await fetch("/api/liquidity/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          network: "hedera",
-          wallet_address: hederaAccount.toString(),
-          amount: Number(amount),
-          txId: result.transactionId.toString()
-        }), 
-      }).then(() => {
-        setTxStatus("Deposit successful!")
-        setPending(false)
 
+      if( result.transactionId.toString() ){
         setTimeout(()=>{
+          setTxStatus("Deposit successful!")
           window.location.reload();
         }, 2000)
-       
-      })
+      }
+
+  
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setPending(false)
-      setTxStatus("Hedera deposit failed: " + message)
+      setTxStatus("Hedera deposit failed")
     }
   }
 
@@ -119,40 +109,23 @@ const DepositAction = () => {
         ? evmTx
         : (evmTx as { hash?: string }).hash ?? String(evmTx)
 
-    fetch("/api/liquidity/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        network: vault.network_slug,
-        wallet_address: evmAddress,
-        amount: Number(amount),
-        txId: txHash,
-      }),
-    }).then(() => {
 
-      setTxStatus("Deposit successful!")
+      setTimeout(()=>{
+        setTxStatus("Deposit successful!")
+        window.location.reload();
+      }, 2000)
 
-        setTimeout(()=>{
-          window.location.reload();
-        }, 2000)
-    })
-    .catch((err) => {
-      console.error("Failed to notify backend of EVM deposit", err)
-    })
   }, [evmTx, evmAddress, amount, vault.network_slug])
 
 
+  const isButtonDisabled = useMemo(() => {
 
-
-
-const isButtonDisabled = useMemo(() => {
-
-  if (vault.network_slug === 'hedera') {
-    return hederaChain?.chain?.id !== CHAIN_IDS['hedera'];
-  } else {
-    return evmChain !== CHAIN_IDS[vault.network_slug as NetworkOption];
-  }
-}, [vault.network_slug, hederaChain?.chain?.id, evmChain, hederaAccount]);
+    if (vault.network_slug === 'hedera') {
+      return hederaChain?.chain?.id !== CHAIN_IDS['hedera'];
+    } else {
+      return evmChain !== CHAIN_IDS[vault.network_slug as NetworkOption];
+    }
+  }, [vault.network_slug, hederaChain?.chain?.id, evmChain, hederaAccount]);
 
 
   return (
