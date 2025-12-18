@@ -4,7 +4,7 @@ import { API_URL } from "@/config/bridge";
 const REMOTE = `${API_URL}/api`
 
 export async function GET() {
-  const res = await fetch(REMOTE+"/get-fee");
+  const res = await fetch(REMOTE+"/fee");
   const data = await res.json();
   return NextResponse.json(data);
 }
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const res = await fetch(`${REMOTE}/set-fee`, {
+    const res = await fetch(`${REMOTE}/fee`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
