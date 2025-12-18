@@ -67,6 +67,8 @@ const JoinCompetition = () => {
     }
   }, [hederaAccount, isJoined])
 
+  return null
+
   return (
     <div className='flex flex-col gap-2'>
       {!isJoined && !isFetchingAccount && !isVerifying ? (
