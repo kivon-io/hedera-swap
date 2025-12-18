@@ -2,6 +2,7 @@
 import { TOKENS } from "@/config/tokens"
 import Image from "next/image"
 import React from "react"
+import JoinCompetition from "./competition/join-competition"
 
 const BridgeContainer = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -22,7 +23,9 @@ const BridgeContainer = ({ children }: { children: React.ReactNode }) => {
             <p className='text-sm font-medium text-zinc-900'>Hedera</p>
           </div>
         </div>
-        <p className='text-base text-zinc-900'>Multichain swap</p>
+        <div className='flex flex-col gap-1'>
+          <JoinCompetition />
+        </div>
       </div>
       <div className='p-2 md:p-4 bg-zinc-50 text-zinc-800 border border-zinc-200 rounded-2xl flex flex-col gap-4'>
         {children}
