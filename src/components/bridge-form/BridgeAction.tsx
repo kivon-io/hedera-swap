@@ -7,6 +7,7 @@ import { Button } from "../ui/button"
 import BRIDGE_ABI from "@/Abi/bridge.json"
 import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
 import { TX_MESSAGES, TX_STATUS } from "@/config/bridge"
+import { COMPETITION_ID } from "@/config/competition"
 import { CHAIN_IDS, CONTRACT_ADDRESSES, NetworkOption } from "@/config/networks"
 import { TOKENS } from "@/config/tokens"
 import { BridgeTransactionBuildArgs, buildTransactionPayload } from "@/config/transactions"
@@ -443,6 +444,18 @@ const BridgeAction = ({ fromPrice, toPrice }: { fromPrice: number; toPrice: numb
           } else {
             transactionSnapshotRef.current = null
           }
+
+          // record the bridge transaction, competition id, user hedera account, volume in usd
+          const fromAmountUsd = fromAmount * fromPrice
+          await fetch("/api/competition/record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: COMPETITION_ID,
+              userAddress: hederaAccount,
+              volume: fromAmountUsd,
+            }),
+          })
         }
         setIsBridging(false)
         if (fromNetwork == "hedera" || toNetwork == "hedera") {
