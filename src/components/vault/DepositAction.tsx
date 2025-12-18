@@ -29,12 +29,13 @@ const DepositAction = () => {
   const { data: hederaChain } = useChain({ autoFetch: hederaConnected }); 
   const  evmChain = useChainId(); 
 
-  const evmPoolAddress = '0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e'; 
-  const hederPoolAddress = '0.0.10145769'; 
+  const evmPoolAddress = process.env.NEXT_PUBLIC_EVM_POOL; 
+  const hederPoolAddress = process.env.NEXT_PUBLIC_HEDERA_POOL;
+
 
   const handleDeposit = async () => {
     if (!amount || Number(amount) <= 0) {
-      setTxStatus("Enter a valid amount")
+      setTxStatus("Enter a valid amount")  
       return
     }
 
@@ -70,6 +71,9 @@ const DepositAction = () => {
     }
 
     try {
+      if(!hederPoolAddress){
+        return; 
+      }
       setTxStatus("Preparing Hedera transaction...")
       const hbarAmount = new Hbar(Number(amount))
       const tx = new TransferTransaction()
