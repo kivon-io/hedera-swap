@@ -18,7 +18,7 @@ import BRIDGE_ABI from "@/Abi/bridge.json"
 import HEDERA_BRIDGE_ABI from "@/Abi/hedera_abi.json"
 import { CHAIN_IDS, CONTRACT_ADDRESSES, NetworkOption, getChainNameById } from "@/config/networks"
 import { type Address } from "viem"
-import { API_URL } from "@/config/bridge"
+import { API_URL } from "@/config/bridge"  
 
 
 export default function AdminPage() {
@@ -98,7 +98,7 @@ export default function AdminPage() {
   // ✅ Fetch fees
   async function fetchFees() {
     try {
-      const res = await fetch("/api/fee");
+      const res = await fetch(`${API_URL}/api/fee`);
       const data = await res.json();
       setFees({
         fee_pct: data.data.fee_pct ?? 0,
@@ -112,7 +112,7 @@ export default function AdminPage() {
 
   async function fetchPk() {
       try {
-        const res = await fetch("/api/pk");
+        const res = await fetch(`${API_URL}/api/pk`);
         const data = await res.json();
         if(data.has_pk){
           setPKSet(true)
