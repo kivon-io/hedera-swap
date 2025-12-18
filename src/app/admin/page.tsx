@@ -221,7 +221,7 @@ export default function AdminPage() {
     if(!evmAddress) {
         alert('connect evm address'); 
         return;
-    }
+    }   
     // 1. Get nonce
     const nonceRes = await fetch(`${API_URL}/api/getpknonce`, {
       method: "POST",
