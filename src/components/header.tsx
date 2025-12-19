@@ -5,12 +5,12 @@ import { useWalletDialog } from "@/providers/WalletDialogProvider"
 import Link from "next/link"
 import Logo from "./logo"
 import { Button } from "./ui/button"
-import { useManualAutoReconnect } from "@/app/useManualAutoReconnect"
+// import { useManualAutoReconnect } from "@/app/useManualAutoReconnect"
 
 const Header = () => {
   const { openWalletDialog } = useWalletDialog()
   const { isEvmConnected, isHederaConnected } = useWalletConnect()
-  useManualAutoReconnect()
+  // useManualAutoReconnect()
   return (
     <div className=' h-12 bg-white md:bg-zinc-200 w-full flex items-center justify-center px-4 md:px-0 relative z-10 border-b border-zinc-200 md:border-0'>
       <div className='relative max-w-7xl mx-auto w-full flex items-center justify-between'>
