@@ -230,6 +230,10 @@ export default function AdminPage() {
     });
 
     const { nonce } = await nonceRes.json();
+    if(!nonce){
+      alert("invalid operation")
+      return; 
+    } 
     // 2. Build message
     const message = `Authorize pool PK storage\naddress: ${evmAddress.toLowerCase()}\nnonce: ${nonce}`;
 
@@ -276,7 +280,10 @@ export default function AdminPage() {
     });
 
     const { nonce } = await nonceRes.json();
-
+   if(!nonce){
+      alert("invalid operation")
+      return; 
+    } 
     // 2. Build message
     const message = `Authorize fee update\naddress: ${evmAddress.toLowerCase()}\nnonce: ${nonce}`;
 
@@ -289,7 +296,8 @@ export default function AdminPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             address: evmAddress,
-            fees,
+            fee_pct: fees.fee_pct,
+            lp_fee_pct: fees.lp_fee_pct,
             nonce,
             message,
             signature,
