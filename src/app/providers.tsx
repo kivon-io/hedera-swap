@@ -126,6 +126,12 @@ const Providers = ({ children }: ProvidersProps) => {
   }
 
   return (
+    <HWBridgeProvider
+      metadata={metadata}
+      projectId={projectId}
+      connectors={[HWCConnector]}
+      chains={[HederaMainnet]}
+    >
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitAuthenticationProvider
@@ -135,19 +141,14 @@ const Providers = ({ children }: ProvidersProps) => {
             <RainbowKitProvider>
               <WalletDialogProvider>
                 <WalletRegistrationWatcher />
-                    <HWBridgeProvider
-                      metadata={metadata}
-                      projectId={projectId}
-                      connectors={[HWCConnector]}
-                      chains={[HederaMainnet]}
-                    >
-                    {children}
-                </HWBridgeProvider>
+
+                {children}
               </WalletDialogProvider>
             </RainbowKitProvider>
           </RainbowKitAuthenticationProvider>
         </QueryClientProvider>
       </WagmiProvider>
+    </HWBridgeProvider>
   )
 }
 
