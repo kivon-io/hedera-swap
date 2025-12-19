@@ -3,7 +3,8 @@
 import { COMPETITION_ID } from "@/config/competition"
 import { useAccountId, useWallet } from "@buidlerlabs/hashgraph-react-wallets"
 import { HWCConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Link from "next/link"
 import { useCallback, useState } from "react"
 import { Button } from "../ui/button"
 
@@ -12,6 +13,7 @@ const JoinCompetition = () => {
   const { data: hederaAccount, isLoading: isFetchingAccount } = useAccountId({
     autoFetch: isConnected,
   })
+  const queryClient = useQueryClient()
 
   const [isJoining, setIsJoining] = useState(false)
 
@@ -59,7 +61,7 @@ const JoinCompetition = () => {
         throw new Error(payload?.error ?? "Failed to join competition")
       }
 
-      isJoined.refetch()
+      queryClient.invalidateQueries({ queryKey: ["competition", COMPETITION_ID, hederaAccount] })
     } catch (error) {
       console.error(error)
     } finally {
@@ -77,11 +79,19 @@ const JoinCompetition = () => {
         <p className='text-sm text-zinc-900'>Multichain swap</p>
       )}
 
-      {isConnected && !isJoined && !isFetchingAccount && !isVerifying && (
-        <Button onClick={handleJoin} disabled={isJoining} size={"sm"}>
-          {isJoining ? "Joining..." : "Join Competition"}
-        </Button>
-      )}
+      {isConnected &&
+        !isJoined &&
+        !isFetchingAccount &&
+        !isVerifying &&
+        (!isJoined ? (
+          <Button onClick={handleJoin} disabled={isJoining} size={"sm"}>
+            {isJoining ? "Joining..." : "Join Competition"}
+          </Button>
+        ) : (
+          <Link href={`https://kivon.io/trading-competition/${COMPETITION_ID}`}>
+            <Button size={"sm"}>View Leaderboard</Button>
+          </Link>
+        ))}
     </div>
   )
 }
