@@ -307,6 +307,7 @@ export default function AdminPage() {
         const data = await res.json();
         if (data?.success) {
           setTxStatus("✅ Fees updated successfully!");
+          alert("Fees updated successfully!")
         } else if (data?.error) {
           setTxStatus(`❌ ${data.error}`);
         }
@@ -483,6 +484,7 @@ export default function AdminPage() {
           >
             {feeIsProcessing ? "Updating..." : "Update Fees"}
           </Button>
+
 
           <div className="mt-4 text-sm text-gray-600">
             <p>
