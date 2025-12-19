@@ -80,7 +80,6 @@ const JoinCompetition = () => {
       )}
 
       {isConnected &&
-        !isJoined &&
         !isFetchingAccount &&
         !isVerifying &&
         (!isJoined ? (
