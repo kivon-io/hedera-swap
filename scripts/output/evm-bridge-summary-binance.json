@@ -1,0 +1,104 @@
+{
+  "chain": "binance",
+  "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+  "startIso": "2025-12-18T00:00:00Z",
+  "fromBlock": "72018713",
+  "toBlock": "75580518",
+  "explorer_tx_base": "https://bscscan.com/tx",
+  "logsFetched": 730,
+  "eventsDecoded": 729,
+  "uniqueTokens": 4,
+  "volume_by_token": [
+    {
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": 18,
+      "total_raw": "89135130000000000000",
+      "total_human": "89.13513"
+    },
+    {
+      "tokenFrom": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+      "symbol": "BTCB",
+      "decimals": 18,
+      "total_raw": "77000000000000",
+      "total_human": "0.000077"
+    },
+    {
+      "tokenFrom": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+      "symbol": "USDC",
+      "decimals": 18,
+      "total_raw": "30700000000000000000",
+      "total_human": "30.7"
+    },
+    {
+      "tokenFrom": "0x55d398326f99059ff775485246999027b3197955",
+      "symbol": "USDT",
+      "decimals": 18,
+      "total_raw": "30000000000000000000",
+      "total_human": "30"
+    }
+  ],
+  "note": "EVM bridged volume computed as sum of BridgeDeposit(amount) logs emitted by the bridge contract since startIso. totals_csv aggregates by token. events_csv includes per-event rows with explorer_url for verification.",
+  "events_sample": [
+    {
+      "explorer_url": "https://bscscan.com/tx/0x985121051fe981ca64a5e590e224397748f22eb3598d3248ab3577f27f15a368",
+      "tx_hash": "0x985121051fe981ca64a5e590e224397748f22eb3598d3248ab3577f27f15a368",
+      "block_number": "72533353",
+      "log_index": "422",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "amount_raw": "2000000000000000",
+      "amount_human": "0.002"
+    },
+    {
+      "explorer_url": "https://bscscan.com/tx/0xea14c90ab1d55562b8d240154382d014b48f96835fb6675126aa8ea6031579a4",
+      "tx_hash": "0xea14c90ab1d55562b8d240154382d014b48f96835fb6675126aa8ea6031579a4",
+      "block_number": "72533569",
+      "log_index": "684",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "amount_raw": "220000000000000000",
+      "amount_human": "0.22"
+    },
+    {
+      "explorer_url": "https://bscscan.com/tx/0x2ee65e37336897bb67f4643f3092f52230f32d116bef81fbc5f53ac49489fa34",
+      "tx_hash": "0x2ee65e37336897bb67f4643f3092f52230f32d116bef81fbc5f53ac49489fa34",
+      "block_number": "72533741",
+      "log_index": "530",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "amount_raw": "219800000000000000",
+      "amount_human": "0.2198"
+    },
+    {
+      "explorer_url": "https://bscscan.com/tx/0x0e2d702a4946900442ac4a726e703624b65aec1342124ae9b842a6f560f89b9c",
+      "tx_hash": "0x0e2d702a4946900442ac4a726e703624b65aec1342124ae9b842a6f560f89b9c",
+      "block_number": "72533909",
+      "log_index": "412",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "amount_raw": "220000000000000000",
+      "amount_human": "0.22"
+    },
+    {
+      "explorer_url": "https://bscscan.com/tx/0xe74d2cc60a1bf169cbf433cb2c83cbd17d9ff285ac8e035e559b5b8ed9a27871",
+      "tx_hash": "0xe74d2cc60a1bf169cbf433cb2c83cbd17d9ff285ac8e035e559b5b8ed9a27871",
+      "block_number": "72534293",
+      "log_index": "657",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "amount_raw": "220000000000000000",
+      "amount_human": "0.22"
+    }
+  ]
+}

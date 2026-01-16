@@ -1,0 +1,104 @@
+{
+  "chain": "arbitrum",
+  "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+  "startIso": "2025-12-18T00:00:00Z",
+  "fromBlock": "411751136",
+  "toBlock": "421915093",
+  "explorer_tx_base": "https://arbiscan.io/tx",
+  "logsFetched": 1945,
+  "eventsDecoded": 1944,
+  "uniqueTokens": 4,
+  "volume_by_token": [
+    {
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": 18,
+      "total_raw": "5959244000000000000",
+      "total_human": "5.959244"
+    },
+    {
+      "tokenFrom": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "symbol": "USDC",
+      "decimals": 6,
+      "total_raw": "516730000",
+      "total_human": "516.73"
+    },
+    {
+      "tokenFrom": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
+      "symbol": "USDT",
+      "decimals": 6,
+      "total_raw": "421498000",
+      "total_human": "421.498"
+    },
+    {
+      "tokenFrom": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
+      "symbol": "WBTC",
+      "decimals": 8,
+      "total_raw": "441840",
+      "total_human": "0.0044184"
+    }
+  ],
+  "note": "EVM bridged volume computed as sum of BridgeDeposit(amount) logs emitted by the bridge contract since startIso. totals_csv aggregates by token. events_csv includes per-event rows with explorer_url for verification.",
+  "events_sample": [
+    {
+      "explorer_url": "https://arbiscan.io/tx/0x2cbe28aa0c362c73996581ce9b1499691e4d3a45750ca1d5df2096a56a40e96c",
+      "tx_hash": "0x2cbe28aa0c362c73996581ce9b1499691e4d3a45750ca1d5df2096a56a40e96c",
+      "block_number": "411751987",
+      "log_index": "5",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "explorer_url": "https://arbiscan.io/tx/0x86d24d090bf270cd63e103ab9ae65c936f080a53095b5e09566b112dee78ddb6",
+      "tx_hash": "0x86d24d090bf270cd63e103ab9ae65c936f080a53095b5e09566b112dee78ddb6",
+      "block_number": "411752473",
+      "log_index": "3",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "explorer_url": "https://arbiscan.io/tx/0xd0310c202b17234833a188bf75db0320109b42f047eb34c61a4dbc4c69ab0513",
+      "tx_hash": "0xd0310c202b17234833a188bf75db0320109b42f047eb34c61a4dbc4c69ab0513",
+      "block_number": "411753571",
+      "log_index": "0",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "explorer_url": "https://arbiscan.io/tx/0xa8814e1bd802e305fa7e7b56fb2882999bc62f0be2aaaa2f0ae31ef18f64101f",
+      "tx_hash": "0xa8814e1bd802e305fa7e7b56fb2882999bc62f0be2aaaa2f0ae31ef18f64101f",
+      "block_number": "411754638",
+      "log_index": "0",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "explorer_url": "https://arbiscan.io/tx/0x0e4420e032167a9b640b61b0bd2d66392a9232f7313d0236171c37a89612c797",
+      "tx_hash": "0x0e4420e032167a9b640b61b0bd2d66392a9232f7313d0236171c37a89612c797",
+      "block_number": "411865250",
+      "log_index": "6",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "300000000000000",
+      "amount_human": "0.0003"
+    }
+  ]
+}

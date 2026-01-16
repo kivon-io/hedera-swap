@@ -1,0 +1,92 @@
+{
+  "contract_id": "0.0.10115692",
+  "milestone_start": "1766016000.000000000",
+  "endpoint_used": "https://mainnet-public.mirrornode.hedera.com/api/v1/contracts/0.0.10115692/results/logs?timestamp=gte:1766016000.000000000&limit=100&order=asc",
+  "tx_lookup_endpoint_used": "https://mainnet-public.mirrornode.hedera.com/api/v1/transactions?timestamp=<consensus_timestamp>&limit=1&order=asc",
+  "explorer": "HashScan (mainnet)",
+  "pagesFetched": 29,
+  "logsSeen": 2886,
+  "eventsDecoded": 2885,
+  "unique_wallets": 2064,
+  "volume_by_token": [
+    {
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "total_raw": "115504148003700",
+      "total_human": "1155041.480037"
+    },
+    {
+      "tokenFrom": "0x0000000000000000000000000000000000492a28",
+      "symbol": "PACK",
+      "decimals": 6,
+      "total_raw": "4061000000",
+      "total_human": "4061"
+    },
+    {
+      "tokenFrom": "0x00000000000000000000000000000000000b2ad5",
+      "symbol": "SAUCE",
+      "decimals": 6,
+      "total_raw": "2790000000",
+      "total_human": "2790"
+    }
+  ],
+  "note": "Hedera bridged volume computed as sum of BridgeDeposit event amounts emitted by the Hedera bridge contract, grouped by tokenFrom. events_csv includes per-event rows with HashScan explorer_url for verification.",
+  "events_sample": [
+    {
+      "explorer_url": "https://hashscan.io/mainnet/transaction/0.0.9759598-1766016084-335199768",
+      "transaction_id": "0.0.9759598-1766016084-335199768",
+      "consensus_timestamp": "1766016110.748543000",
+      "from": "0x000000000000000000000000000000000094eb6e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "amount_raw": "44200000000",
+      "amount_human": "442"
+    },
+    {
+      "explorer_url": "https://hashscan.io/mainnet/transaction/0.0.9759598-1766016248-624325324",
+      "transaction_id": "0.0.9759598-1766016248-624325324",
+      "consensus_timestamp": "1766016275.729203239",
+      "from": "0x000000000000000000000000000000000094eb6e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "amount_raw": "44000000000",
+      "amount_human": "440"
+    },
+    {
+      "explorer_url": "https://hashscan.io/mainnet/transaction/0.0.9759598-1766016366-229364649",
+      "transaction_id": "0.0.9759598-1766016366-229364649",
+      "consensus_timestamp": "1766016465.802831000",
+      "from": "0x000000000000000000000000000000000094eb6e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "amount_raw": "44000000000",
+      "amount_human": "440"
+    },
+    {
+      "explorer_url": "https://hashscan.io/mainnet/transaction/0.0.9759598-1766016636-330204377",
+      "transaction_id": "0.0.9759598-1766016636-330204377",
+      "consensus_timestamp": "1766016667.133910000",
+      "from": "0x000000000000000000000000000000000094eb6e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "amount_raw": "44000000000",
+      "amount_human": "440"
+    },
+    {
+      "explorer_url": "https://hashscan.io/mainnet/transaction/0.0.9759598-1766016886-512922612",
+      "transaction_id": "0.0.9759598-1766016886-512922612",
+      "consensus_timestamp": "1766016916.083821099",
+      "from": "0x000000000000000000000000000000000094eb6e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "HBAR",
+      "decimals": 8,
+      "amount_raw": "44000000000",
+      "amount_human": "440"
+    }
+  ]
+}

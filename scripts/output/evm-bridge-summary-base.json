@@ -1,0 +1,97 @@
+{
+  "chain": "base",
+  "bridge_contract": "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
+  "startIso": "2025-12-18T00:00:00Z",
+  "fromBlock": "39613327",
+  "toBlock": "40883171",
+  "explorer_tx_base": "https://basescan.org/tx",
+  "logsFetched": 210,
+  "eventsDecoded": 209,
+  "uniqueTokens": 3,
+  "volume_by_token": [
+    {
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": 18,
+      "total_raw": "11701552760000000000",
+      "total_human": "11.70155276"
+    },
+    {
+      "tokenFrom": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "symbol": "USDC",
+      "decimals": 6,
+      "total_raw": "1000000",
+      "total_human": "1"
+    },
+    {
+      "tokenFrom": "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+      "symbol": "USDT",
+      "decimals": 6,
+      "total_raw": "4040000",
+      "total_human": "4.04"
+    }
+  ],
+  "note": "EVM bridged volume computed as sum of BridgeDeposit(amount) logs emitted by the bridge contract since startIso. totals_csv aggregates by token. events_csv includes per-event rows with explorer_url for verification.",
+  "events_sample": [
+    {
+      "explorer_url": "https://basescan.org/tx/0x33650af1f08ffa763fc6e29d534da8d914be7c12b0da7c678398804fff331891",
+      "tx_hash": "0x33650af1f08ffa763fc6e29d534da8d914be7c12b0da7c678398804fff331891",
+      "block_number": "39684657",
+      "log_index": "331",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "8000000000000000",
+      "amount_human": "0.008"
+    },
+    {
+      "explorer_url": "https://basescan.org/tx/0x0a86fe0b54316ecc9abdc2210abbf6b523559ee27c3b232e1783f51f5a8506d6",
+      "tx_hash": "0x0a86fe0b54316ecc9abdc2210abbf6b523559ee27c3b232e1783f51f5a8506d6",
+      "block_number": "39684856",
+      "log_index": "1226",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "8590000000000000",
+      "amount_human": "0.00859"
+    },
+    {
+      "explorer_url": "https://basescan.org/tx/0xd483c11ab94c78a31ecf5933c973e71a346b18a825198b1850f1ee42ca0c4152",
+      "tx_hash": "0xd483c11ab94c78a31ecf5933c973e71a346b18a825198b1850f1ee42ca0c4152",
+      "block_number": "39688615",
+      "log_index": "349",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "8500000000000000",
+      "amount_human": "0.0085"
+    },
+    {
+      "explorer_url": "https://basescan.org/tx/0x4a9cfaf0c5eb7939a4e97e938dc3f81a374a48b60f22b2afe50c20e38f9ec6a1",
+      "tx_hash": "0x4a9cfaf0c5eb7939a4e97e938dc3f81a374a48b60f22b2afe50c20e38f9ec6a1",
+      "block_number": "39688709",
+      "log_index": "1013",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "8200000000000000",
+      "amount_human": "0.0082"
+    },
+    {
+      "explorer_url": "https://basescan.org/tx/0xf89a07044b7ab16e0114ceb2d792a19638533e0d410d04d9807f000fbd5b000e",
+      "tx_hash": "0xf89a07044b7ab16e0114ceb2d792a19638533e0d410d04d9807f000fbd5b000e",
+      "block_number": "39688860",
+      "log_index": "398",
+      "depositor": "0x78dd671a5bfa543fcb9475c3ef2bfe1298feb7ba",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "7800000000000000",
+      "amount_human": "0.0078"
+    }
+  ]
+}
