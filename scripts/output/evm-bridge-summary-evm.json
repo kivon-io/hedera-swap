@@ -1,0 +1,245 @@
+{
+  "startIso": "2025-12-18T00:00:00Z",
+  "chains": {
+    "arbitrum": {
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "fromBlock": "411751136",
+      "toBlock": "423863067",
+      "logsFetched": 1945,
+      "eventsDecoded": 1944,
+      "explorer_tx_base": "https://arbiscan.io/tx"
+    },
+    "base": {
+      "bridge_contract": "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
+      "fromBlock": "39613327",
+      "toBlock": "41126540",
+      "logsFetched": 210,
+      "eventsDecoded": 209,
+      "explorer_tx_base": "https://basescan.org/tx"
+    },
+    "binance": {
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "fromBlock": "72018713",
+      "toBlock": "76661390",
+      "logsFetched": 745,
+      "eventsDecoded": 744,
+      "explorer_tx_base": "https://bscscan.com/tx"
+    }
+  },
+  "output_files": {
+    "events_csv": "evm-bridge-events-evm.csv",
+    "totals_csv": "evm-bridge-volume-evm.csv",
+    "summary_json": "evm-bridge-summary-evm.json"
+  },
+  "note": "EVM volume computed from on-chain BridgeDeposit logs on Arbitrum/Base/BSC since startIso. events_csv is event-level with explorer links; totals_csv aggregates by chain+tokenFrom.",
+  "events_total": 2897,
+  "totals_rows": 11,
+  "volume_by_chain_token": [
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "total_raw": "5959244000000000000",
+      "total_human": "5.959244"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "symbol": "USDC",
+      "decimals": "6",
+      "total_raw": "516730000",
+      "total_human": "516.73"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
+      "symbol": "USDT",
+      "decimals": "6",
+      "total_raw": "421498000",
+      "total_human": "421.498"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
+      "symbol": "WBTC",
+      "decimals": "8",
+      "total_raw": "441840",
+      "total_human": "0.0044184"
+    },
+    {
+      "chain": "base",
+      "bridge_contract": "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "ETH",
+      "decimals": "18",
+      "total_raw": "11701552760000000000",
+      "total_human": "11.70155276"
+    },
+    {
+      "chain": "base",
+      "bridge_contract": "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
+      "tokenFrom": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "symbol": "USDC",
+      "decimals": "6",
+      "total_raw": "1000000",
+      "total_human": "1"
+    },
+    {
+      "chain": "base",
+      "bridge_contract": "0xe179c49A5006EB738A242813A6C5BDe46a54Fc5C",
+      "tokenFrom": "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+      "symbol": "USDT",
+      "decimals": "6",
+      "total_raw": "4040000",
+      "total_human": "4.04"
+    },
+    {
+      "chain": "binance",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "symbol": "BNB",
+      "decimals": "18",
+      "total_raw": "89302171000000000000",
+      "total_human": "89.302171"
+    },
+    {
+      "chain": "binance",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+      "symbol": "BTCB",
+      "decimals": "18",
+      "total_raw": "77000000000000",
+      "total_human": "0.000077"
+    },
+    {
+      "chain": "binance",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+      "symbol": "USDC",
+      "decimals": "18",
+      "total_raw": "30700000000000000000",
+      "total_human": "30.7"
+    },
+    {
+      "chain": "binance",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "tokenFrom": "0x55d398326f99059ff775485246999027b3197955",
+      "symbol": "USDT",
+      "decimals": "18",
+      "total_raw": "30000000000000000000",
+      "total_human": "30"
+    }
+  ],
+  "events_sample": [
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "explorer_url": "https://arbiscan.io/tx/0x2cbe28aa0c362c73996581ce9b1499691e4d3a45750ca1d5df2096a56a40e96c",
+      "tx_hash": "0x2cbe28aa0c362c73996581ce9b1499691e4d3a45750ca1d5df2096a56a40e96c",
+      "block_number": "411751987",
+      "block_timestamp": "1766016213",
+      "block_time_iso": "2025-12-18T00:03:33.000Z",
+      "log_index": "5",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "to": "0x000000000000000000000000000000000094eb6e",
+      "poolAddress": "0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "tokenTo": "0x0000000000000000000000000000000000000000",
+      "desChain": "295",
+      "nonce": "0x9404d8283cedd1921dd489e2451027f105017cc2362161c9d392432168dabbec",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "explorer_url": "https://arbiscan.io/tx/0x86d24d090bf270cd63e103ab9ae65c936f080a53095b5e09566b112dee78ddb6",
+      "tx_hash": "0x86d24d090bf270cd63e103ab9ae65c936f080a53095b5e09566b112dee78ddb6",
+      "block_number": "411752473",
+      "block_timestamp": "1766016334",
+      "block_time_iso": "2025-12-18T00:05:34.000Z",
+      "log_index": "3",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "to": "0x000000000000000000000000000000000094eb6e",
+      "poolAddress": "0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "tokenTo": "0x0000000000000000000000000000000000000000",
+      "desChain": "295",
+      "nonce": "0x3286781a75cf797c9f70088aab7c388dbc13db7408255504117e0e3731fc7ddf",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "explorer_url": "https://arbiscan.io/tx/0xd0310c202b17234833a188bf75db0320109b42f047eb34c61a4dbc4c69ab0513",
+      "tx_hash": "0xd0310c202b17234833a188bf75db0320109b42f047eb34c61a4dbc4c69ab0513",
+      "block_number": "411753571",
+      "block_timestamp": "1766016609",
+      "block_time_iso": "2025-12-18T00:10:09.000Z",
+      "log_index": "0",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "to": "0x000000000000000000000000000000000094eb6e",
+      "poolAddress": "0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "tokenTo": "0x0000000000000000000000000000000000000000",
+      "desChain": "295",
+      "nonce": "0x21361305540407aaffabf49e8b3cad574a05c6b71c923199d685e86c0ecc8519",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "explorer_url": "https://arbiscan.io/tx/0xa8814e1bd802e305fa7e7b56fb2882999bc62f0be2aaaa2f0ae31ef18f64101f",
+      "tx_hash": "0xa8814e1bd802e305fa7e7b56fb2882999bc62f0be2aaaa2f0ae31ef18f64101f",
+      "block_number": "411754638",
+      "block_timestamp": "1766016875",
+      "block_time_iso": "2025-12-18T00:14:35.000Z",
+      "log_index": "0",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "to": "0x000000000000000000000000000000000094eb6e",
+      "poolAddress": "0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "tokenTo": "0x0000000000000000000000000000000000000000",
+      "desChain": "295",
+      "nonce": "0x7577e8227c3e8e8b7fcf1dfc319c6c737b900283afede3e1bef69c2be62e44d3",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "17000000000000000",
+      "amount_human": "0.017"
+    },
+    {
+      "chain": "arbitrum",
+      "bridge_contract": "0x119d249246160028fcCCc8C3DF4a5a3C11dc9a6B",
+      "explorer_url": "https://arbiscan.io/tx/0x0e4420e032167a9b640b61b0bd2d66392a9232f7313d0236171c37a89612c797",
+      "tx_hash": "0x0e4420e032167a9b640b61b0bd2d66392a9232f7313d0236171c37a89612c797",
+      "block_number": "411865250",
+      "block_timestamp": "1766044491",
+      "block_time_iso": "2025-12-18T07:54:51.000Z",
+      "log_index": "6",
+      "depositor": "0xee6ffda94fca8b25fa337d4b63a5f9ca6e78465d",
+      "to": "0x00000000000000000000000000000000009a55bd",
+      "poolAddress": "0xe0f537e3815a8ae3e8aa64b176d8c0ec5cee519e",
+      "tokenFrom": "0x0000000000000000000000000000000000000000",
+      "tokenTo": "0x0000000000000000000000000000000000000000",
+      "desChain": "295",
+      "nonce": "0xa612137c36579fde6b6a52a9c97079b288ebbc560287774036745a22b4639c57",
+      "symbol": "ETH",
+      "decimals": "18",
+      "amount_raw": "300000000000000",
+      "amount_human": "0.0003"
+    }
+  ]
+}

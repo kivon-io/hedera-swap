@@ -1,0 +1,13 @@
+{
+  "pricing_source": "CoinMarketCap spot price",
+  "pricing_timestamp_utc": "2026-01-22T00:00:00Z",
+  "prices_usd": {
+    "HBAR": 0.11,
+    "ETH": 3013.05,
+    "BNB": 889.64,
+    "USDC": 1.0,
+    "USDT": 1.0,
+    "WBTC": 89631.25,
+    "BTCB": 89631.25
+  }
+}

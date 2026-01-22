@@ -1,0 +1,18 @@
+{
+  "contract": "0.0.10115692",
+  "milestone_start": "1766016000.000000000",
+  "unique_wallets": 2066,
+  "total_contract_calls_seen": 2905,
+  "pagesFetched": 30,
+  "excluded": {
+    "exclude_env_used": false,
+    "excluded_wallets": [],
+    "excluded_hits": 0
+  },
+  "method": {
+    "endpoint": "https://mainnet-public.mirrornode.hedera.com/api/v1/contracts/0.0.10115692/results",
+    "filter": "timestamp=gte:1766016000.000000000",
+    "unique_definition": "unique(from) from Hedera Mirror Node contract results (EVM caller address) after excluding operator wallets",
+    "export": "raw addresses in hedera_unique_wallets.csv"
+  }
+}

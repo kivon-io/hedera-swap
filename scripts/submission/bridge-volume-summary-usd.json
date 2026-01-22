@@ -1,0 +1,50 @@
+{
+  "pricing_source": "CoinMarketCap spot price",
+  "pricing_timestamp_utc": "2026-01-22T00:00:00Z",
+  "prices_usd": {
+    "HBAR": 0.11,
+    "ETH": 3013.05,
+    "BNB": 889.64,
+    "USDC": 1,
+    "USDT": 1,
+    "WBTC": 89631.25,
+    "BTCB": 89631.25
+  },
+  "input": {
+    "evm_csvs": [
+      "./output/evm-bridge-events-evm.csv"
+    ],
+    "hedera_csvs": [
+      "./output/hedera-bridge-events.csv"
+    ],
+    "prices_json": "./output/prices.json"
+  },
+  "outputs": {
+    "master_csv": "bridge-events-all.csv",
+    "usd_csv": "bridge-events-all-usd.csv",
+    "summary_json": "bridge-volume-summary-usd.json"
+  },
+  "counts": {
+    "events": 5798,
+    "events_with_price": 5788
+  },
+  "totals_usd": {
+    "total_usd": 261278.97,
+    "by_chain": {
+      "hedera": 127211.33,
+      "arbitrum": 19290.58,
+      "base": 35262.75,
+      "binance": 79514.31
+    },
+    "by_symbol": {
+      "HBAR": 127211.33,
+      "ETH": 53213.93,
+      "USDC": 548.43,
+      "BNB": 79446.71,
+      "WBTC": 396.13,
+      "USDT": 455.54,
+      "BTCB": 6.9
+    }
+  },
+  "note": "USD totals are computed from bridge-events-all.csv by multiplying amount_human by prices_usd[symbol] from prices.json at pricing_timestamp_utc. Events without a known price are included but contribute no USD value."
+}
