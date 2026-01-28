@@ -1,0 +1,15 @@
+field,value
+input_csv,../scripts/output/bridge-events-all-usd.csv
+operational_wallets_file,../scripts/output/operational-wallets.txt
+exclusion_rule,Excluded rows where from OR to is in operational set
+events_before,5798
+events_after,5781
+excluded_events,17
+unique_wallets_definition,unique(from) on included rows
+unique_wallets_before,2079
+unique_wallets_after,2077
+usd_volume_before,261278.97
+usd_volume_after,260824.46
+operational_wallets_count,2
+operational_wallet_1,0.0.9759598
+operational_wallet_2,0x000000000000000000000000000000000094eb6e

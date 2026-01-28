@@ -1,0 +1,24 @@
+{
+  "input_csv": "../scripts/output/bridge-events-all-usd.csv",
+  "operational_wallets_file": "../scripts/output/operational-wallets.txt",
+  "exclusion_rule": "Excluded rows where from OR to is in operational set",
+  "counts": {
+    "events_before": 5798,
+    "events_after": 5781,
+    "excluded_events": 17
+  },
+  "unique_wallets": {
+    "definition": "unique(from) on included rows",
+    "before": 2079,
+    "after": 2077
+  },
+  "usd_volume": {
+    "before": 261278.97,
+    "after": 260824.46
+  },
+  "operational_wallets_count": 2,
+  "operational_wallets": [
+    "0.0.9759598",
+    "0x000000000000000000000000000000000094eb6e"
+  ]
+}
